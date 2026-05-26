@@ -1,0 +1,163 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/server";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createAdminClient();
+
+    const { data, error } = await supabase
+      .from("interviews")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: "Interview not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data });
+  } catch (error) {
+    console.error("Get interview error:", error);
+    return NextResponse.json({ error: "Failed to fetch interview" }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const supabase = await createAdminClient();
+
+
+    // Perform Groq Whisper transcription on completed interviews
+    if (body.status === "completed" && body.video_url && process.env.GROQ_API_KEY) {
+      try {
+        console.log(`Starting Groq Whisper transcription for interview: ${id}`);
+        const videoRes = await fetch(body.video_url);
+        if (videoRes.ok) {
+          const arrayBuffer = await videoRes.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          
+          const formData = new FormData();
+          const blob = new Blob([buffer], { type: "video/webm" });
+          formData.append("file", blob, "video.webm");
+          formData.append("model", "whisper-large-v3");
+          formData.append("response_format", "verbose_json");
+          
+          const groqRes = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+            },
+            body: formData
+          });
+          
+          if (groqRes.ok) {
+            const groqData = await groqRes.json();
+            const segments = groqData.segments || [];
+            console.log(`Successfully retrieved Whisper transcription with ${segments.length} segments`);
+            
+            if (body.transcript && Array.isArray(body.transcript)) {
+              body.transcript = body.transcript.map((entry: any) => {
+                const start = entry.timestamp_start ?? 0;
+                const end = entry.timestamp_end ?? 999999;
+                
+                // Match segments falling within this question's time range
+                const matched = segments.filter((seg: any) => {
+                  const mid = (seg.start + seg.end) / 2;
+                  return mid >= start && mid <= end;
+                });
+                
+                const text = matched.map((seg: any) => seg.text.trim()).join(" ");
+                return {
+                  ...entry,
+                  text: text || entry.text || ""
+                };
+              });
+
+              // Generate AI Summary
+              try {
+                console.log(`Generating AI Summary...`);
+                const fullText = body.transcript.map((t: any) => `Q: ${t.question}\nA: ${t.text}`).join("\n\n");
+                
+                const chatRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                  method: "POST",
+                  headers: {
+                    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({
+                    model: "llama-3.1-8b-instant",
+                    messages: [
+                      { role: "system", content: "You are an expert HR recruiter. Summarize the following interview transcript in 3-4 concise bullet points highlighting the candidate's key qualifications, experience, and communication style." },
+                      { role: "user", content: fullText }
+                    ]
+                  })
+                });
+                
+                if (chatRes.ok) {
+                  const chatData = await chatRes.json();
+                  body.summary = chatData.choices[0]?.message?.content || "";
+                  console.log(`Successfully generated AI Summary`);
+                } else {
+                  console.error("Groq Chat API returned an error:", await chatRes.text());
+                }
+              } catch (summaryErr) {
+                console.error("Summary generation failed:", summaryErr);
+              }
+            }
+          } else {
+            console.error("Groq API returned an error:", await groqRes.text());
+          }
+        } else {
+          console.error(`Failed to download video from URL: ${body.video_url}`);
+        }
+      } catch (transcribeError) {
+        console.error("Transcription failed but continuing PATCH update:", transcribeError);
+      }
+    }
+
+    const { data, error } = await supabase
+      .from("interviews")
+      .update(body)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ data });
+  } catch (error) {
+    console.error("Update interview error:", error);
+    return NextResponse.json({ error: "Failed to update interview" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createAdminClient();
+
+    const { error } = await supabase
+      .from("interviews")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete interview error:", error);
+    return NextResponse.json({ error: "Failed to delete interview" }, { status: 500 });
+  }
+}

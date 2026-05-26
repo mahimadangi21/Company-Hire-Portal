@@ -1,0 +1,12 @@
+{
+  "name": "kl-hire-dashboard-root",
+  "version": "1.0.0",
+  "description": "Root runner for KL HIRE Dashboard and Video Bot",
+  "scripts": {
+    "dev": "concurrently --kill-others \"npm run dev --prefix app\" \"npm run dev --prefix video-bot\"",
+    "install:all": "npm install --prefix app && npm install --legacy-peer-deps --prefix video-bot"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

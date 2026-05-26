@@ -1,0 +1,79 @@
+import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+interface LogoProps {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+  href?: string;
+  showTagline?: boolean;
+}
+
+const sizeConfig = {
+  sm: { img: 34 },
+  md: { img: 48 },
+  lg: { img: 64 },
+};
+
+export function Logo({ className, size = "md", href, showTagline }: LogoProps) {
+  const { img } = sizeConfig[size];
+
+  const content = (
+    <div className={cn("flex items-center gap-2.5", className)}>
+      <Image
+        src="/kadellabs-logo.png"
+        alt="kadellabs logo"
+        width={img * 3}
+        height={img}
+        className="object-contain"
+        priority
+        style={{ height: img, width: "auto" }}
+      />
+      {showTagline && (
+        <span className="text-white/30 text-xs border-l border-white/10 pl-2.5 ml-1">
+          Interview Platform
+        </span>
+      )}
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="inline-flex items-center">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
+}
+
+/** Compact inline icon-only brand mark for tight spaces */
+export function LogoMark({ size = 32 }: { size?: number }) {
+  return (
+    <div
+      className="rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center flex-shrink-0"
+      style={{ width: size, height: size }}
+    >
+      <svg
+        width={size * 0.5}
+        height={size * 0.5}
+        viewBox="0 0 16 16"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Video camera icon */}
+        <path
+          d="M1 4.5C1 3.67 1.67 3 2.5 3H9.5C10.33 3 11 3.67 11 4.5V11.5C11 12.33 10.33 13 9.5 13H2.5C1.67 13 1 12.33 1 11.5V4.5Z"
+          fill="white"
+          fillOpacity="0.9"
+        />
+        <path
+          d="M11 6.2L14.5 4.5V11.5L11 9.8V6.2Z"
+          fill="white"
+          fillOpacity="0.7"
+        />
+      </svg>
+    </div>
+  );
+}
