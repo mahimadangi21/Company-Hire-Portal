@@ -1,30 +1,69 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AppContext = createContext();
 
 export const useAppContext = () => useContext(AppContext);
 
+const API_URL = 'http://localhost:3000';
+
 export const AppProvider = ({ children }) => {
-  const [jobs, setJobs] = useState([
-    { id: 1, title: 'Senior Frontend Engineer', department: 'Engineering', questions: 7, status: 'Active', applicants: 12, date: '2026-05-20' },
-    { id: 2, title: 'Product Manager', department: 'Product', questions: 5, status: 'Active', applicants: 8, date: '2026-05-22' }
-  ]);
-
-  const [candidates, setCandidates] = useState([
-    { id: 1, name: 'Alice Smith', email: 'alice@example.com', phone: '+1 234 567 8900', skills: ['React', 'TypeScript'], jobApplied: 'Senior Frontend Engineer', resumeStatus: 'Parsed', formStatus: 'Submitted', videoStatus: 'Completed', techStatus: 'Scheduled', reportStatus: 'Shared', stage: 'Technical Interview', resumeScore: 85, videoScore: 90, techScore: 88, finalRecommendation: 'Selected' },
-    { id: 2, name: 'Bob Jones', email: 'bob@example.com', phone: '+1 987 654 3210', skills: ['Product Strategy', 'Agile'], jobApplied: 'Product Manager', resumeStatus: 'Parsed', formStatus: 'Pending', videoStatus: 'Pending', techStatus: 'Pending', reportStatus: 'Not Shared', stage: 'Candidate Form', resumeScore: 78, videoScore: null, techScore: null, finalRecommendation: 'Under Review' }
-  ]);
-
+  const [jobs, setJobs] = useState([]);
+  const [candidates, setCandidates] = useState([]);
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'New resume uploaded for Frontend Engineer', time: '5m ago', read: false },
     { id: 2, text: 'Alice Smith completed Video Bot Interview', time: '1h ago', read: true }
   ]);
 
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/jobs`);
+      if (res.ok) {
+        const data = await res.json();
+        setJobs(data);
+      }
+    } catch (e) {
+      console.error("Error fetching jobs:", e);
+    }
+  };
+
+  const fetchCandidates = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/candidates`);
+      if (res.ok) {
+        const data = await res.json();
+        setCandidates(data.map(c => ({
+          ...c,
+          // Map snake_case from DB to camelCase expected by existing React UI
+          jobApplied: c.job_applied,
+          resumeStatus: c.resume_status,
+          formStatus: c.form_status,
+          videoStatus: c.video_status,
+          techStatus: c.tech_status,
+          reportStatus: c.report_status,
+          resumeScore: c.resume_score,
+          videoScore: c.video_score,
+          techScore: c.tech_score,
+          finalRecommendation: c.final_recommendation,
+          extractedData: c.extracted_data
+        })));
+      }
+    } catch (e) {
+      console.error("Error fetching candidates:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+    fetchCandidates();
+  }, []);
+
   return (
     <AppContext.Provider value={{
       jobs, setJobs,
       candidates, setCandidates,
-      notifications, setNotifications
+      notifications, setNotifications,
+      refreshJobs: fetchJobs,
+      refreshCandidates: fetchCandidates
     }}>
       {children}
     </AppContext.Provider>

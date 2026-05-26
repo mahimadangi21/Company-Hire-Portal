@@ -3,7 +3,7 @@ import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, 
 import { useAppContext } from '../context/AppContext';
 
 const ResumeUpload = () => {
-  const { jobs, candidates, setCandidates } = useAppContext();
+  const { jobs, candidates, refreshCandidates } = useAppContext();
   const [selectedJob, setSelectedJob] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -112,31 +112,41 @@ const ResumeUpload = () => {
 
       if (response.ok && result.success) {
         const data = result.data;
-        const newCandidate = {
-          id: Date.now(),
+        const payload = {
           name: data.personalInformation?.fullName || file.name.replace('.pdf', ''),
           email: data.personalInformation?.email || 'No email provided',
           phone: data.personalInformation?.phoneNumber || 'No phone provided',
           skills: data.skillExtraction?.extractedSkills || [],
-          jobApplied: selectedJob,
-          resumeStatus: 'Parsed',
-          formStatus: 'Pending',
-          videoStatus: 'Pending',
-          techStatus: 'Pending',
-          reportStatus: 'Not Shared',
+          job_applied: selectedJob,
+          resume_status: 'Parsed',
+          form_status: 'Pending',
+          video_status: 'Pending',
+          tech_status: 'Pending',
+          report_status: 'Not Shared',
           stage: 'Candidate Form',
-          resumeScore: Math.round(75 + (data.totalExperienceAnalysis?.domainExperience || 0) * 2 + Math.random() * 5),
-          videoScore: null,
-          techScore: null,
-          finalRecommendation: 'Under Review',
-          extractedData: data
+          resume_score: Math.round(75 + (data.totalExperienceAnalysis?.domainExperience || 0) * 2 + Math.random() * 5),
+          extracted_data: data
         };
 
-        setCandidates(prev => [newCandidate, ...prev]);
-        setStatus({ 
-          type: 'success', 
-          message: `Successfully parsed! Extracted profile for ${newCandidate.name}.` 
+        const dbRes = await fetch('http://localhost:3000/api/candidates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
+
+        if (dbRes.ok) {
+          refreshCandidates();
+          setStatus({ 
+            type: 'success', 
+            message: `Successfully parsed! Extracted profile for ${payload.name}.` 
+          });
+        } else {
+          const dbErr = await dbRes.json();
+          setStatus({ 
+            type: 'error', 
+            message: dbErr.error || 'Parsing succeeded but failed to save candidate to database.' 
+          });
+        }
       } else {
         setStatus({ 
           type: 'error', 

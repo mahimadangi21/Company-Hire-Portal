@@ -3,17 +3,49 @@ import { Calendar as CalendarIcon, Clock, Users, Link as LinkIcon, Edit2, X, Sen
 import { useAppContext } from '../context/AppContext';
 
 const TechnicalScheduler = () => {
-  const { candidates } = useAppContext();
-  const eligibleCandidates = candidates.filter(c => c.videoStatus === 'Completed');
+  const { candidates, refreshCandidates } = useAppContext();
+  const eligibleCandidates = candidates.filter(c => c.videoStatus === 'Completed' && c.techStatus !== 'Scheduled');
   const scheduledCandidates = candidates.filter(c => c.techStatus === 'Scheduled');
   
   const [selectedCandidateId, setSelectedCandidateId] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCandidateChange = (e) => {
     const id = e.target.value;
     setSelectedCandidateId(id);
     setSelectedCandidate(eligibleCandidates.find(c => c.id.toString() === id) || null);
+  };
+
+  const handleSchedule = async () => {
+    if (!selectedCandidate) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('http://localhost:3000/api/candidates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedCandidate.id,
+          tech_status: 'Scheduled',
+          stage: 'Technical Interview'
+        })
+      });
+
+      if (res.ok) {
+        alert("Interview scheduled successfully!");
+        setSelectedCandidateId('');
+        setSelectedCandidate(null);
+        refreshCandidates();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to schedule interview");
+      }
+    } catch (e) {
+      alert("Error scheduling interview");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -94,8 +126,13 @@ const TechnicalScheduler = () => {
                   </div>
                 </div>
 
-                <button className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
-                  Schedule Interview
+                <button 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', marginTop: '0.5rem' }}
+                  onClick={handleSchedule}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Scheduling...' : 'Schedule Interview'}
                 </button>
               </div>
             ) : (
@@ -147,7 +184,33 @@ const TechnicalScheduler = () => {
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
                         <button className="btn btn-ghost" title="Edit" style={{ padding: '0.25rem' }}><Edit2 size={16}/></button>
                         <button className="btn btn-ghost" title="Resend" style={{ padding: '0.25rem' }}><Send size={16}/></button>
-                        <button className="btn btn-ghost" title="Cancel" style={{ padding: '0.25rem', color: 'var(--danger)' }}><X size={16}/></button>
+                        <button 
+                          className="btn btn-ghost" 
+                          title="Cancel" 
+                          style={{ padding: '0.25rem', color: 'var(--danger)' }}
+                          onClick={async () => {
+                            if (window.confirm(`Cancel scheduled interview for ${candidate.name}?`)) {
+                              try {
+                                const res = await fetch('http://localhost:3000/api/candidates', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    id: candidate.id,
+                                    tech_status: 'Pending',
+                                    stage: 'Video Interview'
+                                  })
+                                });
+                                if (res.ok) {
+                                  refreshCandidates();
+                                }
+                              } catch (e) {
+                                console.error(e);
+                              }
+                            }
+                          }}
+                        >
+                          <X size={16}/>
+                        </button>
                       </div>
                     </td>
                   </tr>

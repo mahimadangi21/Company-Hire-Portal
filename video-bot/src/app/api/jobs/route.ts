@@ -1,0 +1,53 @@
+import { NextResponse } from "next/server";
+import { getServiceSupabase } from "@/lib/supabase/server";
+
+export async function GET() {
+  try {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching jobs:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { title, department } = body;
+
+    if (!title || !department) {
+      return NextResponse.json(
+        { error: "title and department are required" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert({ title, department, status: "Active" })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error inserting job:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

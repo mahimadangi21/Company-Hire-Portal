@@ -1,0 +1,119 @@
+import { NextResponse } from "next/server";
+import { getServiceSupabase } from "@/lib/supabase/server";
+
+export async function GET() {
+  try {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("candidates")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching candidates:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const {
+      name,
+      email,
+      phone,
+      skills,
+      job_applied,
+      resume_status,
+      form_status,
+      video_status,
+      tech_status,
+      report_status,
+      stage,
+      resume_score,
+      video_score,
+      tech_score,
+      final_recommendation,
+      extracted_data
+    } = body;
+
+    if (!name || !email) {
+      return NextResponse.json(
+        { error: "name and email are required" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("candidates")
+      .insert({
+        name,
+        email,
+        phone,
+        skills: skills || [],
+        job_applied,
+        resume_status: resume_status || "Pending",
+        form_status: form_status || "Pending",
+        video_status: video_status || "Pending",
+        tech_status: tech_status || "Pending",
+        report_status: report_status || "Not Shared",
+        stage: stage || "Resume Upload",
+        resume_score,
+        video_score,
+        tech_score,
+        final_recommendation: final_recommendation || "Under Review",
+        extracted_data
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error inserting candidate:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, ...updates } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "candidate id is required for updates" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("candidates")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating candidate:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

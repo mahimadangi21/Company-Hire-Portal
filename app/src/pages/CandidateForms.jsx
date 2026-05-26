@@ -3,14 +3,25 @@ import { Mail, CheckCircle, Clock, Search, ExternalLink } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const CandidateForms = () => {
-  const { candidates } = useAppContext();
+  const { candidates, refreshCandidates } = useAppContext();
   const [filterJob, setFilterJob] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const stats = [
     { label: 'Forms Sent', value: candidates.length, color: 'var(--info)' },
     { label: 'Pending Submission', value: candidates.filter(c => c.formStatus === 'Pending').length, color: 'var(--warning)' },
     { label: 'Submitted', value: candidates.filter(c => c.formStatus === 'Submitted').length, color: 'var(--success)' }
   ];
+
+  // Job options list computed dynamically
+  const jobOptions = ['All', ...new Set(candidates.map(c => c.jobApplied).filter(Boolean))];
+
+  const filteredCandidates = candidates.filter(c => {
+    const matchesJob = filterJob === 'All' || c.jobApplied === filterJob;
+    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          c.email.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesJob && matchesSearch;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -31,11 +42,22 @@ const CandidateForms = () => {
         <div className="card" style={{ gridColumn: 'span 2' }}>
           <div className="card-header flex justify-between items-center">
             <h3 className="card-title">Candidate Forms</h3>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <select className="form-select" style={{ width: '220px' }} value={filterJob} onChange={e => setFilterJob(e.target.value)}>
-                <option value="All">All Jobs</option>
-                <option value="Senior Frontend Engineer">Senior Frontend Engineer</option>
-                <option value="Product Manager">Product Manager</option>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+                <input 
+                  type="text" 
+                  placeholder="Search candidate..." 
+                  className="form-input" 
+                  style={{ paddingLeft: '2.25rem', width: '180px', fontSize: '0.875rem', paddingY: '0.25rem' }} 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <select className="form-select" style={{ width: '180px', fontSize: '0.875rem' }} value={filterJob} onChange={e => setFilterJob(e.target.value)}>
+                {jobOptions.map(job => (
+                  <option key={job} value={job}>{job === 'All' ? 'All Jobs' : job}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -51,31 +73,84 @@ const CandidateForms = () => {
                 </tr>
               </thead>
               <tbody>
-                {candidates.map(candidate => (
-                  <tr key={candidate.id}>
-                    <td>
-                      <div style={{ fontWeight: '600', color: 'var(--brand-navy)' }}>{candidate.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{candidate.email}</div>
-                    </td>
-                    <td style={{ color: 'var(--gray-700)' }}>{candidate.jobApplied}</td>
-                    <td>
-                      {candidate.formStatus === 'Submitted' ? (
-                        <span className="badge badge-success"><CheckCircle size={12} style={{ marginRight: '4px' }}/> Submitted</span>
-                      ) : (
-                        <span className="badge badge-warning"><Clock size={12} style={{ marginRight: '4px' }}/> Pending</span>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {candidate.formStatus === 'Submitted' ? (
-                          <button className="btn btn-outline" style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}>View Details</button>
-                        ) : (
-                          <button className="btn btn-primary" style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}><Mail size={14}/> Resend Link</button>
-                        )}
-                      </div>
+                {filteredCandidates.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                      No candidates found.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredCandidates.map(candidate => (
+                    <tr key={candidate.id}>
+                      <td>
+                        <div style={{ fontWeight: '600', color: 'var(--brand-navy)' }}>{candidate.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{candidate.email}</div>
+                      </td>
+                      <td style={{ color: 'var(--gray-700)' }}>{candidate.jobApplied}</td>
+                      <td>
+                        {candidate.formStatus === 'Submitted' ? (
+                          <span className="badge badge-success"><CheckCircle size={12} style={{ marginRight: '4px' }}/> Submitted</span>
+                        ) : (
+                          <span className="badge badge-warning"><Clock size={12} style={{ marginRight: '4px' }}/> Pending</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {candidate.formStatus === 'Submitted' ? (
+                            <button 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch('http://localhost:3000/api/candidates', {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      id: candidate.id,
+                                      form_status: 'Pending',
+                                      stage: 'Candidate Form'
+                                    })
+                                  });
+                                  if (res.ok) refreshCandidates();
+                                } catch (e) {
+                                  console.error(e);
+                                }
+                              }}
+                            >
+                              Mark Pending
+                            </button>
+                          ) : (
+                            <>
+                              <button 
+                                className="btn btn-primary" 
+                                style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch('http://localhost:3000/api/candidates', {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        id: candidate.id,
+                                        form_status: 'Submitted',
+                                        stage: 'Video Interview'
+                                      })
+                                    });
+                                    if (res.ok) refreshCandidates();
+                                  } catch (e) {
+                                    console.error(e);
+                                  }
+                                }}
+                              >
+                                Mark Submitted
+                              </button>
+                              <button className="btn btn-outline" style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}><Mail size={14}/> Resend</button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
