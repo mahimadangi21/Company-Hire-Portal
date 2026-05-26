@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, CheckCircle, Save } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 const NEXT_JS_URL = 'http://localhost:3000';
 
 const QuestionBankModal = ({ onClose }) => {
+  const { jobs } = useAppContext();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -11,13 +13,24 @@ const QuestionBankModal = ({ onClose }) => {
   const [newQuestionText, setNewQuestionText] = useState('');
   const [isMandatory, setIsMandatory] = useState(false);
   
-  // Unique job roles from the DB
-  const jobRoles = [...new Set(questions.map(q => q.job_role))];
+  // Unique job roles combined from existing questions and jobs database
+  const allRoles = [...new Set([
+    ...questions.map(q => q.job_role),
+    ...jobs.map(j => j.title)
+  ])].filter(Boolean);
+  
   const [selectedRole, setSelectedRole] = useState('');
 
   useEffect(() => {
     fetchQuestions();
   }, []);
+
+  // Set default selected role once roles list is loaded
+  useEffect(() => {
+    if (allRoles.length > 0 && !selectedRole) {
+      setSelectedRole(allRoles[0]);
+    }
+  }, [questions, jobs]);
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -25,9 +38,6 @@ const QuestionBankModal = ({ onClose }) => {
       const res = await fetch(`${NEXT_JS_URL}/api/questions`);
       const data = await res.json();
       setQuestions(data || []);
-      if (data && data.length > 0 && !selectedRole) {
-        setSelectedRole([...new Set(data.map(q => q.job_role))][0]);
-      }
     } catch (e) {
       console.error(e);
     }
@@ -84,7 +94,7 @@ const QuestionBankModal = ({ onClose }) => {
                   disabled={!!newRole}
                 >
                   <option value="">Select Existing Role...</option>
-                  {jobRoles.map(role => (
+                  {allRoles.map(role => (
                     <option key={role} value={role}>{role}</option>
                   ))}
                 </select>
@@ -137,7 +147,7 @@ const QuestionBankModal = ({ onClose }) => {
               value={selectedRole}
               onChange={e => setSelectedRole(e.target.value)}
             >
-              {jobRoles.map(role => (
+              {allRoles.map(role => (
                 <option key={role} value={role}>{role}</option>
               ))}
             </select>
