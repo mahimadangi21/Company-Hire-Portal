@@ -1,0 +1,692 @@
+INTERVIEW MANAGEMENT SYSTEM
+Software Requirements Specification (SRS)
+Functional & Non-Functional Requirements
+Document Version
+v1.0
+Document Type
+Software Requirements Specification (SRS)
+System
+Interview Management System (IMS)
+Access Level
+Admin-Only Controlled Platform
+Date
+26 May 2026
+Status
+Draft — For Review
+CONFIDENTIAL — FOR INTERNAL USE ONLY
+1. Introduction
+1.1 Purpose
+This Software Requirements Specification (SRS) document formally defines the complete functional and non-functional requirements for the Interview Management System (IMS). The document serves as the authoritative reference for design, development, testing, and stakeholder review activities.
+1.2 Scope
+The Interview Management System is a fully admin-controlled recruitment workflow platform designed to manage the end-to-end interview process — from resume upload through final report generation and sharing. The system eliminates any candidate-facing login or dashboard, ensuring all process control resides with the administrator.
+The platform covers the following modules:
+Admin Authentication
+Dashboard & Analytics
+Resume Upload & AI Parsing
+Candidate Form Management (SMTP-based)
+Video Bot Interview Management
+Technical Interview Scheduling
+Reports & Evaluation
+1.3 Definitions and Acronyms
+Term / Acronym
+Definition
+IMS
+Interview Management System
+SRS
+Software Requirements Specification
+Admin
+System Administrator — the sole user of the IMS dashboard
+Candidate
+Job applicant who interacts only via externally shared email links
+SMTP
+Simple Mail Transfer Protocol — used to dispatch form and interview links
+AI Parsing
+Automated extraction of candidate data from uploaded resumes
+Video Bot
+AI-powered automated video interview module
+PDF Report
+Downloadable evaluation report generated post-interview
+FR
+Functional Requirement
+NFR
+Non-Functional Requirement
+MFA
+Multi-Factor Authentication
+RBAC
+Role-Based Access Control
+SLA
+Service Level Agreement
+1.4 System Overview
+The IMS operates as a unidirectional admin-driven pipeline. Candidates never access the system dashboard. Instead, they interact only through secure, time-limited links delivered via SMTP email. The complete candidate journey is:
+Resume Upload  →  AI Parsing  →  Candidate Form (Email Link)  →  Video Bot Interview (Email Link)  →  Technical Interview (Email Link)  →  Report Generation  →  Report Sharing
+2. Stakeholders & User Roles
+Role
+System Access
+Responsibilities
+Administrator
+Full dashboard access
+All system operations, configuration, scheduling, reporting
+Candidate
+No system access
+Submits forms and interviews only via externally shared links
+Panelist
+No system access
+Receives interview meeting links via email
+3. Functional Requirements
+The following sections detail all functional requirements grouped by module. Each requirement is assigned a unique identifier, priority level (Critical / High / Medium), and notes.
+3.1 Module 1: Admin Authentication (Screen 1)
+The system shall provide a secure, admin-exclusive login portal. No registration or self-service sign-up shall be available from the login screen.
+Req. ID
+Requirement Description
+Priority / Notes
+FR-AUTH-01
+The system shall display an admin login page with fields for email address and password.
+Critical
+FR-AUTH-02
+The system shall authenticate admin credentials against securely stored, hashed passwords.
+Critical
+FR-AUTH-03
+The system shall display a system logo and application title on the login page.
+High
+FR-AUTH-04
+The system shall provide a 'Forgot Password' link that initiates a secure password reset flow via email.
+High
+FR-AUTH-05
+The system shall lock the admin account after 5 consecutive failed login attempts and notify the admin via email.
+Critical
+FR-AUTH-06
+The system shall create and maintain a secure session upon successful admin login.
+Critical
+FR-AUTH-07
+The system shall enforce session expiration after a configurable idle period (default: 30 minutes).
+High
+FR-AUTH-08
+The system shall log all login attempts (success and failure) with timestamps and IP addresses.
+High
+FR-AUTH-09
+The login page shall be the only publicly accessible page; all other routes shall redirect unauthenticated users to the login page.
+Critical
+FR-AUTH-10
+The system shall support optional Multi-Factor Authentication (MFA) for the admin account.
+Medium
+3.2 Module 2: Admin Dashboard (Screen 2)
+The main control panel provides pipeline analytics, workflow tracking, and navigation to all system modules.
+3.2.1 Navigation & Layout
+Req. ID
+Requirement Description
+Priority / Notes
+FR-DASH-01
+The dashboard shall include a persistent left sidebar with navigation links to all modules: Dashboard, Resume Upload, Candidate Forms, Video Bot Interview, Technical Interview Scheduler, Reports, Email History / Notifications, Settings, and Logout.
+Critical
+FR-DASH-02
+The dashboard shall include a top navigation bar with an admin profile icon, notification bell, global search bar, and page title.
+High
+FR-DASH-03
+The admin profile section shall display the logged-in admin's name and avatar/initials.
+Medium
+FR-DASH-04
+The notification bell shall display unread alert count and show a dropdown list of recent system notifications.
+High
+FR-DASH-05
+The global search bar shall support searching by candidate name, email, or status across all modules.
+High
+3.2.2 Analytics Cards
+Req. ID
+Requirement Description
+Priority / Notes
+FR-DASH-06
+The dashboard shall display a 'Total Candidates' card showing the cumulative count of all candidates in the system.
+Critical
+FR-DASH-07
+The dashboard shall display a 'Resumes Parsed' card showing the count of successfully parsed resumes.
+Critical
+FR-DASH-08
+The dashboard shall display a 'Forms Submitted' card showing the count of completed candidate form submissions.
+Critical
+FR-DASH-09
+The dashboard shall display a 'Screening Completed' card showing video bot interviews marked as completed.
+Critical
+FR-DASH-10
+The dashboard shall display a 'Scheduled Technical Interviews' card showing upcoming/total scheduled interviews.
+Critical
+FR-DASH-11
+The dashboard shall display a 'Reports Generated' card showing the count of finalized evaluation reports.
+Critical
+FR-DASH-12
+All analytics cards shall refresh in real time or near-real time without requiring a full page reload.
+High
+3.2.3 Workflow Progress Tracker
+Req. ID
+Requirement Description
+Priority / Notes
+FR-DASH-13
+The dashboard shall display a visual workflow progress tracker representing the six-stage candidate pipeline: Resume Upload → Resume Parsing → Candidate Form → Video Bot Interview → Technical Interview Scheduling → Report Generation.
+Critical
+FR-DASH-14
+Each stage in the workflow tracker shall visually indicate the count of candidates currently at that stage.
+High
+FR-DASH-15
+The workflow tracker shall use clear visual indicators (completed, in-progress, pending) to distinguish stage statuses.
+High
+3.3 Module 3: Resume Upload & Parsing (Screen 3)
+3.3.1 Upload Functionality
+Req. ID
+Requirement Description
+Priority / Notes
+FR-RESU-01
+The system shall provide a drag-and-drop file upload area supporting simultaneous multi-file selection.
+Critical
+FR-RESU-02
+The system shall provide an explicit 'Upload Resume' button as an alternative to drag-and-drop.
+Critical
+FR-RESU-03
+The system shall accept resume files in PDF, DOC, and DOCX formats.
+Critical
+FR-RESU-04
+The system shall enforce a configurable maximum file size per upload (default: 5 MB per file).
+High
+FR-RESU-05
+The system shall display per-file upload progress indicators (uploading, success, error).
+Critical
+FR-RESU-06
+The system shall allow batch upload of multiple resumes simultaneously.
+High
+3.3.2 Automated Parsing
+Req. ID
+Requirement Description
+Priority / Notes
+FR-RESU-07
+Upon successful upload, the system shall automatically initiate AI-powered resume parsing for each file.
+Critical
+FR-RESU-08
+The parser shall extract and display: Candidate Name, Email, Phone Number, Skills Set, Work Experience, Relevant Experience, and Qualification.
+Critical
+FR-RESU-09
+The system shall display per-resume parsing status (Parsing, Success, Error).
+Critical
+FR-RESU-10
+The system shall display a summary of successfully parsed candidates in a data table.
+Critical
+FR-RESU-11
+The system shall surface a clear error message if parsing fails, with an option to retry or manually review.
+High
+3.3.3 Parsed Candidates Table
+Req. ID
+Requirement Description
+Priority / Notes
+FR-RESU-12
+The parsed candidates table shall include columns: Candidate Name, Email, Resume Status, Parsing Status, and Action.
+Critical
+FR-RESU-13
+Each row in the table shall provide action buttons: View (read parsed data), Edit (correct parsed fields), and Send Form Link (trigger SMTP email with candidate form link).
+Critical
+FR-RESU-14
+The admin shall be able to search and filter the parsed candidates table by name, email, or parsing status.
+High
+FR-RESU-15
+The system shall retain all parsed candidate data persistently in the database.
+Critical
+3.4 Module 4: Candidate Form Management (Screen 4)
+Candidates do not access the IMS dashboard. The admin generates and distributes a secure form link via SMTP email. Candidates complete the form through an external browser link.
+3.4.1 Form Design & Fields
+Req. ID
+Requirement Description
+Priority / Notes
+FR-FORM-01
+The candidate form shall capture: Full Name, Email, Phone Number, Address, Qualification, Skills Set, Work Experience, Relevant Experience, Preferred Role, and Resume Confirmation.
+Critical
+FR-FORM-02
+The admin panel shall display a preview of the candidate form as it appears to the candidate.
+High
+FR-FORM-03
+Each form submission shall be associated with the corresponding candidate profile.
+Critical
+3.4.2 Link Generation & Distribution
+Req. ID
+Requirement Description
+Priority / Notes
+FR-FORM-04
+The system shall allow the admin to generate a unique, secure form link per candidate.
+Critical
+FR-FORM-05
+The system shall dispatch the form link to the candidate via SMTP email with a configurable email template.
+Critical
+FR-FORM-06
+The system shall display an email send status indicator (Sent, Failed) immediately after dispatch.
+High
+FR-FORM-07
+The admin shall be able to configure link expiration duration (e.g., 24 hours, 48 hours, 7 days).
+High
+FR-FORM-08
+The system shall allow the admin to resend the form link to a candidate who has not yet submitted.
+High
+FR-FORM-09
+The form link shall be invalidated upon submission or expiration.
+Critical
+3.4.3 Submission Tracking
+Req. ID
+Requirement Description
+Priority / Notes
+FR-FORM-10
+The system shall display status cards summarising: Form Sent count, Pending Submission count, and Submitted count.
+Critical
+FR-FORM-11
+The candidate form table shall include columns: Candidate, Email, Form Status, Submission Time, and Action.
+Critical
+FR-FORM-12
+Available row actions shall include: Resend Link and View Submission.
+Critical
+FR-FORM-13
+The system shall record the exact timestamp of each form submission.
+High
+3.5 Module 5: Video Bot Interview Management (Screen 5)
+The AI Video Bot Interview module allows the admin to configure, dispatch, and monitor automated video interviews. All monitoring toggles (Camera, Microphone, Screen Sharing) are mandatory and cannot be disabled by the candidate.
+3.5.1 Interview Configuration
+Req. ID
+Requirement Description
+Priority / Notes
+FR-VBOT-01
+The admin shall be able to manage a Question Bank from which bot interview questions are drawn.
+Critical
+FR-VBOT-02
+The admin shall be able to specify the number of questions presented per interview session.
+Critical
+FR-VBOT-03
+The admin shall be able to set the total interview duration in minutes.
+Critical
+FR-VBOT-04
+The admin shall be able to compose and save interview instructions displayed to the candidate before the session starts.
+High
+FR-VBOT-05
+No retry functionality shall be available for video bot interviews; each candidate receives a single attempt only.
+Critical
+3.5.2 Mandatory Monitoring Controls
+Req. ID
+Requirement Description
+Priority / Notes
+FR-VBOT-06
+The system shall enforce Camera Required (ON) as a mandatory, non-negotiable prerequisite for interview access.
+Critical
+FR-VBOT-07
+The system shall enforce Microphone Required (ON) as a mandatory, non-negotiable prerequisite for interview access.
+Critical
+FR-VBOT-08
+The system shall enforce Screen Sharing Required (ON) as a mandatory, non-negotiable prerequisite for interview access.
+Critical
+FR-VBOT-09
+The interview session shall terminate automatically if any mandatory monitoring device is disabled mid-session.
+Critical
+FR-VBOT-10
+The system shall record and flag any monitoring violation events in the candidate's interview record.
+Critical
+3.5.3 Interview Dispatch & Monitoring
+Req. ID
+Requirement Description
+Priority / Notes
+FR-VBOT-11
+The admin shall be able to send an interview link to a candidate via SMTP email from the management table.
+Critical
+FR-VBOT-12
+The system shall record all interview sessions (video, audio, and screen capture).
+Critical
+FR-VBOT-13
+The interview management table shall include columns: Candidate Name, Interview Link, Status, Camera Status, Audio Status, Screening Completed, and Actions.
+Critical
+FR-VBOT-14
+Interview status values shall include: Pending, In Progress, Screening Completed, and Failed.
+Critical
+FR-VBOT-15
+Available row actions shall include: Send Interview Link, View Recording, and View Score.
+Critical
+FR-VBOT-16
+The system shall generate an automated AI evaluation score upon interview completion.
+High
+3.6 Module 6: Technical Interview Scheduler (Screen 6)
+3.6.1 Scheduling Panel
+Req. ID
+Requirement Description
+Priority / Notes
+FR-SCHED-01
+The admin shall be able to schedule a technical interview by specifying: Candidate Name, Interview Date, Time, one or more Panelist Names, Meeting Link, and optional Notes.
+Critical
+FR-SCHED-02
+The system shall support selection of multiple panelists for a single interview session.
+Critical
+FR-SCHED-03
+Upon scheduling, the system shall automatically dispatch interview details to the candidate and all selected panelists via SMTP email.
+Critical
+FR-SCHED-04
+The admin shall be able to reschedule or cancel a scheduled interview, triggering updated email notifications.
+High
+FR-SCHED-05
+The system shall support adding internal notes to each scheduled interview (visible to admin only).
+Medium
+3.6.2 Calendar & View
+Req. ID
+Requirement Description
+Priority / Notes
+FR-SCHED-06
+The system shall provide both Monthly and Weekly calendar views of scheduled interviews.
+High
+FR-SCHED-07
+The calendar shall highlight upcoming interview dates and display interview count per day.
+High
+FR-SCHED-08
+The system shall display automated reminders for upcoming interviews (configurable lead time, e.g., 24 hours before).
+High
+3.6.3 Interview Table
+Req. ID
+Requirement Description
+Priority / Notes
+FR-SCHED-09
+The interview table shall include columns: Candidate, Panelists, Date, Time, Status, and Meeting Link.
+Critical
+FR-SCHED-10
+Interview status values shall include: Scheduled, Rescheduled, Completed, and Cancelled.
+Critical
+FR-SCHED-11
+Multiple panelists associated with a single interview shall be displayed within the Panelists column.
+High
+3.7 Module 7: Reports & Evaluation (Screen 7)
+3.7.1 Report Summary
+Req. ID
+Requirement Description
+Priority / Notes
+FR-RPT-01
+The report dashboard shall display summary cards for: Overall Candidates, Average Scores, Video Interview Results, Technical Interview Results, and Final Selection Rate.
+Critical
+FR-RPT-02
+The candidate report table shall include columns: Candidate, Resume Score, Form Status, Video Interview Score, Technical Interview Score, Final Recommendation, and Report Share Status.
+Critical
+FR-RPT-03
+Final Recommendation values shall include: Selected, Rejected, and Under Review, displayed as colour-coded badges.
+Critical
+3.7.2 Report Actions
+Req. ID
+Requirement Description
+Priority / Notes
+FR-RPT-04
+The admin shall be able to view the full evaluation report for any candidate.
+Critical
+FR-RPT-05
+The admin shall be able to download the report as a formatted PDF.
+Critical
+FR-RPT-06
+The admin shall be able to share a report via SMTP email to one or more individual recipients.
+Critical
+FR-RPT-07
+The admin shall be able to share a report with a defined group of recipients simultaneously.
+High
+FR-RPT-08
+The system shall generate and manage a secure, shareable report link that can be copied.
+High
+FR-RPT-09
+The admin shall be able to track report sharing status per candidate. Statuses shall include: Not Shared, Shared Individually, Shared with Group, and Delivered.
+Critical
+FR-RPT-10
+The system shall log each share event with timestamp, recipient(s), and share method.
+High
+4. Non-Functional Requirements
+Non-functional requirements define the quality attributes and operational constraints that the system must meet, independent of specific behaviours.
+4.1 Performance
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-PERF-01
+Dashboard page load time shall not exceed 3 seconds under normal load (up to 100 concurrent admin sessions).
+Critical
+NFR-PERF-02
+Resume parsing for a single file (up to 5 MB) shall complete within 10 seconds.
+Critical
+NFR-PERF-03
+SMTP email dispatch (form links, interview links, notifications) shall complete within 5 seconds of admin action.
+High
+NFR-PERF-04
+Analytics card data on the dashboard shall refresh within 2 seconds of the underlying data changing.
+High
+NFR-PERF-05
+The system shall support batch upload of up to 50 resumes simultaneously without performance degradation.
+High
+NFR-PERF-06
+PDF report generation shall complete within 15 seconds per report.
+Medium
+NFR-PERF-07
+Video recording retrieval and playback initiation shall begin within 5 seconds of admin request.
+High
+4.2 Security
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-SEC-01
+All data in transit shall be encrypted using TLS 1.2 or higher (HTTPS enforced platform-wide).
+Critical
+NFR-SEC-02
+All data at rest (database, file storage) shall be encrypted using AES-256 or equivalent.
+Critical
+NFR-SEC-03
+Admin passwords shall be hashed using bcrypt (minimum cost factor 12) or Argon2; plaintext passwords shall never be stored.
+Critical
+NFR-SEC-04
+The system shall implement Role-Based Access Control (RBAC) to ensure only authenticated admins can access any dashboard route.
+Critical
+NFR-SEC-05
+All candidate form links and interview links shall be unique, single-use, and time-limited (configurable expiry).
+Critical
+NFR-SEC-06
+Shared report links shall be access-controlled and revocable by the admin.
+High
+NFR-SEC-07
+The system shall implement CSRF protection on all state-changing API endpoints.
+Critical
+NFR-SEC-08
+The system shall sanitise all inputs to prevent SQL injection, XSS, and command injection attacks.
+Critical
+NFR-SEC-09
+Video recordings and screen captures shall be stored in a secure, access-controlled storage environment.
+Critical
+NFR-SEC-10
+The system shall enforce rate limiting on authentication endpoints to mitigate brute-force attacks.
+Critical
+NFR-SEC-11
+All admin actions (login, logout, email dispatch, report sharing, scheduling) shall be recorded in an immutable audit log.
+High
+NFR-SEC-12
+The system shall optionally support Multi-Factor Authentication (MFA) for the admin account.
+High
+4.3 Reliability & Availability
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-REL-01
+The system shall maintain a minimum uptime of 99.5% on a monthly basis, excluding scheduled maintenance windows.
+Critical
+NFR-REL-02
+Scheduled maintenance windows shall be communicated to the admin with a minimum of 24 hours' advance notice.
+High
+NFR-REL-03
+The system shall implement automated database backups at least once every 24 hours, with a minimum of 30-day retention.
+Critical
+NFR-REL-04
+In the event of a resume parsing failure, the system shall notify the admin and retain the original file for manual review.
+High
+NFR-REL-05
+Failed SMTP email dispatch events shall be automatically retried up to 3 times with exponential backoff before raising an alert.
+High
+NFR-REL-06
+Video interview recordings shall be persisted to durable, redundant storage immediately upon session completion.
+Critical
+NFR-REL-07
+The system shall gracefully handle partial failures (e.g., one file failing in a batch upload) without affecting other files.
+High
+4.4 Usability
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-USE-01
+The admin UI shall follow a clean, modern dashboard aesthetic with consistent spacing, typography, and colour language.
+High
+NFR-USE-02
+All pages shall be fully functional on screen widths from 1024px to 2560px (responsive desktop layout).
+High
+NFR-USE-03
+The workflow progress tracker shall make the current pipeline status immediately legible without requiring navigation away from the dashboard.
+High
+NFR-USE-04
+All data tables shall support column sorting, text search, and status-based filtering.
+High
+NFR-USE-05
+Destructive actions (delete candidate, cancel interview) shall require explicit admin confirmation before execution.
+Critical
+NFR-USE-06
+The system shall display contextual success and error messages (toasts/alerts) for all admin actions within 1 second.
+High
+NFR-USE-07
+Navigation between modules shall complete within 1 second (client-side routing).
+Medium
+NFR-USE-08
+The system shall preserve admin filter and sort preferences during a session.
+Medium
+4.5 Scalability
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-SCAL-01
+The system architecture shall support horizontal scaling of application server instances behind a load balancer.
+High
+NFR-SCAL-02
+The database shall be capable of storing records for a minimum of 10,000 candidates without performance degradation.
+High
+NFR-SCAL-03
+The file storage subsystem shall support a minimum of 100 GB of resume and video recording storage, with capacity to expand.
+High
+NFR-SCAL-04
+The resume parsing service shall support a queue-based architecture to handle bursts of concurrent upload requests.
+Medium
+NFR-SCAL-05
+The SMTP email service shall support sending a minimum of 500 emails per hour without throttling.
+High
+4.6 Maintainability & Supportability
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-MAINT-01
+The system shall be built using a modular architecture that allows individual modules to be updated or replaced independently.
+High
+NFR-MAINT-02
+All API endpoints shall be documented using OpenAPI (Swagger) specification.
+High
+NFR-MAINT-03
+Application and server error logs shall be centralised, searchable, and retained for a minimum of 90 days.
+High
+NFR-MAINT-04
+The codebase shall maintain a minimum of 70% unit test coverage for critical business logic modules.
+High
+NFR-MAINT-05
+Configuration parameters (SMTP credentials, link expiry durations, file size limits) shall be manageable through an admin settings panel without code changes.
+High
+NFR-MAINT-06
+The system shall expose health-check endpoints to support infrastructure monitoring and alerting.
+Medium
+4.7 Compliance & Data Privacy
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-COMP-01
+The system shall comply with applicable data protection regulations (e.g., DPDP Act 2023 for India, GDPR where applicable) regarding personal data collected from candidates.
+Critical
+NFR-COMP-02
+Candidate personal data (name, email, phone, resume contents) shall be stored only for as long as necessary and shall be deletable upon admin request.
+Critical
+NFR-COMP-03
+Video recordings and screen capture data shall be treated as sensitive personal data and subject to appropriate retention and deletion policies.
+Critical
+NFR-COMP-04
+The system shall provide an audit trail of all data access and sharing events for compliance reporting.
+High
+NFR-COMP-05
+Shared report links shall not expose personal data to unauthorised third parties.
+Critical
+4.8 Integration & Email
+Req. ID
+Requirement Description
+Priority / Notes
+NFR-INT-01
+The system shall integrate with a configurable SMTP server (supporting Gmail SMTP, Outlook SMTP, SendGrid, and custom SMTP).
+Critical
+NFR-INT-02
+Email templates (form link, interview link, report share) shall be configurable by the admin via the Settings module.
+High
+NFR-INT-03
+The AI resume parsing module shall integrate with the system via an internal API or microservice.
+Critical
+NFR-INT-04
+The video recording storage shall integrate with a secure cloud storage provider (e.g., AWS S3, Azure Blob).
+High
+NFR-INT-05
+The system shall support webhook-based event notifications for integration with external HR or ATS platforms.
+Medium
+5. Constraints & Assumptions
+5.1 Constraints
+The system shall be accessible via modern web browsers (Chrome 100+, Firefox 100+, Edge 100+, Safari 15+) without requiring browser plugins.
+Candidate-facing form and interview links shall function on mobile browsers without requiring the IMS application to be installed.
+No candidate login, registration, or dashboard feature shall be built or implied.
+Retry functionality for video bot interviews is explicitly excluded from scope.
+All three monitoring controls (Camera, Microphone, Screen Sharing) for video interviews are mandatory and cannot be made optional.
+The system's primary interface language shall be English.
+5.2 Assumptions
+The organisation operating IMS has access to a valid SMTP email server or third-party email service.
+The admin user is a single individual or a small, trusted team with shared admin credentials.
+Candidates have access to a modern web browser with camera, microphone, and screen-sharing capability for video interviews.
+Panelists are provided meeting links through the admin's scheduling process and do not require IMS system access.
+Cloud storage and computing infrastructure will be provisioned separately by the organisation.
+6. Requirements Traceability Matrix
+The following matrix maps each platform screen to its associated functional requirements and priority classification.
+Screen / Module
+FR Coverage
+Critical FRs
+Total FRs
+Screen 1 – Admin Login
+FR-AUTH-01 to FR-AUTH-10
+7
+10
+Screen 2 – Dashboard
+FR-DASH-01 to FR-DASH-15
+8
+15
+Screen 3 – Resume Upload
+FR-RESU-01 to FR-RESU-15
+10
+15
+Screen 4 – Candidate Forms
+FR-FORM-01 to FR-FORM-13
+8
+13
+Screen 5 – Video Bot Interview
+FR-VBOT-01 to FR-VBOT-16
+12
+16
+Screen 6 – Technical Scheduler
+FR-SCHED-01 to FR-SCHED-11
+6
+11
+Screen 7 – Reports
+FR-RPT-01 to FR-RPT-10
+6
+10
+Platform-Wide NFRs
+NFR-PERF, NFR-SEC, NFR-REL, NFR-USE, NFR-SCAL, NFR-MAINT, NFR-COMP, NFR-INT
+28
+52
+7. Appendix — Candidate Journey Summary
+The following is a textual summary of the complete admin-controlled candidate journey as implemented by the IMS:
+Admin uploads one or more candidate resumes via drag-and-drop or file picker.
+The system automatically parses each resume and extracts structured candidate data.
+Admin reviews parsed data, makes corrections if needed, and sends the candidate a personalised form link via SMTP email.
+Candidate receives the email, opens the secure link in a browser, completes the form, and submits. No IMS login required.
+Admin reviews form submissions and dispatches a Video Bot Interview link via SMTP email.
+Candidate opens the interview link, grants Camera, Microphone, and Screen Sharing permissions (all mandatory), and completes the AI-driven interview in a single attempt.
+Admin reviews interview recordings, monitoring status, and AI-generated scores.
+Admin schedules a Technical Interview, selects one or more panelists, and the system dispatches calendar invitations and meeting links via SMTP email.
+Upon completion, the system aggregates all evaluation data into a structured report.
+Admin reviews, finalises, and shares the report individually or with a group via email or secure link. Share status is tracked in the system.
+— End of Document —
