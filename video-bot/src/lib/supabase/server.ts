@@ -50,3 +50,11 @@ export async function createAdminClient() {
     }
   );
 }
+
+export function getServiceSupabase() {
+  const { createClient: createDirectClient } = require("@supabase/supabase-js");
+  return createDirectClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
