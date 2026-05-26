@@ -37,18 +37,7 @@ const JobPostings = () => {
                 </select>
               </div>
             </div>
-            
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Video Bot Interview Configuration</label>
-              <select className="form-select" style={{ maxWidth: '300px' }}>
-                <option value="5">5 Questions (15 minutes)</option>
-                <option value="7">7 Questions (21 minutes)</option>
-                <option value="10">10 Questions (30 minutes)</option>
-              </select>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>This automatically sets up the AI interview phase for candidates applying to this job.</span>
-            </div>
-
-            <div className="flex gap-4">
+             <div className="flex gap-4">
               <button className="btn btn-primary">Publish Job</button>
               <button className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>
             </div>
@@ -63,7 +52,6 @@ const JobPostings = () => {
               <tr>
                 <th>Job Title</th>
                 <th>Department</th>
-                <th>Bot Questions</th>
                 <th>Status</th>
                 <th>Candidates</th>
                 <th>Actions</th>
@@ -74,7 +62,6 @@ const JobPostings = () => {
                 <tr key={job.id}>
                   <td style={{ fontWeight: '500' }}>{job.title}</td>
                   <td>{job.department}</td>
-                  <td>{job.questions}</td>
                   <td><span className="badge badge-success">{job.status}</span></td>
                   <td>{job.applicants} applied</td>
                   <td>
