@@ -24,6 +24,11 @@ const VideoBot = () => {
 
   useEffect(() => {
     fetchInterviews();
+    
+    // Auto-refresh the list every 10 seconds so status changes reflect in real-time
+    const interval = setInterval(fetchInterviews, 10000);
+    
+    return () => clearInterval(interval);
   }, [showQuestionModal]); // refresh when modal closes
 
   const copyToClipboard = (text, id) => {
