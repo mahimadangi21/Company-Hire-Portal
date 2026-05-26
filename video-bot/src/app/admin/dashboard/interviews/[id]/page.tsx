@@ -143,15 +143,6 @@ export default function InterviewReviewPage() {
               )}
             </>
           )}
-          <Button
-            onClick={handleDelete}
-            variant="outline"
-            size="sm"
-            className="border-white/10 text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-2 ml-2"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Delete
-          </Button>
         </div>
       </div>
 
