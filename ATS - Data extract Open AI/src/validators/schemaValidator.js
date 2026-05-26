@@ -139,6 +139,17 @@ function coerceTypes(parsed) {
   // ── educationDetails ────────────────────────────────────────────────────
   if (!Array.isArray(parsed.educationDetails)) {
     parsed.educationDetails = [];
+  } else {
+    for (const edu of parsed.educationDetails) {
+      if (edu && typeof edu === 'object') {
+        if (edu.passingYear !== undefined && edu.passingYear !== null) {
+          edu.passingYear = String(edu.passingYear);
+        }
+        if (edu.cgpaOrPercentage !== undefined && edu.cgpaOrPercentage !== null) {
+          edu.cgpaOrPercentage = String(edu.cgpaOrPercentage);
+        }
+      }
+    }
   }
 
   // ── projectAnalysis ─────────────────────────────────────────────────────
