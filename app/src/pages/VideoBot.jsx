@@ -27,19 +27,7 @@ const VideoBot = () => {
   }, [showQuestionModal]); // refresh when modal closes
 
   const copyToClipboard = (text, id) => {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text)
-        .then(() => {
-          setCopiedId(id);
-          setTimeout(() => setCopiedId(null), 2000);
-        })
-        .catch(() => fallbackCopy(text, id));
-    } else {
-      fallbackCopy(text, id);
-    }
-  };
-
-  const fallbackCopy = (text, id) => {
+    // Execute synchronous copy first to guarantee it runs inside the user gesture
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";
@@ -49,16 +37,27 @@ const VideoBot = () => {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
+    
+    let successful = false;
     try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 2000);
-      }
+      successful = document.execCommand('copy');
     } catch (err) {
-      console.error("Fallback copy failed", err);
+      console.error("execCommand failed", err);
     }
     document.body.removeChild(textArea);
+
+    if (successful) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Fallback to async clipboard API if execCommand is not supported
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          setCopiedId(id);
+          setTimeout(() => setCopiedId(null), 2000);
+        })
+        .catch(err => console.error("Clipboard API failed", err));
+    }
   };
 
   const fetchInterviews = async () => {
