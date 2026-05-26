@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send } from 'lucide-react';
+import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import QuestionBankModal from '../components/QuestionBankModal';
 
 const NEXT_JS_URL = 'http://localhost:3000';
 
 const VideoBot = () => {
-  const { candidates } = useAppContext();
+  const { candidates, jobs } = useAppContext();
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   
   // Dashboard state
@@ -17,12 +17,10 @@ const VideoBot = () => {
   const [inviteCandidateId, setInviteCandidateId] = useState('');
   const [inviteJobRole, setInviteJobRole] = useState('');
   const [inviteQuestionCount, setInviteQuestionCount] = useState(3);
-  const [jobRoles, setJobRoles] = useState([]);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     fetchInterviews();
-    fetchJobRoles();
   }, [showQuestionModal]); // refresh when modal closes
 
   const fetchInterviews = async () => {
@@ -36,18 +34,6 @@ const VideoBot = () => {
     setLoading(false);
   };
 
-  const fetchJobRoles = async () => {
-    try {
-      const res = await fetch(`${NEXT_JS_URL}/api/questions`);
-      const data = await res.json();
-      if (data) {
-        setJobRoles([...new Set(data.map(q => q.job_role))]);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const handleSendInvite = async () => {
     const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
     if (!candidate || !inviteJobRole || inviteQuestionCount < 1) return;
@@ -59,7 +45,7 @@ const VideoBot = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           candidate_name: candidate.name,
-          candidate_email: candidate.email, // Assuming the context has email
+          candidate_email: candidate.email,
           job_role: inviteJobRole,
           number_of_questions: inviteQuestionCount
         })
@@ -77,6 +63,24 @@ const VideoBot = () => {
       alert("Error sending invite");
     }
     setSending(false);
+  };
+
+  const handleDeleteInterview = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this interview record?")) return;
+
+    try {
+      const res = await fetch(`${NEXT_JS_URL}/api/interviews/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        alert("Interview deleted successfully!");
+        fetchInterviews();
+      } else {
+        alert("Failed to delete interview");
+      }
+    } catch (e) {
+      alert("Error deleting interview");
+    }
   };
 
   return (
@@ -100,7 +104,7 @@ const VideoBot = () => {
               <select className="form-select" value={inviteCandidateId} onChange={e => setInviteCandidateId(e.target.value)}>
                 <option value="">Choose candidate...</option>
                 {candidates.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied})</option>
+                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Job'})</option>
                 ))}
               </select>
             </div>
@@ -109,8 +113,8 @@ const VideoBot = () => {
               <label className="form-label">Job Role (Questions)</label>
               <select className="form-select" value={inviteJobRole} onChange={e => setInviteJobRole(e.target.value)}>
                 <option value="">Choose role...</option>
-                {jobRoles.map(role => (
-                  <option key={role} value={role}>{role}</option>
+                {jobs.map(job => (
+                  <option key={job.id} value={job.title}>{job.title}</option>
                 ))}
               </select>
             </div>
@@ -193,31 +197,51 @@ const VideoBot = () => {
                         )}
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button 
-                            className="btn btn-outline" 
-                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                            onClick={() => {
-                              // Use the share_token
-                              const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
-                              navigator.clipboard.writeText(url);
-                              alert("Share link copied!");
-                            }}
-                          >
-                            Copy Link
-                          </button>
-
-                          {status === 'completed' && (
-                            <a 
-                              href={`${NEXT_JS_URL}/admin/dashboard/interviews/${interview.id}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-primary" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          {status === 'completed' ? (
+                            <>
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                onClick={() => {
+                                  const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
+                                  navigator.clipboard.writeText(url);
+                                  alert("Share review link copied!");
+                                }}
+                              >
+                                Copy Share Link
+                              </button>
+                              <a 
+                                href={`${NEXT_JS_URL}/admin/dashboard/interviews/${interview.id}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-primary" 
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
+                              >
+                                <Eye size={14}/> View Interview
+                              </a>
+                            </>
+                          ) : (
+                            <button 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                              onClick={() => {
+                                const url = `${NEXT_JS_URL}/interview/${interview.id}`;
+                                navigator.clipboard.writeText(url);
+                                alert("Candidate invite link copied!");
+                              }}
                             >
-                              <Eye size={14}/> View Interview
-                            </a>
+                              Copy Invite Link
+                            </button>
                           )}
+                          <button 
+                            className="btn btn-ghost" 
+                            title="Delete Interview" 
+                            style={{ padding: '0.25rem', color: 'var(--danger)' }}
+                            onClick={() => handleDeleteInterview(interview.id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
