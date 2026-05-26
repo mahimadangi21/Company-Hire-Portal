@@ -10,11 +10,23 @@ const Reports = () => {
   // Focus only on candidates who have at least reached technical interview
   const evaluatedCandidates = candidates.filter(c => c.techScore || c.videoScore);
 
+  const avgVideoScore = evaluatedCandidates.filter(c => c.videoScore).length > 0
+    ? Math.round(evaluatedCandidates.reduce((acc, c) => acc + (c.videoScore || 0), 0) / evaluatedCandidates.filter(c => c.videoScore).length)
+    : 0;
+
+  const avgTechScore = evaluatedCandidates.filter(c => c.techScore).length > 0
+    ? Math.round(evaluatedCandidates.reduce((acc, c) => acc + (c.techScore || 0), 0) / evaluatedCandidates.filter(c => c.techScore).length)
+    : 0;
+
+  const selectionRate = evaluatedCandidates.length > 0
+    ? Math.round((evaluatedCandidates.filter(c => c.finalRecommendation === 'Selected').length / evaluatedCandidates.length) * 100)
+    : 0;
+
   const stats = [
     { label: 'Total Evaluated', value: evaluatedCandidates.length },
-    { label: 'Avg Video Score', value: '88%' },
-    { label: 'Avg Tech Score', value: '85%' },
-    { label: 'Selection Rate', value: '45%' }
+    { label: 'Avg Video Score', value: avgVideoScore ? `${avgVideoScore}%` : '-' },
+    { label: 'Avg Tech Score', value: avgTechScore ? `${avgTechScore}%` : '-' },
+    { label: 'Selection Rate', value: selectionRate ? `${selectionRate}%` : '-' }
   ];
 
   const handleShareClick = (candidate) => {

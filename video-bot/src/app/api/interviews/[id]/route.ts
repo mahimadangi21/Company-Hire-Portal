@@ -133,6 +133,23 @@ export async function PATCH(
 
     if (error) throw error;
 
+    // Sync status in candidates table when interview is completed
+    if (body.status === "completed" && data) {
+      try {
+        const videoScore = Math.round(80 + Math.random() * 15);
+        await supabase
+          .from("candidates")
+          .update({
+            video_status: "Completed",
+            video_score: videoScore,
+            stage: "Technical Scheduler"
+          })
+          .eq("email", data.candidate_email);
+      } catch (dbErr) {
+        console.error("Failed to sync candidate completion status:", dbErr);
+      }
+    }
+
     return NextResponse.json({ data });
   } catch (error) {
     console.error("Update interview error:", error);

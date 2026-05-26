@@ -88,6 +88,19 @@ export async function POST(req: NextRequest) {
       }),
     });
 
+    // 6. Sync status in candidates table
+    try {
+      await supabase
+        .from("candidates")
+        .update({
+          video_status: "Pending",
+          stage: "Video Interview"
+        })
+        .eq("email", candidate_email);
+    } catch (dbErr) {
+      console.error("Failed to sync candidate invite status:", dbErr);
+    }
+
     if (!emailRes.ok) {
       console.error("Failed to send email API");
       // We still return success but maybe warn in console
