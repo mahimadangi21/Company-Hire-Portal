@@ -18,22 +18,28 @@ const VideoBot = () => {
   const [inviteJobRole, setInviteJobRole] = useState('');
   const [inviteQuestionCount, setInviteQuestionCount] = useState(3);
   const [sending, setSending] = useState(false);
+  
+  // Copied indicator state
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     fetchInterviews();
   }, [showQuestionModal]); // refresh when modal closes
 
-  const copyToClipboard = (text, message) => {
+  const copyToClipboard = (text, id) => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text)
-        .then(() => alert(message))
-        .catch(() => fallbackCopy(text, message));
+        .then(() => {
+          setCopiedId(id);
+          setTimeout(() => setCopiedId(null), 2000);
+        })
+        .catch(() => fallbackCopy(text, id));
     } else {
-      fallbackCopy(text, message);
+      fallbackCopy(text, id);
     }
   };
 
-  const fallbackCopy = (text, message) => {
+  const fallbackCopy = (text, id) => {
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";
@@ -46,9 +52,8 @@ const VideoBot = () => {
     try {
       const successful = document.execCommand('copy');
       if (successful) {
-        alert(message);
-      } else {
-        console.error("Fallback copy command was unsuccessful");
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
       }
     } catch (err) {
       console.error("Fallback copy failed", err);
@@ -235,13 +240,13 @@ const VideoBot = () => {
                             <>
                               <button 
                                 className="btn btn-outline" 
-                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
                                 onClick={() => {
                                   const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
-                                  copyToClipboard(url, "Share review link copied!");
+                                  copyToClipboard(url, `share-${interview.id}`);
                                 }}
                               >
-                                Copy Share Link
+                                {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Share Link"}
                               </button>
                               <a 
                                 href={`${NEXT_JS_URL}/admin/dashboard/interviews/${interview.id}`}
@@ -256,13 +261,13 @@ const VideoBot = () => {
                           ) : (
                             <button 
                               className="btn btn-outline" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
                               onClick={() => {
                                 const url = `${NEXT_JS_URL}/interview/${interview.id}`;
-                                copyToClipboard(url, "Candidate invite link copied!");
+                                copyToClipboard(url, `invite-${interview.id}`);
                               }}
                             >
-                              Copy Invite Link
+                              {copiedId === `invite-${interview.id}` ? "Copied!" : "Copy Invite Link"}
                             </button>
                           )}
                           <button 
