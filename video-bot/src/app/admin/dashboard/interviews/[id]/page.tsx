@@ -65,6 +65,8 @@ export default function InterviewReviewPage() {
     a.click();
   };
 
+  const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:5173";
+
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this interview? This action cannot be undone.")) return;
     
@@ -73,7 +75,7 @@ export default function InterviewReviewPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        router.push("/admin/dashboard");
+        window.location.href = PORTAL_URL;
       }
     } catch (err) {
       console.error("Failed to delete interview", err);
@@ -93,11 +95,11 @@ export default function InterviewReviewPage() {
       <div className="min-h-screen bg-[#050810] flex items-center justify-center text-center">
         <div>
           <p className="text-white/50 text-lg mb-4">Interview not found</p>
-          <Link href="/admin/dashboard">
+          <a href={PORTAL_URL}>
             <Button variant="outline" className="border-white/10 text-white/60">
               Back to dashboard
             </Button>
-          </Link>
+          </a>
         </div>
       </div>
     );
@@ -108,10 +110,10 @@ export default function InterviewReviewPage() {
       {/* Top nav */}
       <div className="border-b border-white/[0.06] bg-[#080c14] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin/dashboard" className="text-white/40 hover:text-white transition-colors">
+          <a href={PORTAL_URL} className="text-white/40 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <Logo href="/admin/dashboard" size="sm" />
+          </a>
+          <Logo href={PORTAL_URL} size="sm" />
           <span className="text-white/20">/</span>
           <span className="text-white/60 text-sm">Interview Review</span>
         </div>
