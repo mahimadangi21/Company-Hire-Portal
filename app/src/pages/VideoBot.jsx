@@ -23,6 +23,39 @@ const VideoBot = () => {
     fetchInterviews();
   }, [showQuestionModal]); // refresh when modal closes
 
+  const copyToClipboard = (text, message) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => alert(message))
+        .catch(() => fallbackCopy(text, message));
+    } else {
+      fallbackCopy(text, message);
+    }
+  };
+
+  const fallbackCopy = (text, message) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert(message);
+      } else {
+        console.error("Fallback copy command was unsuccessful");
+      }
+    } catch (err) {
+      console.error("Fallback copy failed", err);
+    }
+    document.body.removeChild(textArea);
+  };
+
   const fetchInterviews = async () => {
     try {
       const res = await fetch(`${NEXT_JS_URL}/api/interviews/list`);
@@ -205,8 +238,7 @@ const VideoBot = () => {
                                 style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                                 onClick={() => {
                                   const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
-                                  navigator.clipboard.writeText(url);
-                                  alert("Share review link copied!");
+                                  copyToClipboard(url, "Share review link copied!");
                                 }}
                               >
                                 Copy Share Link
@@ -227,8 +259,7 @@ const VideoBot = () => {
                               style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                               onClick={() => {
                                 const url = `${NEXT_JS_URL}/interview/${interview.id}`;
-                                navigator.clipboard.writeText(url);
-                                alert("Candidate invite link copied!");
+                                copyToClipboard(url, "Candidate invite link copied!");
                               }}
                             >
                               Copy Invite Link
