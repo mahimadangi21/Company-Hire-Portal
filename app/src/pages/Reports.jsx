@@ -586,6 +586,42 @@ const Reports = () => {
   const [filterJob, setFilterJob] = useState('All');
   const [filterRec, setFilterRec] = useState('All');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareResult, setShareResult] = useState(null); // { success, reportUrl, error }
+
+  const handleSendReport = async (candidate) => {
+    setShareLoading(true);
+    setShareResult(null);
+    try {
+      const res = await fetch('http://localhost:3000/api/reports/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          candidateEmail: candidate.email,
+          candidateName: candidate.name,
+          jobRole: candidate.jobApplied,
+          scores: {
+            resume: candidate.resumeScore,
+            video: candidate.videoScore,
+            tech: candidate.techScore,
+          },
+          recommendation: candidate.finalRecommendation,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setShareResult({ success: true, reportUrl: data.reportUrl });
+        refreshCandidates();
+      } else {
+        setShareResult({ success: false, error: data.error || 'Failed to send report.' });
+      }
+    } catch (e) {
+      setShareResult({ success: false, error: 'Network error. Please try again.' });
+    } finally {
+      setShareLoading(false);
+    }
+  };
 
   useEffect(() => { refreshCandidates(); }, []);
 
@@ -844,45 +880,110 @@ const Reports = () => {
 
       {/* ─── SHARE MODAL ─── */}
       {shareModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10,18,40,0.6)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }} onClick={() => setShareModalOpen(null)}>
-          <div className="card animate-slide-up" style={{ width: '440px', padding: 0, overflow: 'hidden', borderRadius: '16px' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)', background: 'var(--brand-navy)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ color: '#fff', fontWeight: '700', fontSize: '1rem', margin: 0 }}>Share Report</h3>
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', margin: '2px 0 0' }}>{shareModalOpen.name}</p>
-              </div>
-              <button onClick={() => setShareModalOpen(null)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '6px', color: 'rgba(255,255,255,0.7)', display: 'flex' }}><X size={16} /></button>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Recipient Emails</label>
-                <input type="text" className="form-input" placeholder="manager@company.com, hr@company.com" />
-              </div>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Include Sections</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                  {['Overview', 'Skills', 'Education', 'Projects', 'Strengths/Weaknesses', 'Transcript'].map((s) => (
-                    <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer', padding: '4px 10px', borderRadius: '999px', border: '1px solid var(--border)', backgroundColor: 'var(--gray-50)' }}>
-                      <input type="checkbox" defaultChecked style={{ accentColor: 'var(--brand-navy)' }} />
-                      {s}
-                    </label>
-                  ))}
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10,18,40,0.6)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }}
+          onClick={() => { setShareModalOpen(null); setShareResult(null); }}>
+          <div className="card animate-slide-up" style={{ width: '460px', padding: 0, overflow: 'hidden', borderRadius: '18px' }} onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <div style={{ padding: '1.25rem 1.5rem', background: 'var(--brand-navy)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '0.85rem' }}>
+                  {getInitials(shareModalOpen.name)}
+                </div>
+                <div>
+                  <h3 style={{ color: '#fff', fontWeight: '700', fontSize: '1rem', margin: 0 }}>Share Report with Candidate</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.73rem', margin: '2px 0 0' }}>{shareModalOpen.name} · {shareModalOpen.email}</p>
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Link Expiry</label>
-                <select className="form-select">
-                  <option>7 Days</option>
-                  <option>30 Days</option>
-                  <option>No Expiry</option>
-                </select>
-              </div>
-            </div>
-            <div style={{ padding: '1rem 1.5rem', backgroundColor: 'var(--gray-50)', display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--border)' }}>
-              <button className="btn btn-outline" onClick={() => setShareModalOpen(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => { alert('Report shared with selected recipients!'); setShareModalOpen(null); }}>
-                <Share2 size={14} style={{ marginRight: '4px' }} /> Send Report
+              <button onClick={() => { setShareModalOpen(null); setShareResult(null); }}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '6px', color: 'rgba(255,255,255,0.7)', display: 'flex' }}>
+                <X size={16} />
               </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '1.5rem' }}>
+              {!shareResult ? (
+                <>
+                  {/* Info box */}
+                  <div style={{ padding: '12px 14px', borderRadius: '10px', backgroundColor: 'rgba(14,45,123,0.05)', border: '1px solid rgba(14,45,123,0.12)', marginBottom: '1.25rem' }}>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--brand-navy)', fontWeight: '600', margin: '0 0 4px' }}>📧 Report will be sent to:</p>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--gray-700)', margin: 0, fontWeight: '500' }}>{shareModalOpen.email}</p>
+                  </div>
+
+                  {/* What's included */}
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Report Includes</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {['Scores', 'Skills', 'Education', 'Projects', 'Experience', 'Application Status'].map((s) => (
+                        <span key={s} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: '600', padding: '4px 10px', borderRadius: '999px', border: '1px solid var(--border)', backgroundColor: 'var(--gray-50)', color: 'var(--gray-700)' }}>
+                          <CheckCircle size={11} color="var(--brand-green)" /> {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Scores preview */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem' }}>
+                    {[['Resume', shareModalOpen.resumeScore], ['Video', shareModalOpen.videoScore], ['Technical', shareModalOpen.techScore]].map(([label, val]) => val ? (
+                      <div key={label} style={{ flex: 1, textAlign: 'center', padding: '8px', borderRadius: '10px', border: '1px solid var(--border)', backgroundColor: 'var(--gray-50)' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: '800', color: scoreColor(val) }}>{val}</div>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>{label}</div>
+                      </div>
+                    ) : null)}
+                  </div>
+
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+                    🔒 A secure, read-only link valid for <strong>30 days</strong> will be emailed to the candidate.
+                  </p>
+                </>
+              ) : shareResult.success ? (
+                <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(16,185,129,0.1)', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                    <CheckCircle size={24} color="#10b981" />
+                  </div>
+                  <h4 style={{ color: '#065f46', fontWeight: '800', fontSize: '1rem', margin: '0 0 6px' }}>Report Sent Successfully!</h4>
+                  <p style={{ color: 'var(--gray-600)', fontSize: '0.82rem', margin: '0 0 16px', lineHeight: 1.5 }}>
+                    A report email has been sent to <strong>{shareModalOpen.email}</strong>.
+                  </p>
+                  <div style={{ padding: '8px 12px', borderRadius: '8px', backgroundColor: 'var(--gray-50)', border: '1px solid var(--border)', textAlign: 'left' }}>
+                    <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '0 0 4px', fontWeight: '600' }}>Report Link:</p>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--brand-navy)', fontWeight: '600', margin: 0, wordBreak: 'break-all' }}>{shareResult.reportUrl}</p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(239,68,68,0.1)', border: '2px solid #ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                    <X size={24} color="#ef4444" />
+                  </div>
+                  <h4 style={{ color: '#7f1d1d', fontWeight: '800', fontSize: '1rem', margin: '0 0 6px' }}>Failed to Send Report</h4>
+                  <p style={{ color: 'var(--gray-600)', fontSize: '0.82rem', margin: 0 }}>{shareResult.error}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '1rem 1.5rem', backgroundColor: 'var(--gray-50)', display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--border)' }}>
+              <button className="btn btn-outline" onClick={() => { setShareModalOpen(null); setShareResult(null); }}>
+                {shareResult?.success ? 'Close' : 'Cancel'}
+              </button>
+              {!shareResult && (
+                <button
+                  className="btn btn-primary"
+                  disabled={shareLoading}
+                  onClick={() => handleSendReport(shareModalOpen)}
+                  style={{ minWidth: '130px' }}
+                >
+                  {shareLoading
+                    ? <><span style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', marginRight: '6px' }} />Sending...</>
+                    : <><Share2 size={14} /> Send Report</>}
+                </button>
+              )}
+              {shareResult && !shareResult.success && (
+                <button className="btn btn-primary" onClick={() => handleSendReport(shareModalOpen)} disabled={shareLoading}>
+                  <Share2 size={14} /> Retry
+                </button>
+              )}
             </div>
           </div>
         </div>

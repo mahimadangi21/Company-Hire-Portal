@@ -309,6 +309,10 @@ ul, ol {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Auth Gradient Background */
 .auth-bg {
   background: linear-gradient(135deg, #f4f7f6 0%, #e8edf5 100%);
