@@ -654,47 +654,6 @@ const Reports = () => {
         })}
       </div>
 
-      {/* ── VISUAL CHARTS ROW ── */}
-      <div className="grid grid-cols-3 gap-6">
-
-        {/* Recommendation donut */}
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <p style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px' }}>Recommendation Split</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <Donut slices={donutData} size={80} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {donutData.map((d, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: d.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.73rem', color: 'var(--gray-700)', fontWeight: '500' }}>{d.label}</span>
-                  <span style={{ marginLeft: 'auto', fontWeight: '700', fontSize: '0.73rem', color: d.color }}>{d.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Top skills across all candidates */}
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <p style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px' }}>Top Skills Across Pool</p>
-          {topSkills.length > 0
-            ? <BarChart data={topSkills} color="var(--brand-navy)" />
-            : <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skill data yet.</p>}
-        </div>
-
-        {/* Score distribution */}
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <p style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px' }}>Avg Score Breakdown</p>
-          <BarChart
-            data={[
-              { label: 'Resume', value: avgResume },
-              { label: 'Video', value: Math.round(allCandidates.filter(c => c.videoScore).reduce((a, c) => a + (c.videoScore || 0), 0) / Math.max(allCandidates.filter(c => c.videoScore).length, 1)) },
-              { label: 'Technical', value: Math.round(allCandidates.filter(c => c.techScore).reduce((a, c) => a + (c.techScore || 0), 0) / Math.max(allCandidates.filter(c => c.techScore).length, 1)) },
-            ]}
-            color="#3b82f6"
-          />
-        </div>
-      </div>
 
       {/* ── CANDIDATE TABLE ── */}
       <div className="card">
