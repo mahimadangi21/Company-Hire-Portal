@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2 } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const ResumeUpload = () => {
@@ -145,11 +145,14 @@ const ResumeUpload = () => {
         });
 
         if (dbRes.ok) {
+          const createdCandidate = await dbRes.json();
           refreshCandidates();
           setStatus({ 
             type: 'success', 
             message: `Successfully parsed! Extracted profile for ${payload.name}.` 
           });
+          // Automatically trigger the email verification & send form invitation modal!
+          setEmailModal({ candidate: { ...payload, id: createdCandidate.id }, email: payload.email });
         } else {
           const dbErr = await dbRes.json();
           setStatus({ 
@@ -302,7 +305,7 @@ const ResumeUpload = () => {
                 <th>Candidate Name</th>
                 <th>Email</th>
                 <th>Job Applied</th>
-                <th>Parsing Status</th>
+                <th>Form Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -330,9 +333,19 @@ const ResumeUpload = () => {
                     <td style={{ color: 'var(--gray-600)' }}>{candidate.email}</td>
                     <td>{candidate.jobApplied}</td>
                     <td>
-                      <span className="badge badge-success" style={{ display: 'inline-flex', gap: '0.25rem' }}>
-                        <CheckCircle size={12} /> Parsed
-                      </span>
+                      {candidate.formStatus === 'Submitted' ? (
+                        <span className="badge badge-success" style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center' }}>
+                          <CheckCircle size={12} /> Submitted
+                        </span>
+                      ) : candidate.formStatus === 'Pending' ? (
+                        <span className="badge badge-warning" style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center' }}>
+                          <Clock size={12} /> Pending
+                        </span>
+                      ) : (
+                        <span className="badge badge-info" style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.15)' }}>
+                          <Clock size={12} /> Not Sent
+                        </span>
+                      )}
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -343,13 +356,31 @@ const ResumeUpload = () => {
                         >
                           View
                         </button>
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
-                          onClick={() => setEmailModal({ candidate, email: candidate.email })}
-                        >
-                          Send Form
-                        </button>
+                        {candidate.formStatus === 'Submitted' ? (
+                          <button 
+                            className="btn btn-outline" 
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
+                            disabled
+                          >
+                            Submitted
+                          </button>
+                        ) : candidate.formStatus === 'Pending' ? (
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            onClick={() => setEmailModal({ candidate, email: candidate.email })}
+                          >
+                            <Mail size={12} /> Resend
+                          </button>
+                        ) : (
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            onClick={() => setEmailModal({ candidate, email: candidate.email })}
+                          >
+                            <Send size={12} /> Send Form
+                          </button>
+                        )}
                         <div style={{ position: 'relative' }}>
                           <button 
                             className="btn btn-ghost" 

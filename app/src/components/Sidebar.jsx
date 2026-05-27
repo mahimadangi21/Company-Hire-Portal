@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, FileText, FileSpreadsheet, Video, Calendar, BarChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Video, Calendar, BarChart, LogOut } from 'lucide-react';
 
 const Sidebar = () => {
   const [isLogoutHovered, setIsLogoutHovered] = useState(false);
@@ -8,7 +8,6 @@ const Sidebar = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Job Listed', path: '/jobs', icon: Briefcase },
     { name: 'Resume Upload', path: '/resumes', icon: FileText },
-    { name: 'Candidate Forms', path: '/forms', icon: FileSpreadsheet },
     { name: 'Video Bot Screening', path: '/video-bot', icon: Video },
     { name: 'Technical Scheduler', path: '/scheduler', icon: Calendar },
     { name: 'Reports', path: '/reports', icon: BarChart },
