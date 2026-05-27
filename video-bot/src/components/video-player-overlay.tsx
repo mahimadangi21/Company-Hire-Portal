@@ -37,7 +37,7 @@ export function VideoPlayerOverlay({ videoUrl, status, transcript, onTimeUpdate,
   };
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden border border-white/[0.06] bg-black flex items-center justify-center group h-full w-full ${isFullscreen ? '' : 'aspect-video'}`}>
+    <div className={`relative rounded-2xl overflow-hidden border border-[#E2E8F0] bg-black shadow-md flex items-center justify-center group h-full w-full ${isFullscreen ? '' : 'aspect-video'}`}>
       {videoUrl ? (
         <>
           <video
