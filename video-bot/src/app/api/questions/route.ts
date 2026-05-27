@@ -27,7 +27,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { job_role, question_text, is_mandatory } = body;
+    const { job_role, question_text, is_mandatory, department, sub_department } = body;
 
     if (!job_role || !question_text) {
       return NextResponse.json(
@@ -42,7 +42,9 @@ export async function POST(request: Request) {
       .insert({
         job_role,
         question_text,
-        is_mandatory: is_mandatory || false
+        is_mandatory: is_mandatory || false,
+        department: department || null,
+        sub_department: sub_department || null,
       })
       .select()
       .single();
