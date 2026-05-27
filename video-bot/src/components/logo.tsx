@@ -10,9 +10,9 @@ interface LogoProps {
 }
 
 const sizeConfig = {
-  sm: { img: 34 },
-  md: { img: 48 },
-  lg: { img: 64 },
+  sm: { img: 42 }, // increased from 34 by 23.5%
+  md: { img: 58 }, // increased from 48 by 20.8%
+  lg: { img: 78 }, // increased from 64 by 21.8%
 };
 
 export function Logo({ className, size = "md", href, showTagline }: LogoProps) {
@@ -30,7 +30,7 @@ export function Logo({ className, size = "md", href, showTagline }: LogoProps) {
         style={{ height: img, width: "auto" }}
       />
       {showTagline && (
-        <span className="text-white/30 text-xs border-l border-white/10 pl-2.5 ml-1">
+        <span className="text-slate-400 dark:text-white/30 text-xs border-l border-slate-200 dark:border-white/10 pl-2.5 ml-1">
           Interview Platform
         </span>
       )}
