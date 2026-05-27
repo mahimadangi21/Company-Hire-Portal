@@ -9,7 +9,7 @@ const Sidebar = () => {
     { name: 'Job Listed', path: '/jobs', icon: Briefcase },
     { name: 'Resume Upload', path: '/resumes', icon: FileText },
     { name: 'Candidate Forms', path: '/forms', icon: FileSpreadsheet },
-    { name: 'Video Bot Interview', path: '/video-bot', icon: Video },
+    { name: 'Video Bot Screening', path: '/video-bot', icon: Video },
     { name: 'Technical Scheduler', path: '/scheduler', icon: Calendar },
     { name: 'Reports', path: '/reports', icon: BarChart },
     { name: 'Email History', path: '/emails', icon: History },
