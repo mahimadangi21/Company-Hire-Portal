@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Edit2, Save, Printer } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import html2pdf from 'html2pdf.js';
 
 const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
-  const { apiFetch } = useAppContext();
+  const { apiFetch, jobs } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const printRef = useRef(null);
@@ -13,6 +13,13 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
   // Local state for editing
   const [name, setName] = useState(candidate?.name || '');
   const [skills, setSkills] = useState(candidate?.skills ? candidate.skills.join(', ') : '');
+  
+  const initialJob = jobs.find(j => j.title === candidate?.jobApplied);
+  const [selectedDepartment, setSelectedDepartment] = useState(initialJob?.department || '');
+  const [selectedJob, setSelectedJob] = useState(candidate?.jobApplied || '');
+  
+  const departments = [...new Set(jobs.map(j => j.department))].filter(Boolean).sort();
+  const availableSubJobs = jobs.filter(j => j.department === selectedDepartment).sort((a,b) => a.title.localeCompare(b.title));
   
   const extractedData = candidate?.extractedData || {};
   const [expTotal, setExpTotal] = useState(extractedData?.totalExperienceAnalysis?.totalExperience || '');
@@ -39,6 +46,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
         body: JSON.stringify({
           id: candidate.id,
           name,
+          job_applied: selectedJob,
           skills: skillsArray,
           extracted_data: updatedExtractedData
         })
@@ -147,9 +155,38 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
                 {name.toUpperCase()}
               </h1>
             )}
-            <p style={{ fontSize: '1.25rem', color: '#475569', fontWeight: '500', margin: '0.5rem 0 0 0', letterSpacing: '0.01em' }}>
-              {candidate.jobApplied} Professional
-            </p>
+            {isEditing ? (
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <select 
+                  value={selectedDepartment} 
+                  onChange={e => {
+                    setSelectedDepartment(e.target.value);
+                    setSelectedJob('');
+                  }}
+                  style={{ padding: '0.4rem 0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#334155', backgroundColor: 'white' }}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+                <select 
+                  value={selectedJob} 
+                  onChange={e => setSelectedJob(e.target.value)}
+                  disabled={!selectedDepartment}
+                  style={{ padding: '0.4rem 0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#334155', backgroundColor: 'white' }}
+                >
+                  <option value="">Select Sub Department</option>
+                  {availableSubJobs.map(job => (
+                    <option key={job.id} value={job.title}>{job.title}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <p style={{ fontSize: '1.25rem', color: '#475569', fontWeight: '500', margin: '0.5rem 0 0 0', letterSpacing: '0.01em' }}>
+                {selectedJob || candidate.jobApplied} Professional
+              </p>
+            )}
           </div>
           <div>
             <img src="/kadellabs-logo.png" alt="Kadel Labs" style={{ height: '48px', objectFit: 'contain' }} />
