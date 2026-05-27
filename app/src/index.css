@@ -1298,7 +1298,7 @@ ul, ol {
 
 /* Notification checkboxes */
 .modal-notify-row { display: flex; gap: 1rem; }
-.modal-notify-check { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8rem; cursor: pointer; }
+.modal-notify-check { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8rem; cursor: pointer; color: var(--text-main); }
 
 /* Review card */
 .modal-review-card {

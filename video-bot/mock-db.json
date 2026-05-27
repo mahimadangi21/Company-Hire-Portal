@@ -46,7 +46,7 @@
       "video_status": "Pending",
       "tech_status": "Pending",
       "report_status": "Not Shared",
-      "stage": "Candidate Form",
+      "stage": "Technical Interview",
       "resume_score": 77,
       "final_recommendation": "Under Review",
       "extracted_data": {
@@ -135,7 +135,7 @@
       "video_status": "Pending",
       "tech_status": "Pending",
       "report_status": "Not Shared",
-      "stage": "Candidate Form",
+      "stage": "Technical Interview",
       "resume_score": 78,
       "final_recommendation": "Under Review",
       "extracted_data": {

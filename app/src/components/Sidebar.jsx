@@ -6,7 +6,7 @@ const Sidebar = () => {
   const [isLogoutHovered, setIsLogoutHovered] = useState(false);
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Job Listed', path: '/jobs', icon: Briefcase },
+    { name: 'Department', path: '/jobs', icon: Briefcase },
     { name: 'Resume Upload', path: '/resumes', icon: FileText },
     { name: 'Candidate Forms', path: '/forms', icon: FileSpreadsheet },
     { name: 'Video Bot Screening', path: '/video-bot', icon: Video },

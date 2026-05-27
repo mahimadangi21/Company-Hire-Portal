@@ -86,13 +86,13 @@ const Dashboard = () => {
       {/* Active Jobs Quick View */}
       <div className="card">
         <div className="card-header">
-          <h3 className="card-title">Active Jobs Listed</h3>
+          <h3 className="card-title">Active Departments Listed</h3>
         </div>
         <div className="table-container">
           <table className="table">
             <thead>
               <tr>
-                <th>Job Title</th>
+                <th>Department Title</th>
                 <th>Department</th>
                 <th>Candidates</th>
                 <th>Status</th>

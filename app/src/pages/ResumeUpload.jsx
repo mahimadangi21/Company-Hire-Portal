@@ -191,7 +191,7 @@ const ResumeUpload = () => {
         </div>
         <div className="card-body">
           <div className="form-group" style={{ maxWidth: '400px', marginBottom: '1.5rem' }}>
-            <label className="form-label">Select Job Listed <span style={{ color: 'var(--danger)' }}>*</span></label>
+            <label className="form-label">Select Department <span style={{ color: 'var(--danger)' }}>*</span></label>
             <select 
               className="form-select" 
               value={selectedJob} 
@@ -283,17 +283,6 @@ const ResumeUpload = () => {
       <div className="card">
         <div className="card-header flex justify-between items-center">
           <h3 className="card-title">Parsed Candidates</h3>
-          <div style={{ position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
-            <input 
-              type="text" 
-              placeholder="Search by name..." 
-              className="form-input" 
-              style={{ paddingLeft: '2.25rem', width: '250px' }} 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
         </div>
         <div className="table-container">
           <table className="table">

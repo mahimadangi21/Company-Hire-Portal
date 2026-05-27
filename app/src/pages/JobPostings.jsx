@@ -44,23 +44,23 @@ const JobPostings = () => {
       
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)' }}>Job Listed</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Manage active job roles and application forms</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)' }}>Department</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Manage active Department roles and application forms</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          <Plus size={16} /> Create New Job
+          <Plus size={16} /> Create New Department
         </button>
       </div>
 
       {showForm && (
         <div className="card animate-slide-up" style={{ backgroundColor: 'var(--gray-50)' }}>
           <div className="card-header">
-            <h3 className="card-title" style={{ fontSize: '1.125rem' }}>New Job Configuration</h3>
+            <h3 className="card-title" style={{ fontSize: '1.125rem' }}>New Department Configuration</h3>
           </div>
           <div className="card-body">
             <div className="grid grid-cols-2 gap-6" style={{ marginBottom: '1.5rem' }}>
               <div className="form-group">
-                <label className="form-label">Job Title</label>
+                <label className="form-label">Department</label>
                 <input 
                   type="text" 
                   className="form-input" 
@@ -70,7 +70,7 @@ const JobPostings = () => {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Department</label>
+                <label className="form-label">Sub-Department</label>
                 <select 
                   className="form-select"
                   value={department}
@@ -89,7 +89,7 @@ const JobPostings = () => {
                 onClick={handlePublishJob}
                 disabled={isSubmitting || !title.trim()}
               >
-                {isSubmitting ? 'Publishing...' : 'Publish Job'}
+                {isSubmitting ? 'Publishing...' : 'Publish Department'}
               </button>
               <button className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>
             </div>
@@ -102,7 +102,7 @@ const JobPostings = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Job Title</th>
+                <th>Department Title</th>
                 <th>Department</th>
                 <th>Status</th>
                 <th>Candidates</th>
