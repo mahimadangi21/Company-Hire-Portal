@@ -330,7 +330,35 @@ const ResumeUpload = () => {
                         >
                           View
                         </button>
-                        <button className="btn btn-secondary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}>Send Form</button>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('http://localhost:3000/api/emails/send', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  type: 'form_invite',
+                                  to: candidate.email,
+                                  candidateName: candidate.name,
+                                  jobRole: candidate.jobApplied,
+                                  candidateId: candidate.id
+                                })
+                              });
+                              if (res.ok) {
+                                alert(`Form invitation link sent successfully to ${candidate.name} (${candidate.email})!`);
+                              } else {
+                                alert('Failed to send form invitation');
+                              }
+                            } catch (e) {
+                              console.error(e);
+                              alert('Error sending form invitation');
+                            }
+                          }}
+                        >
+                          Send Form
+                        </button>
                         <button className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem' }}><MoreVertical size={16} /></button>
                       </div>
                     </td>

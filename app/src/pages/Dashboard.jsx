@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Users, FileText, CheckCircle, Video, Calendar, BarChart2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const Dashboard = () => {
-  const { candidates, jobs } = useAppContext();
+  const { candidates, jobs, refreshCandidates, refreshJobs } = useAppContext();
+
+  useEffect(() => {
+    refreshCandidates();
+    refreshJobs();
+  }, []);
 
   const analytics = [
     { title: 'Total Candidates', value: candidates.length, icon: Users, color: 'var(--brand-navy)', bg: 'rgba(14, 45, 123, 0.08)' },

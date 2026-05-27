@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, CheckCircle, Clock, Search, ExternalLink } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const CandidateForms = () => {
   const { candidates, refreshCandidates } = useAppContext();
+
+  useEffect(() => {
+    refreshCandidates();
+  }, []);
   const [filterJob, setFilterJob] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -143,7 +147,35 @@ const CandidateForms = () => {
                               >
                                 Mark Submitted
                               </button>
-                              <button className="btn btn-outline" style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}><Mail size={14}/> Resend</button>
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch('http://localhost:3000/api/emails/send', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        type: 'form_invite',
+                                        to: candidate.email,
+                                        candidateName: candidate.name,
+                                        jobRole: candidate.jobApplied,
+                                        candidateId: candidate.id
+                                      })
+                                    });
+                                    if (res.ok) {
+                                      alert(`Form invitation link sent successfully to ${candidate.name} (${candidate.email})!`);
+                                    } else {
+                                      alert('Failed to send form invitation');
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                    alert('Error sending form invitation');
+                                  }
+                                }}
+                              >
+                                <Mail size={14} style={{ marginRight: '4px' }}/> Resend
+                              </button>
                             </>
                           )}
                         </div>

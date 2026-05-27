@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Archive } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -8,6 +8,10 @@ const JobPostings = () => {
   const [title, setTitle] = useState('');
   const [department, setDepartment] = useState('Engineering');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    refreshJobs();
+  }, []);
 
   const handlePublishJob = async () => {
     if (!title.trim() || !department) return;

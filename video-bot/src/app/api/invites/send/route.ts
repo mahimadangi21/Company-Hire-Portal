@@ -75,7 +75,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Send Email via internal API call
-    const emailRes = await fetch(new URL("/api/emails/send", req.url).toString(), {
+    const emailUrl = new URL("/api/emails/send", req.url).toString().replace("localhost", "127.0.0.1");
+    const emailRes = await fetch(emailUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -90,13 +91,18 @@ export async function POST(req: NextRequest) {
 
     // 6. Sync status in candidates table
     try {
-      await supabase
+      const { error: syncError } = await supabase
         .from("candidates")
         .update({
           video_status: "Pending",
           stage: "Video Interview"
         })
-        .eq("email", candidate_email);
+        .ilike("email", candidate_email.trim());
+      if (syncError) {
+        console.error("Failed to sync candidate invite status in candidates table:", syncError);
+      } else {
+        console.log(`Synced candidate ${candidate_email} status to Video Interview (Pending)`);
+      }
     } catch (dbErr) {
       console.error("Failed to sync candidate invite status:", dbErr);
     }

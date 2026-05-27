@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, Users, Link as LinkIcon, Edit2, X, Send } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const TechnicalScheduler = () => {
   const { candidates, refreshCandidates } = useAppContext();
+
+  useEffect(() => {
+    refreshCandidates();
+  }, []);
   const eligibleCandidates = candidates.filter(c => c.videoStatus === 'Completed' && c.techStatus !== 'Scheduled');
   const scheduledCandidates = candidates.filter(c => c.techStatus === 'Scheduled');
   
