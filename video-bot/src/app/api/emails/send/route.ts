@@ -79,10 +79,8 @@ function formInviteEmailTemplate(
       </table>
     </td></tr>
   </table>
-</body>
-</html>\`;
+</body></html>`;
 }
-
 function inviteEmailTemplate(
   candidateName: string,
   jobRole: string,
@@ -97,7 +95,7 @@ function inviteEmailTemplate(
     day: "numeric",
   });
 
-  return \`
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
