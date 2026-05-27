@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Root runner for KL HIRE Dashboard, Video Bot, and ATS Parser",
   "scripts": {
-    "dev": "concurrently --kill-others \"npm run dev --prefix app\" \"npm run dev --prefix video-bot\" \"npm run start --prefix \\\"ATS - Data extract Open AI\\\"\"",
-    "install:all": "npm install --prefix app && npm install --legacy-peer-deps --prefix video-bot && npm install --prefix \\\"ATS - Data extract Open AI\\\""
+    "dev": "concurrently --kill-others \"npm run dev --prefix app\" \"npm run dev --prefix video-bot\" \"npm run start --prefix ats-parser\"",
+    "install:all": "npm install --prefix app && npm install --legacy-peer-deps --prefix video-bot && npm install --prefix ats-parser"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

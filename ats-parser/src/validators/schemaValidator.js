@@ -45,6 +45,7 @@ const ProjectSchema = z.object({
 });
 
 const ResumeSchema = z.object({
+  isResume: z.boolean().default(true),
   personalInformation: PersonalInformationSchema,
   totalExperienceAnalysis: TotalExperienceSchema,
   skillExtraction: SkillExtractionSchema,

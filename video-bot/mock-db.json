@@ -1,0 +1,587 @@
+{
+  "jobs": [
+    {
+      "id": "job-1",
+      "title": "Senior Frontend Engineer",
+      "department": "Engineering",
+      "status": "Active",
+      "created_at": "2026-05-20T10:00:00.000Z"
+    },
+    {
+      "id": "job-2",
+      "title": "AI Research Scientist",
+      "department": "Research",
+      "status": "Active",
+      "created_at": "2026-05-22T11:00:00.000Z"
+    },
+    {
+      "id": "job-3",
+      "title": "Product Designer",
+      "department": "Design",
+      "status": "Active",
+      "created_at": "2026-05-25T09:00:00.000Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate-1",
+      "name": "Alice Smith",
+      "email": "alice.smith@example.com",
+      "phone": "+1 (555) 019-2834",
+      "skills": [
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "Redux",
+        "Next.js"
+      ],
+      "job_applied": "Senior Frontend Engineer",
+      "resume_status": "Parsed",
+      "form_status": "Submitted",
+      "video_status": "Completed",
+      "tech_status": "Scheduled",
+      "report_status": "Shared",
+      "stage": "Technical Interview",
+      "resume_score": 88,
+      "video_score": 92,
+      "tech_score": 0,
+      "final_recommendation": "Under Review",
+      "created_at": "2026-05-26T14:32:00.000Z"
+    },
+    {
+      "id": "candidate-2",
+      "name": "Bob Jones",
+      "email": "bob.jones@example.com",
+      "phone": "+1 (555) 014-9988",
+      "skills": [
+        "Python",
+        "PyTorch",
+        "Transformers",
+        "NLP",
+        "Machine Learning"
+      ],
+      "job_applied": "AI Research Scientist",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Candidate Form",
+      "resume_score": 95,
+      "video_score": 0,
+      "tech_score": 0,
+      "final_recommendation": "Under Review",
+      "created_at": "2026-05-27T08:15:00.000Z"
+    },
+    {
+      "id": "candidate-1779857831226-149",
+      "created_at": "2026-05-27T04:57:11.226Z",
+      "name": "Mahima Vyas",
+      "email": "mahimavyas04@gmail.com",
+      "phone": "+91 81144 26022",
+      "skills": [
+        "Flutter",
+        "Dart",
+        "HTML",
+        "CSS",
+        "API",
+        "Git",
+        "VS Code",
+        "Arduino IDE",
+        "Postgre SQL",
+        "Android Studio",
+        "Figma"
+      ],
+      "job_applied": "Product Designer",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Candidate Form",
+      "resume_score": 78,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "personalInformation": {
+          "fullName": "Mahima Vyas",
+          "email": "mahimavyas04@gmail.com",
+          "phoneNumber": "+91 81144 26022"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "Flutter",
+            "Dart",
+            "HTML",
+            "CSS",
+            "API",
+            "Git",
+            "VS Code",
+            "Arduino IDE",
+            "Postgre SQL",
+            "Android Studio",
+            "Figma"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Bachelor of Technology",
+            "college": "GITS, Udaipur",
+            "passingYear": null,
+            "cgpaOrPercentage": "8.87"
+          },
+          {
+            "degree": "Secondary School",
+            "college": "M.D.S SR. SEC.SCHOOL",
+            "passingYear": null,
+            "cgpaOrPercentage": "77 %"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "PLANT DISEASE DETECTION",
+            "projectDescription": "Developed a Web Application for farmers with: Disease detection and real-time diagnosis Financial advisory and product recommendations Enhanced decision-making for crop productivity and financial stability",
+            "technologiesUsed": [
+              "Flutter",
+              "Dart",
+              "HTML",
+              "CSS",
+              "API",
+              "Git",
+              "VS Code"
+            ]
+          },
+          {
+            "projectName": "SOLAR BASE SMART PET FEEDER",
+            "projectDescription": "Built pandemic-time automatic pet feeder for busy owners, enhancing pet health Raised by 95 percent of users for addressing the challenges of leaving pets at home A 100 percent automatic system with no human intervention",
+            "technologiesUsed": [
+              "Flutter",
+              "Dart",
+              "Git",
+              "VS Code",
+              "Arduino IDE",
+              "Global System for Mobile Communication"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "candidate-1779857842742-822",
+      "created_at": "2026-05-27T04:57:22.742Z",
+      "name": "Jignesh Ameta",
+      "email": "jignesh.vision.17@gmail.com",
+      "phone": "+91 76918 48733",
+      "skills": [
+        "C",
+        "Python",
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "PHP",
+        "Node.js",
+        "React",
+        "TypeScript",
+        "SQL",
+        "MySQL",
+        "Microsoft SQL Server",
+        "Oracle 10g",
+        "MATLAB",
+        "Microsoft Office Packages",
+        "CorelDraw X7",
+        "Photoshop 7",
+        "VS Code",
+        "XAMPP",
+        "VM Ware",
+        "GitHub",
+        "Linux",
+        "MAC OS",
+        "Windows",
+        "CodeIgniter"
+      ],
+      "job_applied": "Product Designer",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Candidate Form",
+      "resume_score": 78,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "personalInformation": {
+          "fullName": "Jignesh Ameta",
+          "email": "jignesh.vision.17@gmail.com",
+          "phoneNumber": "+91 76918 48733"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "C",
+            "Python",
+            "HTML",
+            "CSS",
+            "JavaScript",
+            "PHP",
+            "Node.js",
+            "React",
+            "TypeScript",
+            "SQL",
+            "MySQL",
+            "Microsoft SQL Server",
+            "Oracle 10g",
+            "MATLAB",
+            "Microsoft Office Packages",
+            "CorelDraw X7",
+            "Photoshop 7",
+            "VS Code",
+            "XAMPP",
+            "VM Ware",
+            "GitHub",
+            "Linux",
+            "MAC OS",
+            "Windows",
+            "CodeIgniter"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Master of Computer Application",
+            "college": "University College of Science(MLSU), Rajasthan, India",
+            "passingYear": null,
+            "cgpaOrPercentage": null
+          },
+          {
+            "degree": "Bachelor of Computer Application",
+            "college": "Vision College of Commerce(MLSU), Rajasthan, India",
+            "passingYear": "2021",
+            "cgpaOrPercentage": "6.6"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "E-Bookshop Management System",
+            "projectDescription": "A web-based book selling platform where users can purchase books and have them delivered to their location",
+            "technologiesUsed": [
+              "CodeIgniter",
+              "PHP",
+              "MySQL",
+              "HTML",
+              "CSS",
+              "JavaScript",
+              "XAMPP",
+              "VS Code",
+              "Notepad++",
+              "Google Chrome"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "candidate-1779858122084-263",
+      "created_at": "2026-05-27T05:02:02.084Z",
+      "name": "Bhawesh_Vyas_Anonymous_Resume",
+      "email": "No email provided",
+      "phone": "No phone provided",
+      "skills": [
+        "JavaScript",
+        "C++",
+        "HTML",
+        "CSS",
+        "Bootstrap",
+        "React",
+        "EJS",
+        "DOM",
+        "Node.js",
+        "Express.js",
+        "REST APIs",
+        "MVC",
+        "MongoDB",
+        "MySQL",
+        "Git",
+        "GitHub",
+        "Postman",
+        "Hoppscotch",
+        "ImageKit"
+      ],
+      "job_applied": "Product Designer",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Candidate Form",
+      "resume_score": 78,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "personalInformation": {
+          "fullName": null,
+          "email": null,
+          "phoneNumber": null
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "JavaScript",
+            "C++",
+            "HTML",
+            "CSS",
+            "Bootstrap",
+            "React",
+            "EJS",
+            "DOM",
+            "Node.js",
+            "Express.js",
+            "REST APIs",
+            "MVC",
+            "MongoDB",
+            "MySQL",
+            "Git",
+            "GitHub",
+            "Postman",
+            "Hoppscotch",
+            "ImageKit"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Bachelor of Technology",
+            "college": null,
+            "passingYear": null,
+            "cgpaOrPercentage": "8.5"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "Hotel & Rental Property Listing Platform",
+            "projectDescription": null,
+            "technologiesUsed": [
+              "MERN"
+            ]
+          },
+          {
+            "projectName": "Business Website Deployment & Maintenance",
+            "projectDescription": null,
+            "technologiesUsed": [
+              "Node.js"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "candidate-1779858158065-668",
+      "created_at": "2026-05-27T05:02:38.065Z",
+      "name": "scorecard_20260402_095940",
+      "email": "No email provided",
+      "phone": "No phone provided",
+      "skills": [],
+      "job_applied": "Product Designer",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Candidate Form",
+      "resume_score": 76,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "personalInformation": {
+          "fullName": null,
+          "email": null,
+          "phoneNumber": null
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": []
+        },
+        "educationDetails": [
+          {
+            "degree": null,
+            "college": null,
+            "passingYear": null,
+            "cgpaOrPercentage": null
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": null,
+            "projectDescription": null,
+            "technologiesUsed": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "candidate-1779858598903-347",
+      "created_at": "2026-05-27T05:09:58.903Z",
+      "name": "Hatim Sidhpurwala",
+      "email": "hatsid000@gmail.com",
+      "phone": "+91 74270 68253",
+      "skills": [
+        "C++",
+        "Python",
+        "Java",
+        "SQL",
+        "HTML/CSS",
+        "JavaScript",
+        "VS Code",
+        "Arduino IDE",
+        "Git & GitHub",
+        "Jupyter Notebook",
+        "Linux/Bash",
+        "Pandas",
+        "NumPy",
+        "Scikit-learn",
+        "Wireshark",
+        "Nmap",
+        "Kali Linux",
+        "VirtualBox",
+        "React",
+        "XGBoost",
+        "Matplotlib"
+      ],
+      "job_applied": "Senior Frontend Engineer",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Candidate Form",
+      "resume_score": 79,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "personalInformation": {
+          "fullName": "Hatim Sidhpurwala",
+          "email": "hatsid000@gmail.com",
+          "phoneNumber": "+91 74270 68253"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "C++",
+            "Python",
+            "Java",
+            "SQL",
+            "HTML/CSS",
+            "JavaScript",
+            "VS Code",
+            "Arduino IDE",
+            "Git & GitHub",
+            "Jupyter Notebook",
+            "Linux/Bash",
+            "Pandas",
+            "NumPy",
+            "Scikit-learn",
+            "Wireshark",
+            "Nmap",
+            "Kali Linux",
+            "VirtualBox",
+            "React",
+            "XGBoost",
+            "Matplotlib"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Bachelor of Technology",
+            "college": "Sir Padampat Singhania University",
+            "passingYear": null,
+            "cgpaOrPercentage": "8.233/10.0"
+          },
+          {
+            "degree": null,
+            "college": "MSB Educational Institute",
+            "passingYear": null,
+            "cgpaOrPercentage": "83.2%"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "Manual Testing of E-Commerce Website",
+            "projectDescription": null,
+            "technologiesUsed": [
+              "Microsoft Excel"
+            ]
+          },
+          {
+            "projectName": "Blockchain-based ERP System",
+            "projectDescription": null,
+            "technologiesUsed": [
+              "Solidity",
+              "React",
+              "Ethereum",
+              "Web3.js"
+            ]
+          },
+          {
+            "projectName": "Network Intrusion Detection System",
+            "projectDescription": null,
+            "technologiesUsed": [
+              "Python",
+              "Machine Learning",
+              "Scikit-learn"
+            ]
+          },
+          {
+            "projectName": "Credit Risk Prediction System",
+            "projectDescription": null,
+            "technologiesUsed": [
+              "Python",
+              "XGBoost",
+              "Scikit-learn",
+              "Pandas",
+              "NumPy",
+              "Matplotlib"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "interviews": [],
+  "questions_bank": [
+    {
+      "id": "q-1",
+      "job_role": "Senior Frontend Engineer",
+      "question_text": "Can you explain the difference between Server Components and Client Components in Next.js, and when you would use each?",
+      "is_mandatory": true,
+      "duration": 60
+    },
+    {
+      "id": "q-2",
+      "job_role": "Senior Frontend Engineer",
+      "question_text": "How do you optimize a React application that is experiencing performance lags on heavy rendering components?",
+      "is_mandatory": false,
+      "duration": 90
+    },
+    {
+      "id": "q-3",
+      "job_role": "AI Research Scientist",
+      "question_text": "What are the primary differences between fine-tuning and retrieval-augmented generation (RAG) when deploying LLMs?",
+      "is_mandatory": true,
+      "duration": 120
+    }
+  ]
+}

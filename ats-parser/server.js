@@ -112,6 +112,7 @@ function resolveErrorStatus(code) {
     INVALID_PDF: 400, INVALID_FILE_TYPE: 400, FILE_TOO_LARGE: 400,
     EMPTY_PDF: 400, EXTRACTION_FAILED: 422, VALIDATION_FAILED: 422,
     NO_FILE: 400, OPENAI_TIMEOUT: 504, INTERNAL_ERROR: 500,
+    INVALID_RESUME: 400,
   };
   return map[code] || 500;
 }
@@ -206,6 +207,12 @@ app.post('/api/analyze', (req, res) => {
           validationResult = validateSchema(rawAI);
 
           if (validationResult.valid) {
+            if (validationResult.data?.isResume === false) {
+              console.warn(`[${requestId}] Document is classified as NOT a resume (attempt ${attempt})`);
+              const err = new Error('The uploaded PDF does not appear to be a valid professional resume. Please upload a resume.');
+              err.code = 'INVALID_RESUME';
+              throw err;
+            }
             console.log(`[${requestId}] Validation OK (attempt ${attempt})`);
             break;
           } else {
