@@ -148,12 +148,30 @@ export async function POST(req: NextRequest) {
     const token = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
 
-    // 2. Store the report share token in the candidates table
+    // 2. First fetch the existing extracted_data so we can merge into it
+    const { data: existing, error: fetchError } = await supabase
+      .from("candidates")
+      .select("extracted_data")
+      .eq("id", candidateId)
+      .single();
+
+    if (fetchError) {
+      console.error("Failed to fetch candidate:", fetchError);
+      return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+    }
+
+    // 3. Embed the token inside extracted_data JSONB (no new columns needed)
+    const mergedData = {
+      ...(existing?.extracted_data || {}),
+      _reportShareToken: token,
+      _reportShareExpiresAt: expiresAt,
+    };
+
+    // 4. Update candidate: store token in extracted_data + set report_status to Shared
     const { error: updateError } = await supabase
       .from("candidates")
       .update({
-        report_share_token: token,
-        report_share_expires_at: expiresAt,
+        extracted_data: mergedData,
         report_status: "Shared",
       })
       .eq("id", candidateId);
@@ -163,11 +181,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to generate report link" }, { status: 500 });
     }
 
-    // 3. Build the report URL
+    // 5. Build the report URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const reportUrl = `${baseUrl}/report/${token}`;
 
-    // 4. Send email to the candidate
+    // 6. Send email to the candidate
     const fromName = process.env.MAIL_FROM_NAME || "KadelLabs";
     const fromEmail = process.env.MAIL_FROM || process.env.GMAIL_USER;
 

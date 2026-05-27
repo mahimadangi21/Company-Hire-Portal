@@ -6,16 +6,20 @@ import { CheckCircle2, Clock, X, BookOpen, Code2, Target, Briefcase, TrendingUp,
 export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const supabase = getServiceSupabase();
-  const { data } = await supabase
-    .from("candidates")
-    .select("name, job_applied")
-    .eq("report_share_token", token)
-    .single();
 
-  if (!data) return { title: "Interview Report — KadelLabs" };
+  // Look up candidate by token stored inside extracted_data JSONB
+  const { data: candidates } = await supabase
+    .from("candidates")
+    .select("name, job_applied, extracted_data");
+
+  const candidate = candidates?.find(
+    (c: any) => c.extracted_data?._reportShareToken === token
+  );
+
+  if (!candidate) return { title: "Interview Report — KadelLabs" };
   return {
-    title: `${data.name} — ${data.job_applied} | KadelLabs Report`,
-    description: `Interview evaluation report for ${data.name} applying for ${data.job_applied}`,
+    title: `${candidate.name} — ${candidate.job_applied} | KadelLabs Report`,
+    description: `Interview evaluation report for ${candidate.name} applying for ${candidate.job_applied}`,
     robots: "noindex, nofollow",
   };
 }
@@ -93,18 +97,22 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   const { token } = await params;
   const supabase = getServiceSupabase();
 
-  const { data: candidate, error } = await supabase
+  // Fetch all candidates and find the one whose extracted_data._reportShareToken matches
+  const { data: allCandidates, error } = await supabase
     .from("candidates")
-    .select("*")
-    .eq("report_share_token", token)
-    .single();
+    .select("*");
+
+  const candidate = allCandidates?.find(
+    (c: any) => c.extracted_data?._reportShareToken === token
+  );
 
   if (error || !candidate) {
     notFound();
   }
 
-  // Check expiry
-  if (candidate.report_share_expires_at && new Date(candidate.report_share_expires_at) < new Date()) {
+  // Check expiry stored inside extracted_data
+  const expiresAt = candidate.extracted_data?._reportShareExpiresAt;
+  if (expiresAt && new Date(expiresAt) < new Date()) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#F4F7F6" }}>
         <div style={{ textAlign: "center", padding: "3rem", maxWidth: "400px" }}>
@@ -115,6 +123,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
       </div>
     );
   }
+
 
   const data = candidate.extracted_data || {};
   const skills: string[] = candidate.skills || [];
