@@ -544,11 +544,11 @@ const ResumeUpload = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-muted)' }}>Total:</span>
-                          <strong>{selectedCandidate.name === 'Alice Smith' ? '5 years' : selectedCandidate.name === 'Bob Jones' ? '3 years' : 'N/A'}</strong>
+                          <strong>N/A</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-muted)' }}>Domain:</span>
-                          <strong>{selectedCandidate.name === 'Alice Smith' ? '5 years' : selectedCandidate.name === 'Bob Jones' ? '3 years' : 'N/A'}</strong>
+                          <strong>N/A</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-muted)' }}>Leadership:</span>
@@ -604,7 +604,7 @@ const ResumeUpload = () => {
                         ))
                       ) : (
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '1rem', backgroundColor: 'var(--gray-50)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-                          {selectedCandidate.name === 'Alice Smith' ? 'B.S. in Computer Science - University of California (2021)' : selectedCandidate.name === 'Bob Jones' ? 'M.B.A. in Product Management - NYU Stern (2022)' : 'No education records extracted.'}
+                          No education records extracted.
                         </div>
                       )}
                     </div>
@@ -638,7 +638,7 @@ const ResumeUpload = () => {
                         ))
                       ) : (
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '1rem', backgroundColor: 'var(--gray-50)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-                          {selectedCandidate.name === 'Alice Smith' ? 'Built complex responsive dashboard using React and TailwindCSS.' : selectedCandidate.name === 'Bob Jones' ? 'Managed the launch of a new SaaS dashboard analytics tool.' : 'No projects extracted.'}
+                          No projects extracted.
                         </div>
                       )}
                     </div>

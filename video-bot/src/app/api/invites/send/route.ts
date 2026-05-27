@@ -12,11 +12,10 @@ export async function POST(req: NextRequest) {
 
     const supabase = getServiceSupabase();
 
-    // 1. Fetch questions for the job role
+    // 1. Fetch questions from the common question bank
     const { data: questions, error: qError } = await supabase
       .from("questions_bank")
-      .select("*")
-      .eq("job_role", job_role);
+      .select("*");
 
     if (qError) {
       return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 });

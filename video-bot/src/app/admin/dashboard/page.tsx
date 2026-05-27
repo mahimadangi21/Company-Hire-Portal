@@ -78,17 +78,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchInterviews();
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUserEmail(data.user?.email || "");
-    });
   }, [fetchInterviews]);
 
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/admin/login");
-  };
+
 
   const copyLink = async (e: React.MouseEvent, type: "interview" | "share", interview: Interview) => {
     e.preventDefault();
@@ -157,18 +149,7 @@ export default function DashboardPage() {
           </Link>
         </nav>
 
-        <div className="border-t border-white/[0.06] pt-4 mt-4">
-          <div className="px-3 mb-3">
-            <p className="text-white/30 text-xs truncate">{userEmail}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/10 text-sm font-medium transition-all"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </div>
+
       </div>
 
       {/* Main content */}
