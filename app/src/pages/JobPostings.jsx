@@ -8,12 +8,7 @@ const JobPostings = () => {
   const [title, setTitle] = useState('');
   const [department, setDepartment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Edit state
-  const [editJobId, setEditJobId] = useState(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDepartment, setEditDepartment] = useState('');
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
 
   useEffect(() => {
     refreshJobs();
@@ -27,48 +22,55 @@ const JobPostings = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await apiFetch('/api/jobs', {
-        method: 'POST',
-        body: JSON.stringify({ title, department })
-      });
+      let res;
+      if (editingJob) {
+        res = await apiFetch('/api/jobs', {
+          method: 'PATCH',
+          body: JSON.stringify({ id: editingJob.id, title, department })
+        });
+      } else {
+        res = await apiFetch('/api/jobs', {
+          method: 'POST',
+          body: JSON.stringify({ title, department })
+        });
+      }
 
       if (res.ok) {
         setTitle('');
         setDepartment('');
+        setEditingJob(null);
         setShowForm(false);
         refreshJobs(); // Reload jobs from Supabase
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to publish job");
+        alert(err.error || "Failed to save department");
       }
     } catch (e) {
-      alert("Error publishing job");
+      alert("Error saving department");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSaveEdit = async () => {
-    if (!editTitle.trim() || !editDepartment.trim() || !editJobId) return;
+  const handleEditJob = (job) => {
+    setEditingJob(job);
+    setTitle(job.title);
+    setDepartment(job.department || '');
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-    setIsSavingEdit(true);
+  const handleDeleteJob = async (job) => {
+    if (!window.confirm(`Are you sure you want to delete ${job.title}?`)) return;
     try {
-      const res = await apiFetch('/api/jobs', {
-        method: 'PATCH',
-        body: JSON.stringify({ id: editJobId, title: editTitle, department: editDepartment })
-      });
-
+      const res = await apiFetch(`/api/jobs?id=${job.id}`, { method: 'DELETE' });
       if (res.ok) {
-        setEditJobId(null);
         refreshJobs();
       } else {
-        const err = await res.json();
-        alert(err.error || "Failed to update job");
+        alert("Failed to delete department");
       }
     } catch (e) {
-      alert("Error updating job");
-    } finally {
-      setIsSavingEdit(false);
+      alert("Error deleting department");
     }
   };
 
@@ -90,7 +92,12 @@ const JobPostings = () => {
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)' }}>Department Hierarchy</h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage parent Departments and their Sub-Departments</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+        <button className="btn btn-primary" onClick={() => {
+          setEditingJob(null);
+          setTitle('');
+          setDepartment('');
+          setShowForm(!showForm);
+        }}>
           <Plus size={16} /> Create New Department Configuration
         </button>
       </div>
@@ -98,7 +105,9 @@ const JobPostings = () => {
       {showForm && (
         <div className="card animate-slide-up" style={{ backgroundColor: 'var(--gray-50)' }}>
           <div className="card-header">
-            <h3 className="card-title" style={{ fontSize: '1.125rem' }}>New Department Configuration</h3>
+            <h3 className="card-title" style={{ fontSize: '1.125rem' }}>
+              {editingJob ? 'Edit Department Configuration' : 'New Department Configuration'}
+            </h3>
           </div>
           <div className="card-body">
             <div className="grid grid-cols-2 gap-6" style={{ marginBottom: '1.5rem' }}>
@@ -137,9 +146,14 @@ const JobPostings = () => {
                 onClick={handlePublishJob}
                 disabled={isSubmitting || !title.trim() || !department.trim()}
               >
-                {isSubmitting ? 'Publishing...' : 'Publish Department'}
+                {isSubmitting ? 'Saving...' : (editingJob ? 'Save Changes' : 'Publish Department')}
               </button>
-              <button className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>
+              <button className="btn btn-outline" onClick={() => {
+                setShowForm(false);
+                setEditingJob(null);
+                setTitle('');
+                setDepartment('');
+              }}>Cancel</button>
             </div>
           </div>
         </div>
@@ -175,78 +189,15 @@ const JobPostings = () => {
                   <tbody>
                     {subDepts.map(job => (
                       <tr key={job.id}>
-                        {editJobId === job.id ? (
-                          <>
-                            <td style={{ paddingLeft: '1.5rem' }}>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                style={{ padding: '0.25rem 0.5rem', height: '30px' }}
-                                value={editTitle} 
-                                onChange={e => setEditTitle(e.target.value)} 
-                              />
-                            </td>
-                            <td colSpan="2">
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                style={{ padding: '0.25rem 0.5rem', height: '30px', width: '100%' }}
-                                placeholder="Parent Department"
-                                value={editDepartment} 
-                                onChange={e => setEditDepartment(e.target.value)} 
-                                list="departments-list-edit"
-                              />
-                              <datalist id="departments-list-edit">
-                                {uniqueDepartments.map(dept => (
-                                  <option key={dept} value={dept} />
-                                ))}
-                              </datalist>
-                            </td>
-                            <td>
-                              <div className="flex gap-2">
-                                <button 
-                                  className="btn btn-primary" 
-                                  style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
-                                  onClick={handleSaveEdit}
-                                  disabled={isSavingEdit || !editTitle.trim() || !editDepartment.trim()}
-                                >
-                                  {isSavingEdit ? 'Saving...' : 'Save'}
-                                </button>
-                                <button 
-                                  className="btn btn-outline" 
-                                  style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
-                                  onClick={() => setEditJobId(null)}
-                                  disabled={isSavingEdit}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td style={{ fontWeight: '500', paddingLeft: '1.5rem' }}>{job.title}</td>
-                            <td><span className="badge badge-success">{job.status || 'Active'}</span></td>
-                            <td>{job.applicants || 0} applied</td>
-                            <td>
-                              <div className="flex gap-2">
-                                <button 
-                                  className="btn btn-ghost" 
-                                  style={{ padding: '0.25rem' }}
-                                  onClick={() => {
-                                    setEditJobId(job.id);
-                                    setEditTitle(job.title);
-                                    setEditDepartment(job.department || '');
-                                  }}
-                                  title="Edit Sub-Department"
-                                >
-                                  <Edit2 size={16} />
-                                </button>
-                                <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--warning)' }}><Archive size={16} /></button>
-                              </div>
-                            </td>
-                          </>
-                        )}
+                        <td style={{ fontWeight: '500', paddingLeft: '1.5rem' }}>{job.title}</td>
+                        <td><span className="badge badge-success">{job.status || 'Active'}</span></td>
+                        <td>{job.applicants || 0} applied</td>
+                        <td>
+                          <div className="flex gap-2">
+                            <button className="btn btn-ghost" style={{ padding: '0.25rem' }} onClick={() => handleEditJob(job)} title="Edit"><Edit2 size={16} /></button>
+                            <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--danger)' }} onClick={() => handleDeleteJob(job)} title="Delete"><Archive size={16} /></button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
