@@ -27,16 +27,10 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/admin/login"
-              className="text-sm text-white/70 hover:text-white transition-colors font-medium px-4 py-2"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/admin/signup"
+              href="/admin/dashboard"
               className="text-sm font-semibold bg-white text-[#050810] hover:bg-white/90 transition-all px-4 py-2 rounded-xl"
             >
-              Get started
+              Dashboard
             </Link>
           </div>
         </div>
@@ -340,7 +334,7 @@ export default function LandingPage() {
             © {new Date().getFullYear()} kadellabs. All rights reserved.
           </p>
           <div className="flex gap-4 text-xs text-white/30">
-            <Link href="/admin/login" className="hover:text-white/60 transition-colors">Admin Login</Link>
+            <Link href="/admin/dashboard" className="hover:text-white/60 transition-colors">Admin Dashboard</Link>
           </div>
         </div>
       </footer>

@@ -45,35 +45,50 @@ const QuestionBankModal = ({ onClose }) => {
   };
 
   const handleAddQuestion = async () => {
-    const targetRole = newRole.trim() || selectedRole;
-    if (!targetRole || !newQuestionText.trim()) return;
+    if (!newQuestionText.trim()) return;
 
     try {
       const res = await fetch(`${NEXT_JS_URL}/api/questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          job_role: targetRole,
+          job_role: 'Common',
           question_text: newQuestionText.trim(),
           is_mandatory: isMandatory
         })
       });
       if (res.ok) {
         setNewQuestionText('');
-        setNewRole('');
         setIsMandatory(false);
         fetchQuestions();
-        setSelectedRole(targetRole);
       }
     } catch (e) {
       console.error(e);
     }
   };
 
-  const filteredQuestions = questions.filter(q => q.job_role === selectedRole);
+  const handleDeleteQuestion = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
+
+    try {
+      const res = await fetch(`${NEXT_JS_URL}/api/questions?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchQuestions();
+      } else {
+        alert("Failed to delete question");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error deleting question");
+    }
+  };
+
+  const filteredQuestions = questions;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
       <div className="card" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 className="card-title">Manage Question Bank</h3>
@@ -84,32 +99,7 @@ const QuestionBankModal = ({ onClose }) => {
           {/* Add New Section */}
           <div style={{ backgroundColor: 'var(--gray-50)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
             <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>Add New Question</h4>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <label className="form-label">Job Role</label>
-                <select 
-                  className="form-select" 
-                  value={newRole ? '' : selectedRole} 
-                  onChange={e => setSelectedRole(e.target.value)}
-                  disabled={!!newRole}
-                >
-                  <option value="">Select Existing Role...</option>
-                  {allRoles.map(role => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ flex: 1 }}>
-                <label className="form-label">Or Create New Role</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="e.g. Frontend Developer" 
-                  value={newRole}
-                  onChange={e => setNewRole(e.target.value)}
-                />
-              </div>
-            </div>
+            {/* Job role input removed for common question bank */}
             
             <div style={{ marginBottom: '1rem' }}>
               <label className="form-label">Question Text</label>
@@ -132,7 +122,7 @@ const QuestionBankModal = ({ onClose }) => {
                 Make this a mandatory question
               </label>
               
-              <button className="btn btn-primary" onClick={handleAddQuestion} disabled={!newQuestionText.trim() || (!newRole && !selectedRole)}>
+              <button className="btn btn-primary" onClick={handleAddQuestion} disabled={!newQuestionText.trim()}>
                 <Plus size={16} /> Add Question
               </button>
             </div>
@@ -141,23 +131,13 @@ const QuestionBankModal = ({ onClose }) => {
           {/* List Section */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h4 style={{ fontSize: '0.875rem', fontWeight: 600 }}>Existing Questions</h4>
-            <select 
-              className="form-select" 
-              style={{ width: '200px' }}
-              value={selectedRole}
-              onChange={e => setSelectedRole(e.target.value)}
-            >
-              {allRoles.map(role => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
           </div>
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>Loading...</div>
           ) : filteredQuestions.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)' }}>
-              No questions found for this role. Add one above!
+              No questions found. Add one above!
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -167,6 +147,22 @@ const QuestionBankModal = ({ onClose }) => {
                     <span style={{ fontSize: '0.875rem', fontWeight: 500, display: 'block' }}>Q{i+1}. {q.question_text}</span>
                     {q.is_mandatory && <span className="badge badge-success" style={{ marginTop: '0.25rem' }}>Mandatory</span>}
                   </div>
+                  <button 
+                    onClick={() => handleDeleteQuestion(q.id)}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer', 
+                      color: 'var(--danger)', 
+                      padding: '0.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Delete Question"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               ))}
             </div>

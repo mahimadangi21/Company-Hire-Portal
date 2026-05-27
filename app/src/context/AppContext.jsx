@@ -9,10 +9,7 @@ const API_URL = 'http://localhost:3000';
 export const AppProvider = ({ children }) => {
   const [jobs, setJobs] = useState([]);
   const [candidates, setCandidates] = useState([]);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'New resume uploaded for Frontend Engineer', time: '5m ago', read: false },
-    { id: 2, text: 'Alice Smith completed Video Bot Screening', time: '1h ago', read: true }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const fetchJobs = async () => {
     try {

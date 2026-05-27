@@ -164,16 +164,6 @@ const VideoBot = () => {
               </select>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
-              <label className="form-label">Job Role (Questions)</label>
-              <select className="form-select" value={inviteJobRole} onChange={e => setInviteJobRole(e.target.value)}>
-                <option value="">Choose role...</option>
-                {jobs.map(job => (
-                  <option key={job.id} value={job.title}>{job.title}</option>
-                ))}
-              </select>
-            </div>
-
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label className="form-label">Number of Questions to Ask</label>
               <input 
@@ -198,12 +188,12 @@ const VideoBot = () => {
                   setEmailModal({
                     candidate,
                     email: candidate.email,
-                    jobRole: inviteJobRole,
+                    jobRole: candidate.jobApplied || 'Common',
                     questionCount: inviteQuestionCount
                   });
                 }
               }}
-              disabled={sending || !inviteCandidateId || !inviteJobRole}
+              disabled={sending || !inviteCandidateId}
             >
               <Send size={16} /> Send Interview Link
             </button>
@@ -214,7 +204,7 @@ const VideoBot = () => {
         {/* Unified Dashboard Table (2 columns) */}
         <div className="card" style={{ gridColumn: 'span 2' }}>
           <div className="card-header flex justify-between items-center">
-            <h3 className="card-title">Interview Status Dashboard</h3>
+            <h3 className="card-title">Common Interview Questions</h3>
             <button className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }} onClick={() => setShowQuestionModal(true)}>
               <Settings2 size={16} /> Manage Question Bank
             </button>
@@ -328,7 +318,7 @@ const VideoBot = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
+          zIndex: 9999,
           padding: '2rem',
           animation: 'fadeIn 0.2s ease-out'
         }} onClick={() => !sending && setEmailModal(null)}>

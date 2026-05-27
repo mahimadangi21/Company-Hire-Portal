@@ -58,3 +58,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: "question id is required for deletion" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabase();
+    const { error } = await supabase
+      .from("questions_bank")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting question:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
