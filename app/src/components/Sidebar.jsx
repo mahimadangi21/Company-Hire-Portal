@@ -24,12 +24,13 @@ const Sidebar = () => {
       boxShadow: '4px 0 15px rgba(14,45,123,0.1)'
     }}>
       <div style={{ 
-        padding: '1.25rem 1.5rem', 
+        height: '73px', 
         backgroundColor: '#ffffff', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        borderBottom: '1px solid rgba(14, 45, 123, 0.1)'
+        borderBottom: '1px solid var(--border)',
+        padding: '0 1.5rem'
       }}>
         <img 
           src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
@@ -65,32 +66,35 @@ const Sidebar = () => {
             )}
           </NavLink>
         ))}
-      </nav>
+        {/* Spacer to push Logout to the bottom of the nav container */}
+        <div style={{ flex: 1 }} />
+        
+        {/* Divider above Logout */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
 
-      <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
         <button 
           onMouseEnter={() => setIsLogoutHovered(true)}
           onMouseLeave={() => setIsLogoutHovered(false)}
-          className="btn" 
           style={{ 
             width: '100%', 
-            justifyContent: 'flex-start', 
-            color: isLogoutHovered ? 'white' : 'rgba(255,255,255,0.7)', 
-            backgroundColor: isLogoutHovered ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-            padding: '0.75rem',
-            border: 'none',
-            borderRadius: 'var(--radius-lg)',
-            transition: 'all 0.2s ease',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.75rem',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            color: isLogoutHovered ? 'white' : 'rgba(255,255,255,0.7)', 
+            backgroundColor: isLogoutHovered ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+            borderLeft: '3px solid transparent',
+            border: 'none',
+            fontWeight: '500',
+            transition: 'all 0.2s ease',
             cursor: 'pointer'
           }}
         >
           <LogOut size={20} color={isLogoutHovered ? 'var(--danger)' : 'rgba(255,255,255,0.7)'} />
           Logout
         </button>
-      </div>
+      </nav>
     </aside>
   );
 };

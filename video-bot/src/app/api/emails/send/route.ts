@@ -2,13 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { getInterviewUrl } from "@/lib/utils";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+const transporter = nodemailer.createTransport(
+  process.env.MAIL_SERVER
+    ? {
+        host: process.env.MAIL_SERVER,
+        port: parseInt(process.env.MAIL_PORT || "465"),
+        secure: process.env.MAIL_SSL_TLS === "true" || process.env.MAIL_SSL_TLS === "True" || process.env.MAIL_SSL_TLS === "1",
+        auth: {
+          user: process.env.MAIL_USERNAME,
+          pass: process.env.MAIL_PASSWORD,
+        },
+      }
+    : {
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD,
+        },
+      }
+);
 
 function formInviteEmailTemplate(
   candidateName: string,
@@ -267,8 +279,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email type" }, { status: 400 });
     }
 
+    const fromName = process.env.MAIL_FROM_NAME || "kadellabs";
+    const fromEmail = process.env.MAIL_FROM || process.env.GMAIL_USER;
+
     await transporter.sendMail({
-      from: `"kadellabs" <${process.env.GMAIL_USER}>`,
+      from: `"${fromName}" <${fromEmail}>`,
       to,
       subject,
       html,
