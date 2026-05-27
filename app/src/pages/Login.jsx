@@ -20,7 +20,7 @@ const Login = () => {
           <img 
             src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
             alt="KadelLabs Logo" 
-            style={{ height: '48px', margin: '0 auto 1.5rem', objectFit: 'contain' }}
+            style={{ height: '76px', margin: '0 auto 1.5rem', objectFit: 'contain' }}
           />
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--brand-navy)' }}>Welcome Back</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Sign in to the Admin Dashboard</p>

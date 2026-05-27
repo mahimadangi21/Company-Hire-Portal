@@ -24,7 +24,7 @@ const Sidebar = () => {
       boxShadow: '4px 0 15px rgba(14,45,123,0.1)'
     }}>
       <div style={{ 
-        height: '73px', 
+        height: '92px', 
         backgroundColor: '#ffffff', 
         display: 'flex', 
         alignItems: 'center', 
@@ -35,7 +35,7 @@ const Sidebar = () => {
         <img 
           src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
           alt="KadelLabs Logo" 
-          style={{ height: '38px', objectFit: 'contain' }}
+          style={{ height: '54px', objectFit: 'contain' }}
         />
       </div>
       

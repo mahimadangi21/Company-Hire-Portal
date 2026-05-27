@@ -170,7 +170,7 @@ const CandidateForms = () => {
                 <img 
                   src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
                   alt="Logo" 
-                  style={{ height: '24px', margin: '0 auto 1rem', objectFit: 'contain' }}
+                  style={{ height: '44px', margin: '0 auto 1rem', objectFit: 'contain' }}
                 />
                 <h4 style={{ fontWeight: '700', color: 'var(--brand-navy)' }}>Candidate Information</h4>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Please review and submit your details.</p>
