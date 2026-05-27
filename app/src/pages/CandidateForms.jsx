@@ -129,25 +129,10 @@ const CandidateForms = () => {
                             <>
                               <button 
                                 className="btn btn-primary" 
-                                style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}
-                                onClick={async () => {
-                                  try {
-                                    const res = await fetch('http://localhost:3000/api/candidates', {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({
-                                        id: candidate.id,
-                                        form_status: 'Submitted',
-                                        stage: 'Video Interview'
-                                      })
-                                    });
-                                    if (res.ok) refreshCandidates();
-                                  } catch (e) {
-                                    console.error(e);
-                                  }
-                                }}
+                                style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}
+                                onClick={() => setEmailModal({ candidate, email: candidate.email })}
                               >
-                                Mark Submitted
+                                <Send size={14} style={{ marginRight: '4px' }}/> Send Form
                               </button>
                               <button 
                                 className="btn btn-outline" 

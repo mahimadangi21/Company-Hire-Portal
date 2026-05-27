@@ -280,3 +280,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
   }
 }
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 });
+}
