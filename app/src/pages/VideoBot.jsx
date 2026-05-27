@@ -19,7 +19,8 @@ const VideoBot = () => {
   const [inviteDepartment, setInviteDepartment] = useState('Technology and Delivery');
   const [inviteSubDepartment, setInviteSubDepartment] = useState('PHP');
   const [sending, setSending] = useState(false);
-  const [emailModal, setEmailModal] = useState(null);
+  const [inviteSubject, setInviteSubject] = useState('');
+  const [inviteBody, setInviteBody] = useState('');
   
   // Define some default examples as requested
   const DEFAULT_DEPARTMENTS = ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
@@ -36,6 +37,20 @@ const VideoBot = () => {
   useEffect(() => {
     fetchInterviews();
   }, [showQuestionModal]); // refresh when modal closes
+
+  useEffect(() => {
+    if (inviteCandidateId) {
+      const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
+      if (candidate) {
+        const jobRole = candidate.jobApplied || 'Common';
+        setInviteSubject(`Your Interview Invitation — ${jobRole} Position`);
+        setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video interview for the ${jobRole} position. Our AI-powered platform will guide you through the process.\n\nWhat to expect:\n• The AI will ask you questions using voice\n• You control when to start and stop recording each answer\n• Your webcam will be on during the interview\n• Ensure you are in a quiet, well-lit space`);
+      }
+    } else {
+      setInviteSubject('');
+      setInviteBody('');
+    }
+  }, [inviteCandidateId, candidates]);
 
   const copyToClipboard = (text, id) => {
     // Execute synchronous copy first to guarantee it runs inside the user gesture
@@ -120,7 +135,8 @@ const VideoBot = () => {
         alert("Invite sent successfully!");
         fetchInterviews();
         setInviteCandidateId('');
-        setEmailModal(null);
+        setInviteSubject('');
+        setInviteBody('');
       } else {
         const err = await res.json();
         alert(err.error || "Failed to send invite");
@@ -130,6 +146,24 @@ const VideoBot = () => {
     }
     setSending(false);
   };
+
+  const filteredCandidatesForDropdown = candidates.filter(c => {
+    const job = jobs.find(j => j.title === c.jobApplied);
+    if (!job) return false;
+    // Strict Department check based on the selected Department
+    if (job.department !== inviteDepartment) return false;
+    
+    // Optional: Filter by Sub-Department (if the job title includes it loosely)
+    if (inviteSubDepartment && inviteSubDepartment !== 'General') {
+       if (!job.title.toLowerCase().includes(inviteSubDepartment.toLowerCase()) && 
+           !c.jobApplied.toLowerCase().includes(inviteSubDepartment.toLowerCase())) {
+          // If we want strictly hierarchical, we can uncomment the return false below.
+          // For now, we just rely on Department, as Jobs don't strictly have a Sub-Department.
+          // return false; 
+       }
+    }
+    return true;
+  });
 
   const handleDeleteInterview = async (id) => {
     if (!window.confirm("Are you sure you want to delete this interview record?")) return;
@@ -166,16 +200,6 @@ const VideoBot = () => {
           <div className="card-body">
             
             <div className="form-group" style={{ marginBottom: '1rem' }}>
-              <label className="form-label">Select Candidate</label>
-              <select className="form-select" value={inviteCandidateId} onChange={e => setInviteCandidateId(e.target.value)}>
-                <option value="">Choose candidate...</option>
-                {candidates.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Job'})</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
               <label className="form-label">Department</label>
               <select 
                 className="form-select" 
@@ -184,6 +208,7 @@ const VideoBot = () => {
                   setInviteDepartment(e.target.value);
                   const subs = DEFAULT_SUB_DEPARTMENTS[e.target.value] || ['General'];
                   setInviteSubDepartment(subs[0]);
+                  setInviteCandidateId('');
                 }}
               >
                 {DEFAULT_DEPARTMENTS.map(d => (
@@ -197,7 +222,10 @@ const VideoBot = () => {
               <select 
                 className="form-select"
                 value={inviteSubDepartment}
-                onChange={e => setInviteSubDepartment(e.target.value)}
+                onChange={e => {
+                  setInviteSubDepartment(e.target.value);
+                  setInviteCandidateId('');
+                }}
               >
                 {(DEFAULT_SUB_DEPARTMENTS[inviteDepartment] || ['General']).map(sd => (
                   <option key={sd} value={sd}>{sd}</option>
@@ -208,6 +236,46 @@ const VideoBot = () => {
               </span>
             </div>
 
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Select Candidate</label>
+              <select className="form-select" value={inviteCandidateId} onChange={e => setInviteCandidateId(e.target.value)}>
+                <option value="">Choose candidate...</option>
+                {filteredCandidatesForDropdown.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Job'})</option>
+                ))}
+              </select>
+              {filteredCandidatesForDropdown.length === 0 && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem', display: 'block' }}>
+                  No candidates found for this department.
+                </span>
+              )}
+            </div>
+
+            {inviteCandidateId && (
+              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Edit Email Details</h4>
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Subject</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    value={inviteSubject}
+                    onChange={(e) => setInviteSubject(e.target.value)}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Email Body</label>
+                  <textarea 
+                    className="form-input" 
+                    rows="6"
+                    value={inviteBody}
+                    onChange={(e) => setInviteBody(e.target.value)}
+                    style={{ resize: 'vertical', fontSize: '0.875rem' }}
+                  />
+                </div>
+              </div>
+            )}
+
             <button 
               className="btn btn-primary" 
               style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
@@ -215,31 +283,20 @@ const VideoBot = () => {
                 const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
                 if (candidate) {
                   const jobRole = candidate.jobApplied || 'Common';
-                  const defaultSubject = `Your Interview Invitation — ${jobRole} Position`;
-                  const defaultBody = `Hello ${candidate.name} 👋,
-
-You've been invited to complete a video interview for the ${jobRole} position. Our AI-powered platform will guide you through the process.
-
-What to expect:
-• The AI will ask you questions using voice
-• You control when to start and stop recording each answer
-• Your webcam will be on during the interview
-• Ensure you are in a quiet, well-lit space`;
-                  
-                  setEmailModal({
-                    candidate,
-                    email: candidate.email,
-                    jobRole: jobRole,
-                    department: inviteDepartment,
-                    subDepartment: inviteSubDepartment,
-                    subject: defaultSubject,
-                    body: defaultBody
-                  });
+                  handleSendInvite(
+                    candidate, 
+                    candidate.email, 
+                    jobRole, 
+                    inviteDepartment, 
+                    inviteSubDepartment,
+                    inviteSubject,
+                    inviteBody
+                  );
                 }
               }}
-              disabled={sending || !inviteCandidateId}
+              disabled={sending || !inviteCandidateId || !inviteSubject || !inviteBody}
             >
-              <Send size={16} /> Send Interview Link
+              {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <><Send size={16} /> Send Mail</>}
             </button>
             
           </div>
@@ -348,122 +405,6 @@ What to expect:
             </table>
           </div>
         </div>
-
-      {/* Email Verification Modal */}
-      {emailModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '2rem',
-          animation: 'fadeIn 0.2s ease-out'
-        }} onClick={() => !sending && setEmailModal(null)}>
-          <div style={{
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-xl)',
-            width: '100%',
-            maxWidth: '600px',
-            boxShadow: 'var(--shadow-xl)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            border: '1px solid var(--border)'
-          }} onClick={(e) => e.stopPropagation()}>
-            
-            <div style={{
-              padding: '1.5rem 2rem',
-              borderBottom: '1px solid var(--gray-100)',
-              backgroundColor: '#f8fafb'
-            }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--brand-navy)' }}>
-                Verify & Edit Invite Email
-              </h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                Review and customize the invitation details for <strong style={{ color: 'var(--brand-navy)' }}>{emailModal.candidate.name}</strong> before sending.
-              </p>
-            </div>
-
-            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '70vh', overflowY: 'auto' }}>
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: '600' }}>Email Address</label>
-                <input 
-                  type="email" 
-                  className="form-input" 
-                  value={emailModal.email}
-                  onChange={(e) => setEmailModal({ ...emailModal, email: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: '600' }}>Subject</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={emailModal.subject}
-                  onChange={(e) => setEmailModal({ ...emailModal, subject: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: '600' }}>Email Body</label>
-                <textarea 
-                  className="form-input" 
-                  rows="7"
-                  style={{ fontFamily: 'inherit', resize: 'vertical', minHeight: '120px' }}
-                  value={emailModal.body}
-                  onChange={(e) => setEmailModal({ ...emailModal, body: e.target.value })}
-                />
-                <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
-                  The candidate portal link (Begin Interview) and template branding will be wrapped around this text.
-                </span>
-              </div>
-            </div>
-
-            <div style={{
-              padding: '1.25rem 2rem',
-              borderTop: '1px solid var(--gray-100)',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '1rem',
-              backgroundColor: '#f8fafb'
-            }}>
-              <button 
-                className="btn btn-outline" 
-                onClick={() => setEmailModal(null)}
-                disabled={sending}
-                style={{ padding: '0.5rem 1.5rem' }}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                disabled={sending || !emailModal.email || !emailModal.subject || !emailModal.body}
-                style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => handleSendInvite(
-                  emailModal.candidate, 
-                  emailModal.email, 
-                  emailModal.jobRole, 
-                  emailModal.department, 
-                  emailModal.subDepartment,
-                  emailModal.subject,
-                  emailModal.body
-                )}
-              >
-                {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : 'Send Mail'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       </div>
     </div>
