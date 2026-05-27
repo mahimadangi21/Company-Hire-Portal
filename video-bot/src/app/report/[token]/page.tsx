@@ -319,7 +319,6 @@ export default async function CandidateReportPage({ params }: { params: Promise<
           <div style={{ display: "flex", alignItems: "center", gap: "0", overflowX: "auto", paddingBottom: "4px" }}>
             {[
               { label: "Resume", status: candidate.resume_status },
-              { label: "Form", status: candidate.form_status },
               { label: "Video", status: candidate.video_status },
               { label: "Technical", status: candidate.tech_status },
               { label: "Report", status: candidate.report_status },

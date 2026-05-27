@@ -11,8 +11,6 @@ const ResumeUpload = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [status, setStatus] = useState({ type: '', message: '' });
   const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [emailModal, setEmailModal] = useState(null);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   // Close dropdown when clicking outside
@@ -129,11 +127,11 @@ const ResumeUpload = () => {
           skills: data.skillExtraction?.extractedSkills || [],
           job_applied: selectedJob,
           resume_status: 'Parsed',
-          form_status: 'Pending',
+          form_status: 'N/A',
           video_status: 'Pending',
           tech_status: 'Pending',
           report_status: 'Not Shared',
-          stage: 'Candidate Form',
+          stage: 'Resume Upload',
           resume_score: Math.round(75 + (data.totalExperienceAnalysis?.domainExperience || 0) * 2 + Math.random() * 5),
           extracted_data: data
         };
@@ -145,14 +143,11 @@ const ResumeUpload = () => {
         });
 
         if (dbRes.ok) {
-          const createdCandidate = await dbRes.json();
           refreshCandidates();
           setStatus({ 
             type: 'success', 
             message: `Successfully parsed! Extracted profile for ${payload.name}.` 
           });
-          // Automatically trigger the email verification & send form invitation modal!
-          setEmailModal({ candidate: { ...payload, id: createdCandidate.id }, email: payload.email });
         } else {
           const dbErr = await dbRes.json();
           setStatus({ 
@@ -305,14 +300,13 @@ const ResumeUpload = () => {
                 <th>Candidate Name</th>
                 <th>Email</th>
                 <th>Job Applied</th>
-                <th>Form Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredCandidates.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                     No candidates found.
                   </td>
                 </tr>
@@ -333,21 +327,6 @@ const ResumeUpload = () => {
                     <td style={{ color: 'var(--gray-600)' }}>{candidate.email}</td>
                     <td>{candidate.jobApplied}</td>
                     <td>
-                      {candidate.formStatus === 'Submitted' ? (
-                        <span className="badge badge-success" style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center' }}>
-                          <CheckCircle size={12} /> Submitted
-                        </span>
-                      ) : candidate.formStatus === 'Pending' ? (
-                        <span className="badge badge-warning" style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center' }}>
-                          <Clock size={12} /> Pending
-                        </span>
-                      ) : (
-                        <span className="badge badge-info" style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.15)' }}>
-                          <Clock size={12} /> Not Sent
-                        </span>
-                      )}
-                    </td>
-                    <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button 
                           className="btn btn-outline" 
@@ -356,31 +335,6 @@ const ResumeUpload = () => {
                         >
                           View
                         </button>
-                        {candidate.formStatus === 'Submitted' ? (
-                          <button 
-                            className="btn btn-outline" 
-                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
-                            disabled
-                          >
-                            Submitted
-                          </button>
-                        ) : candidate.formStatus === 'Pending' ? (
-                          <button 
-                            className="btn btn-primary" 
-                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            onClick={() => setEmailModal({ candidate, email: candidate.email })}
-                          >
-                            <Mail size={12} /> Resend
-                          </button>
-                        ) : (
-                          <button 
-                            className="btn btn-secondary" 
-                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            onClick={() => setEmailModal({ candidate, email: candidate.email })}
-                          >
-                            <Send size={12} /> Send Form
-                          </button>
-                        )}
                         <div style={{ position: 'relative' }}>
                           <button 
                             className="btn btn-ghost" 
@@ -703,130 +657,7 @@ const ResumeUpload = () => {
         </div>
       )}
 
-      {/* Email Verification Modal */}
-      {emailModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '2rem',
-          animation: 'fadeIn 0.2s ease-out'
-        }} onClick={() => !isSendingEmail && setEmailModal(null)}>
-          <div style={{
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-xl)',
-            width: '100%',
-            maxWidth: '450px',
-            boxShadow: 'var(--shadow-xl)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            border: '1px solid var(--border)'
-          }} onClick={(e) => e.stopPropagation()}>
-            
-            <div style={{
-              padding: '1.5rem 2rem',
-              borderBottom: '1px solid var(--gray-100)',
-              backgroundColor: '#f8fafb'
-            }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--brand-navy)' }}>
-                Verify Email Address
-              </h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                Please confirm or edit the email address for <strong style={{ color: 'var(--brand-navy)' }}>{emailModal.candidate.name}</strong> before sending the form link.
-              </p>
-            </div>
 
-            <div style={{ padding: '2rem' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Email Address</label>
-                <input 
-                  type="email" 
-                  className="form-input" 
-                  value={emailModal.email}
-                  onChange={(e) => setEmailModal({ ...emailModal, email: e.target.value })}
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            <div style={{
-              padding: '1.25rem 2rem',
-              borderTop: '1px solid var(--gray-100)',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '1rem',
-              backgroundColor: '#f8fafb'
-            }}>
-              <button 
-                className="btn btn-outline" 
-                onClick={() => setEmailModal(null)}
-                disabled={isSendingEmail}
-                style={{ padding: '0.5rem 1.5rem' }}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                disabled={isSendingEmail || !emailModal.email}
-                style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={async () => {
-                  setIsSendingEmail(true);
-                  try {
-                    const res = await fetch('http://localhost:3000/api/emails/send', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        type: 'form_invite',
-                        to: emailModal.email,
-                        candidateName: emailModal.candidate.name,
-                        jobRole: emailModal.candidate.jobApplied,
-                        candidateId: emailModal.candidate.id
-                      })
-                    });
-                    
-                    if (res.ok) {
-                      // Update candidate email, set form_status to 'Pending' and stage to 'Candidate Form'
-                      await fetch('http://localhost:3000/api/candidates', {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          id: emailModal.candidate.id,
-                          email: emailModal.email,
-                          form_status: 'Pending',
-                          stage: 'Candidate Form'
-                        })
-                      });
-                      refreshCandidates();
-
-                      alert(`Form invitation link sent successfully to ${emailModal.candidate.name} (${emailModal.email})!`);
-                      setEmailModal(null);
-                    } else {
-                      alert('Failed to send form invitation');
-                    }
-                  } catch (e) {
-                    console.error(e);
-                    alert('Error sending form invitation');
-                  } finally {
-                    setIsSendingEmail(false);
-                  }
-                }}
-              >
-                {isSendingEmail ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : 'Send Mail'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
