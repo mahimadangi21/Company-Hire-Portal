@@ -388,10 +388,12 @@ export default function InterviewPage() {
 
   // ---- UI Renders ----
 
+  // ---- UI Renders ----
+
   if (stage === "loading") {
     return (
-      <div className="min-h-screen bg-[#050810] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white/20" />
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
       </div>
     );
   }
@@ -399,7 +401,7 @@ export default function InterviewPage() {
   if (stage === "expired") {
     return (
       <FullScreenMessage
-        icon={<AlertCircle className="w-10 h-10 text-amber-400" />}
+        icon={<AlertCircle className="w-10 h-10 text-amber-500" />}
         color="amber"
         title="Link Expired"
         message="This interview link has expired. Please contact your recruiter for a new link."
@@ -410,7 +412,7 @@ export default function InterviewPage() {
   if (stage === "already-completed") {
     return (
       <FullScreenMessage
-        icon={<CheckCircle2 className="w-10 h-10 text-emerald-400" />}
+        icon={<CheckCircle2 className="w-10 h-10 text-emerald-500" />}
         color="emerald"
         title="Already Completed"
         message="This interview has already been completed. Thank you for your time!"
@@ -421,7 +423,7 @@ export default function InterviewPage() {
   if (stage === "error") {
     return (
       <FullScreenMessage
-        icon={<AlertCircle className="w-10 h-10 text-red-400" />}
+        icon={<AlertCircle className="w-10 h-10 text-red-500" />}
         color="red"
         title="Something went wrong"
         message={error || "An unexpected error occurred."}
@@ -432,7 +434,7 @@ export default function InterviewPage() {
   if (stage === "completed") {
     return (
       <FullScreenMessage
-        icon={<CheckCircle2 className="w-14 h-14 text-emerald-400" />}
+        icon={<CheckCircle2 className="w-14 h-14 text-emerald-500" />}
         color="emerald"
         title="Interview Complete! 🎉"
         message={`Thank you, ${interview?.candidate_name?.split(" ")[0]}! Your interview for ${interview?.job_role} has been submitted. We'll be in touch soon.`}
@@ -443,22 +445,22 @@ export default function InterviewPage() {
 
   if (stage === "processing") {
     return (
-      <div className="min-h-screen bg-[#050810] flex items-center justify-center">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-6">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-slate-800">
+        <div className="text-center max-w-sm p-8 bg-white border border-[#E2E8F0] rounded-2xl shadow-sm animate-pulse">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Processing your interview</h2>
-          <p className="text-white/40 text-sm mb-6">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Processing your interview</h2>
+          <p className="text-slate-500 text-sm mb-6 font-medium">
             Merging your answers and uploading the final video...
           </p>
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
             <div
               className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all duration-500"
               style={{ width: `${processingProgress}%` }}
             />
           </div>
-          <p className="text-white/30 text-xs mt-3">{processingProgress}%</p>
+          <p className="text-slate-400 text-xs font-bold mt-3">{processingProgress}%</p>
         </div>
       </div>
     );
@@ -466,22 +468,22 @@ export default function InterviewPage() {
 
   if (stage === "welcome" && interview) {
     return (
-      <div className="min-h-screen bg-[#050810] flex items-center justify-center p-6">
-        <div className="max-w-lg w-full text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-500/20">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 text-slate-800">
+        <div className="max-w-lg w-full text-center p-8 bg-white border border-[#E2E8F0] rounded-2xl shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
             <Video className="w-8 h-8 text-white" />
           </div>
-          <p className="text-blue-400 text-xs font-semibold uppercase tracking-wider mb-3">Video Interview</p>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-3">Video Interview</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
             Hello, {interview.candidate_name.split(" ")[0]} 👋
           </h1>
-          <p className="text-white/40 text-base mb-1">
+          <p className="text-slate-400 text-base mb-1">
             You&apos;re interviewing for
           </p>
-          <p className="text-white font-semibold text-lg mb-8">{interview.job_role}</p>
+          <p className="text-slate-800 font-bold text-lg mb-8">{interview.job_role}</p>
 
-          <div className="p-5 rounded-2xl border border-white/[0.06] bg-white/[0.03] text-left space-y-3 mb-8">
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">What to expect</p>
+          <div className="p-5 rounded-2xl border border-[#E2E8F0] bg-slate-50/50 text-left space-y-3 mb-8">
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">What to expect</p>
             {[
               `${interview.questions.length} questions asked by our AI`,
               "You control when to start and stop recording each answer",
@@ -490,8 +492,8 @@ export default function InterviewPage() {
               "This is a one-time link — do not refresh the page",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span className="text-white/50 text-sm">{item}</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                <span className="text-slate-600 text-sm font-medium">{item}</span>
               </div>
             ))}
           </div>
@@ -510,23 +512,23 @@ export default function InterviewPage() {
 
   if (stage === "permissions") {
     return (
-      <div className="min-h-screen bg-[#050810] flex items-center justify-center p-6">
-        <div className="max-w-lg w-full text-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 text-slate-800">
+        <div className="max-w-lg w-full text-center p-8 bg-white border border-[#E2E8F0] rounded-2xl shadow-sm">
           <div className="flex gap-4 justify-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <Video className="w-6 h-6 text-white/50" />
+            <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center shadow-sm">
+              <Video className="w-6 h-6 text-slate-500" />
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <Mic className="w-6 h-6 text-white/50" />
+            <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center shadow-sm">
+              <Mic className="w-6 h-6 text-slate-500" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Camera & Microphone Access</h2>
-          <p className="text-white/40 text-sm mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Camera & Microphone Access</h2>
+          <p className="text-slate-500 text-sm mb-8">
             We need access to your camera and microphone to record your interview answers. When prompted, click &quot;Allow&quot;.
           </p>
 
           {error && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-5">
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm mb-5 font-medium shadow-sm">
               {error}
             </div>
           )}
@@ -545,24 +547,24 @@ export default function InterviewPage() {
 
   if (stage === "instructions" && interview) {
     return (
-      <div className="min-h-screen bg-[#050810] flex items-center justify-center p-6">
-        <div className="max-w-2xl w-full">
-          <div className="grid grid-cols-2 gap-6 items-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 text-slate-800">
+        <div className="max-w-3xl w-full p-8 bg-white border border-[#E2E8F0] rounded-2xl shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             {/* Webcam preview */}
-            <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 aspect-video">
+            <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-200 aspect-video shadow-md">
               <canvas ref={canvasRef} className="w-full h-full object-cover hidden" />
               <video ref={videoRef} className="w-full h-full object-cover" muted playsInline style={{ transform: "scaleX(-1)" }} />
               {isCameraReady && (
                 <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 rounded-full px-2.5 py-1">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-white text-xs font-medium">Camera ready</span>
+                  <span className="text-white text-xs font-semibold">Camera ready</span>
                 </div>
               )}
             </div>
 
             {/* Instructions */}
             <div>
-              <h2 className="text-2xl font-bold text-white mb-4">Ready to start?</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Ready to start?</h2>
               <div className="space-y-4 mb-6">
                 {[
                   { step: "1", text: "AI reads the question aloud", icon: Volume2 },
@@ -573,20 +575,20 @@ export default function InterviewPage() {
                   const Icon = s.icon;
                   return (
                     <div key={s.step} className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-3.5 h-3.5 text-blue-400" />
+                      <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <Icon className="w-3.5 h-3.5 text-blue-600" />
                       </div>
-                      <p className="text-white/50 text-sm leading-relaxed mt-0.5">{s.text}</p>
+                      <p className="text-slate-600 text-sm font-medium leading-relaxed mt-0.5">{s.text}</p>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="space-y-3 mb-6 bg-white/5 p-4 rounded-xl border border-white/10">
+              <div className="space-y-3 mb-6 bg-slate-50/50 p-4 rounded-xl border border-[#E2E8F0] shadow-sm">
                 <div>
-                  <label className="text-xs text-white/50 mb-1.5 block">Microphone</label>
+                  <label className="text-xs text-slate-500 font-bold mb-1.5 block">Microphone</label>
                   <select 
-                    className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm"
                     value={selectedMic}
                     onChange={(e) => handleDeviceChange("audio", e.target.value)}
                   >
@@ -596,9 +598,9 @@ export default function InterviewPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-white/50 mb-1.5 block">Camera</label>
+                  <label className="text-xs text-slate-500 font-bold mb-1.5 block">Camera</label>
                   <select 
-                    className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm"
                     value={selectedCamera}
                     onChange={(e) => handleDeviceChange("video", e.target.value)}
                   >
@@ -629,9 +631,9 @@ export default function InterviewPage() {
     const isLastQuestion = currentQuestionIndex === interview.questions.length - 1;
 
     return (
-      <div className="min-h-screen bg-[#050810] flex flex-col">
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col text-slate-800">
         {/* Progress bar */}
-        <div className="h-1 bg-white/5">
+        <div className="h-1 bg-slate-100">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all duration-500"
             style={{ width: `${((currentQuestionIndex + 1) / interview.questions.length) * 100}%` }}
@@ -639,33 +641,33 @@ export default function InterviewPage() {
         </div>
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between shadow-sm">
           <Logo href="/" size="sm" />
-          <div className="flex items-center gap-2 text-white/30 text-sm">
+          <div className="flex items-center gap-2 text-slate-400 text-sm font-semibold">
             <span>Question {currentQuestionIndex + 1} of {interview.questions.length}</span>
           </div>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-4xl w-full grid grid-cols-2 gap-8 items-start">
+          <div className="max-w-4xl w-full p-8 bg-white border border-[#E2E8F0] rounded-2xl shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             {/* Webcam */}
             <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 aspect-video">
+              <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-200 aspect-video shadow-md">
                 <canvas ref={canvasRef} className="w-full h-full object-cover" />
                 <video ref={videoRef} className="hidden" muted playsInline />
 
                 {isRecording && (
                   <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-500/90 rounded-full px-2.5 py-1">
                     <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                    <span className="text-white text-xs font-medium">REC</span>
+                    <span className="text-white text-xs font-semibold">REC</span>
                   </div>
                 )}
 
                 {isSpeaking && (
                   <div className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-black/60 rounded-full px-2.5 py-1">
                     <Volume2 className="w-3 h-3 text-blue-400 animate-pulse" />
-                    <span className="text-white/70 text-xs">AI speaking...</span>
+                    <span className="text-white/70 text-xs font-semibold">AI speaking...</span>
                   </div>
                 )}
               </div>
@@ -674,31 +676,31 @@ export default function InterviewPage() {
             {/* Controls */}
             <div className="flex flex-col justify-center gap-6">
               {/* Question card */}
-              <div className="p-5 rounded-2xl border border-blue-500/20 bg-blue-500/5">
-                <p className="text-blue-400 text-xs font-semibold uppercase tracking-wider mb-3">
+              <div className="p-5 rounded-2xl border border-blue-100 bg-blue-50/50 shadow-sm">
+                <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-3">
                   Question {currentQuestionIndex + 1}
                 </p>
-                <p className="text-white text-lg leading-relaxed font-medium">{question}</p>
+                <p className="text-slate-800 text-lg leading-relaxed font-bold">{question}</p>
               </div>
 
               {/* Status */}
               {isSpeaking && (
-                <div className="flex items-center gap-2 text-white/40 text-sm">
-                  <Volume2 className="w-4 h-4 text-blue-400 animate-pulse" />
+                <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
+                  <Volume2 className="w-4 h-4 text-blue-500 animate-pulse" />
                   AI is reading the question...
                 </div>
               )}
 
               {!isSpeaking && !isRecording && (
-                <div className="flex items-center gap-2 text-white/40 text-sm">
-                  <Mic className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
+                  <Mic className="w-4 h-4 text-slate-400" />
                   Ready to record your answer
                 </div>
               )}
 
               {isRecording && (
-                <div className="flex items-center gap-2 text-red-400 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                <div className="flex items-center gap-2 text-red-500 text-sm font-semibold">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                   Recording your answer...
                 </div>
               )}
@@ -718,7 +720,7 @@ export default function InterviewPage() {
                 ) : (
                   <Button
                     onClick={handleSubmitAnswer}
-                    className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg shadow-red-500/20"
+                    className="w-full h-12 bg-red-50 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg shadow-red-500/20"
                     id="submit-answer-btn"
                   >
                     <Square className="w-4 h-4 mr-2" />
@@ -730,7 +732,7 @@ export default function InterviewPage() {
                   onClick={() => speakQuestion(question)}
                   disabled={isSpeaking || isRecording}
                   variant="ghost"
-                  className="w-full h-10 text-white/40 hover:text-white/70 text-sm disabled:opacity-30"
+                  className="w-full h-10 text-slate-400 hover:text-slate-700 text-sm disabled:opacity-30"
                 >
                   <Volume2 className="w-3.5 h-3.5 mr-2" />
                   Replay question
