@@ -71,16 +71,13 @@ const JobPostings = () => {
               </div>
               <div className="form-group">
                 <label className="form-label">Sub-Department</label>
-                <select 
-                  className="form-select"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                >
-                  <option>Engineering</option>
-                  <option>Product</option>
-                  <option>Design</option>
-                  <option>Marketing</option>
-                </select>
+                 <input
+                   type="text"
+                   className="form-input"
+                   placeholder="e.g. Frontend"
+                   value={department}
+                   onChange={(e) => setDepartment(e.target.value)}
+                 />
               </div>
             </div>
              <div className="flex gap-4">
