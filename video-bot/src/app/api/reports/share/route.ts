@@ -186,15 +186,17 @@ export async function POST(req: NextRequest) {
     const reportUrl = `${baseUrl}/report/${token}`;
 
     // 6. Send email to the candidate
-    const fromName = process.env.MAIL_FROM_NAME || "KadelLabs";
-    const fromEmail = process.env.MAIL_FROM || process.env.GMAIL_USER;
+    if (!body.skipEmail) {
+      const fromName = process.env.MAIL_FROM_NAME || "KadelLabs";
+      const fromEmail = process.env.MAIL_FROM || process.env.GMAIL_USER;
 
-    await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail}>`,
-      to: candidateEmail,
-      subject: `Your Interview Report is Ready — ${jobRole} Position`,
-      html: reportEmailTemplate(candidateName, jobRole, reportUrl, scores || {}, recommendation || "Under Review"),
-    });
+      await transporter.sendMail({
+        from: `"${fromName}" <${fromEmail}>`,
+        to: candidateEmail,
+        subject: `Your Interview Report is Ready — ${jobRole} Position`,
+        html: reportEmailTemplate(candidateName, jobRole, reportUrl, scores || {}, recommendation || "Under Review"),
+      });
+    }
 
     return NextResponse.json({ success: true, reportUrl, token });
   } catch (error: any) {
