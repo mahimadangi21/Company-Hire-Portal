@@ -1,5 +1,4 @@
-import React from 'react';
-import { Bell, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const Navbar = ({ title }) => {
@@ -38,22 +37,7 @@ const Navbar = ({ title }) => {
           />
         </div>
 
-        <div style={{ position: 'relative', cursor: 'pointer', color: 'var(--gray-500)', transition: 'color 0.2s' }} className="hover:text-brand-navy">
-          <Bell size={20} />
-          {unreadCount > 0 && (
-            <span style={{ 
-              position: 'absolute', top: '-6px', right: '-6px', 
-              backgroundColor: 'var(--danger)', color: 'white', 
-              fontSize: '0.65rem', fontWeight: 'bold', 
-              width: '18px', height: '18px', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              borderRadius: '50%',
-              border: '2px solid var(--surface)'
-            }}>
-              {unreadCount}
-            </span>
-          )}
-        </div>
+
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingLeft: '1.5rem', borderLeft: '1px solid var(--border)' }}>
           <div style={{ textAlign: 'right' }}>
