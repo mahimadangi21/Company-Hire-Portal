@@ -46,7 +46,7 @@
       "video_status": "Pending",
       "tech_status": "Pending",
       "report_status": "Not Shared",
-      "stage": "Candidate Form",
+      "stage": "Technical Interview",
       "resume_score": 77,
       "final_recommendation": "Under Review",
       "extracted_data": {
@@ -97,6 +97,137 @@
             "technologiesUsed": [
               "Postman",
               "REST API"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "candidate-1779873144021-640",
+      "created_at": "2026-05-27T09:12:24.022Z",
+      "name": "Dhanesh Vaishnav",
+      "email": "dhaneshvaishnav123@gmail.com",
+      "phone": "+91 86199 20583",
+      "skills": [
+        "Python",
+        "Java",
+        "FastAPI",
+        "Jinja2",
+        "HTML",
+        "CSS",
+        "Tailwind CSS",
+        "MySQL",
+        "PostgreSQL",
+        "MongoDB",
+        "Git",
+        "GitHub",
+        "VS Code",
+        "API Testing",
+        "Google Colab",
+        "AWS",
+        "Render",
+        "NewsAPI",
+        "JavaScript"
+      ],
+      "job_applied": "AI Research Scientist",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Technical Interview",
+      "resume_score": 78,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "isResume": true,
+        "personalInformation": {
+          "fullName": "Dhanesh Vaishnav",
+          "email": "dhaneshvaishnav123@gmail.com",
+          "phoneNumber": "+91 86199 20583"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "Python",
+            "Java",
+            "FastAPI",
+            "Jinja2",
+            "HTML",
+            "CSS",
+            "Tailwind CSS",
+            "MySQL",
+            "PostgreSQL",
+            "MongoDB",
+            "Git",
+            "GitHub",
+            "VS Code",
+            "API Testing",
+            "Google Colab",
+            "AWS",
+            "Render",
+            "NewsAPI",
+            "JavaScript"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Master of Computer Applications",
+            "college": "Mohanlal Sukhadia University, Udaipur",
+            "passingYear": null,
+            "cgpaOrPercentage": "8.00 SGPA"
+          },
+          {
+            "degree": "Bachelor of Computer Applications",
+            "college": "Vidya Bhawan Rural Institute, Udaipur",
+            "passingYear": null,
+            "cgpaOrPercentage": "76.80 %"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "Dhanesh_!NEWS",
+            "projectDescription": "API-Powered News Web Application",
+            "technologiesUsed": [
+              "Python",
+              "FastAPI",
+              "NewsAPI",
+              "Jinja2",
+              "HTML",
+              "CSS",
+              "Tailwind CSS",
+              "Render"
+            ]
+          },
+          {
+            "projectName": "Expense Tracker System",
+            "projectDescription": "Web Application",
+            "technologiesUsed": [
+              "Python",
+              "FastAPI",
+              "PostgreSQL",
+              "Jinja2",
+              "HTML",
+              "CSS",
+              "JavaScript",
+              "Render"
+            ]
+          },
+          {
+            "projectName": "Personal Portfolio",
+            "projectDescription": "FastAPI Web Application",
+            "technologiesUsed": [
+              "Python",
+              "FastAPI",
+              "MongoDB",
+              "Jinja2",
+              "HTML",
+              "CSS",
+              "Tailwind CSS",
+              "Render"
             ]
           }
         ]

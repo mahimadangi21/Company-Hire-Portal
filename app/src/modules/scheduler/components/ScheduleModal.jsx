@@ -328,18 +328,18 @@ function StepReview({ formData }) {
 
       <div className="form-group">
         <label className="form-label">Notifications</label>
-        <div className="modal-notify-row">
-          {[
-            { key: 'notifyEmail', label: 'Email invite' },
-            { key: 'notifyTeams', label: 'Teams message' },
-            { key: 'notifySlack', label: 'Slack DM' },
-          ].map(n => (
-            <label key={n.key} className="modal-notify-check">
-              <input type="checkbox" checked={formData[n.key]} onChange={e => {}} readOnly />
-              {n.label}
-            </label>
-          ))}
-        </div>
+                  <div className="modal-notify-row" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            {[
+              { key: 'notifyEmail', label: 'Email invite' },
+              { key: 'notifyTeams', label: 'Teams message' },
+              { key: 'notifySlack', label: 'Slack DM' },
+            ].map(n => (
+              <label key={n.key} className="modal-notify-check" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <input type="checkbox" checked={formData[n.key]} onChange={e => update({ [n.key]: e.target.checked })} readOnly={false} />
+                {n.label}
+              </label>
+            ))}
+          </div>
       </div>
     </div>
   );
