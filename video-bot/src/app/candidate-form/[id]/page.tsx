@@ -145,7 +145,7 @@ export default function CandidateFormPage() {
       <div className="w-full max-w-lg bg-[#0d111b]/80 border border-white/10 rounded-3xl p-8 md:p-10 shadow-2xl backdrop-blur-xl relative">
         <div className="text-center mb-8">
           <img 
-            src="/kadellabs-logo.png" 
+            src="https://thoughtleadership.kadellabs.com/wp-content/uploads/2023/09/log-kl.png" 
             alt="Logo" 
             className="h-7 mx-auto mb-4 object-contain brightness-110"
           />
