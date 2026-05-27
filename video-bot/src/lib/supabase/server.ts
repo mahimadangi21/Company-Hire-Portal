@@ -1,7 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getMockSupabaseClient } from "./mockClient";
+
+function isSupabaseConfigured() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return !!(url && url.startsWith("http") && !url.includes("your_supabase_project_url"));
+}
 
 export async function createClient() {
+  if (!isSupabaseConfigured()) {
+    return getMockSupabaseClient() as any;
+  }
+
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -27,6 +37,10 @@ export async function createClient() {
 }
 
 export async function createAdminClient() {
+  if (!isSupabaseConfigured()) {
+    return getMockSupabaseClient() as any;
+  }
+
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -52,6 +66,10 @@ export async function createAdminClient() {
 }
 
 export function getServiceSupabase() {
+  if (!isSupabaseConfigured()) {
+    return getMockSupabaseClient() as any;
+  }
+
   const { createClient: createDirectClient } = require("@supabase/supabase-js");
   return createDirectClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

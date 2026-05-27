@@ -14,11 +14,11 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="card animate-slide-up" style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 10, padding: '1rem' }}>
+    <div className="auth-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+      <div className="auth-card animate-slide-up" style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 10, padding: '2rem 1.5rem' }}>
         <div className="card-header" style={{ textAlign: 'center', borderBottom: 'none', paddingBottom: '0' }}>
           <img 
-            src="https://thoughtleadership.kadellabs.com/wp-content/uploads/2023/09/log-kl.png" 
+            src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
             alt="KadelLabs Logo" 
             style={{ height: '48px', margin: '0 auto 1.5rem', objectFit: 'contain' }}
           />

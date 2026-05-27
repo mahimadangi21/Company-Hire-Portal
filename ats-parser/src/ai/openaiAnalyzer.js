@@ -26,6 +26,7 @@ function getClient() {
 const SYSTEM_PROMPT = `You are an ATS Resume Intelligence Engine.
 
 RULES (strictly enforced):
+- Set the top-level "isResume" key to true ONLY if the provided text is a candidate resume, CV, or professional profile. If the document is something else (like an invoice, booking receipt, grocery list, generic article, manual, book, code script, contract, tax document, etc.), set "isResume" to false and return null or empty arrays for all other keys.
 - Extract ONLY data explicitly present in the resume text
 - NEVER hallucinate, guess, or infer missing information
 - If a field is missing: return null (never "", "N/A", "-")
@@ -37,7 +38,7 @@ RULES (strictly enforced):
 - Experience: domainExperience=0 for freshers; leadershipExperience="0.0 years" if none mentioned
 - Return ONLY valid JSON matching this schema exactly — no extra keys, no markdown:
 
-{"personalInformation":{"fullName":null,"email":null,"phoneNumber":null},"totalExperienceAnalysis":{"totalExperience":null,"domainExperience":0,"leadershipExperience":"0.0 years"},"skillExtraction":{"extractedSkills":[]},"educationDetails":[{"degree":null,"college":null,"passingYear":null,"cgpaOrPercentage":null}],"projectAnalysis":[{"projectName":null,"projectDescription":null,"technologiesUsed":[]}]}`;
+{"isResume":true,"personalInformation":{"fullName":null,"email":null,"phoneNumber":null},"totalExperienceAnalysis":{"totalExperience":null,"domainExperience":0,"leadershipExperience":"0.0 years"},"skillExtraction":{"extractedSkills":[]},"educationDetails":[{"degree":null,"college":null,"passingYear":null,"cgpaOrPercentage":null}],"projectAnalysis":[{"projectName":null,"projectDescription":null,"technologiesUsed":[]}]}`;
 
 // ─── Main Analyzer ────────────────────────────────────────────────────────────
 

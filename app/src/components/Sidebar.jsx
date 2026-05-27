@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Briefcase, FileText, FileSpreadsheet, Video, Calendar, BarChart, History, Settings, LogOut } from 'lucide-react';
 
 const Sidebar = () => {
+  const [isLogoutHovered, setIsLogoutHovered] = useState(false);
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Listed Jobs', path: '/jobs', icon: Briefcase },
+    { name: 'Job Listed', path: '/jobs', icon: Briefcase },
     { name: 'Resume Upload', path: '/resumes', icon: FileText },
     { name: 'Candidate Forms', path: '/forms', icon: FileSpreadsheet },
-    { name: 'Video Bot Interview', path: '/video-bot', icon: Video },
+    { name: 'Video Bot Screening', path: '/video-bot', icon: Video },
     { name: 'Technical Scheduler', path: '/scheduler', icon: Calendar },
     { name: 'Reports', path: '/reports', icon: BarChart },
     { name: 'Email History', path: '/emails', icon: History },
@@ -24,11 +25,18 @@ const Sidebar = () => {
       flexDirection: 'column',
       boxShadow: '4px 0 15px rgba(14,45,123,0.1)'
     }}>
-      <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ 
+        padding: '1.25rem 1.5rem', 
+        backgroundColor: '#ffffff', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        borderBottom: '1px solid rgba(14, 45, 123, 0.1)'
+      }}>
         <img 
-          src="https://thoughtleadership.kadellabs.com/wp-content/uploads/2023/09/log-kl.png" 
+          src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
           alt="KadelLabs Logo" 
-          style={{ height: '36px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+          style={{ height: '38px', objectFit: 'contain' }}
         />
       </div>
       
@@ -62,8 +70,26 @@ const Sidebar = () => {
       </nav>
 
       <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', color: 'rgba(255,255,255,0.7)', padding: '0.75rem' }}>
-          <LogOut size={20} />
+        <button 
+          onMouseEnter={() => setIsLogoutHovered(true)}
+          onMouseLeave={() => setIsLogoutHovered(false)}
+          className="btn" 
+          style={{ 
+            width: '100%', 
+            justifyContent: 'flex-start', 
+            color: isLogoutHovered ? 'white' : 'rgba(255,255,255,0.7)', 
+            backgroundColor: isLogoutHovered ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+            padding: '0.75rem',
+            border: 'none',
+            borderRadius: 'var(--radius-lg)',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer'
+          }}
+        >
+          <LogOut size={20} color={isLogoutHovered ? 'var(--danger)' : 'rgba(255,255,255,0.7)'} />
           Logout
         </button>
       </div>

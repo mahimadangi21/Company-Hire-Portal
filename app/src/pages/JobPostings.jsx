@@ -44,7 +44,7 @@ const JobPostings = () => {
       
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)' }}>Listed Jobs</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)' }}>Job Listed</h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage active job roles and application forms</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>

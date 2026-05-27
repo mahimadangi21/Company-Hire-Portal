@@ -11,7 +11,7 @@ export const AppProvider = ({ children }) => {
   const [candidates, setCandidates] = useState([]);
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'New resume uploaded for Frontend Engineer', time: '5m ago', read: false },
-    { id: 2, text: 'Alice Smith completed Video Bot Interview', time: '1h ago', read: true }
+    { id: 2, text: 'Alice Smith completed Video Bot Screening', time: '1h ago', read: true }
   ]);
 
   const fetchJobs = async () => {

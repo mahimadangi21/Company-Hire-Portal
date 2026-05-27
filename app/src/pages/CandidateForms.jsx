@@ -168,7 +168,7 @@ const CandidateForms = () => {
             }}>
               <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                 <img 
-                  src="https://thoughtleadership.kadellabs.com/wp-content/uploads/2023/09/log-kl.png" 
+                  src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
                   alt="Logo" 
                   style={{ height: '24px', margin: '0 auto 1rem', objectFit: 'contain' }}
                 />

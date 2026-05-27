@@ -59,7 +59,7 @@ const ResumeUpload = () => {
 
   const handleContainerClick = () => {
     if (!selectedJob) {
-      setStatus({ type: 'error', message: 'Please select a job posting first.' });
+      setStatus({ type: 'error', message: 'Please select a job listed first.' });
       return;
     }
     if (!isUploading && fileInputRef.current) {
@@ -69,7 +69,7 @@ const ResumeUpload = () => {
 
   const handleUpload = async (file) => {
     if (!selectedJob) {
-      setStatus({ type: 'error', message: 'Please select a job posting first.' });
+      setStatus({ type: 'error', message: 'Please select a job listed first.' });
       return;
     }
 
@@ -205,11 +205,11 @@ const ResumeUpload = () => {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Upload Resumes</h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Select a job posting and upload applicant resumes for AI parsing.</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Select a job listed and upload applicant resumes for AI parsing.</p>
         </div>
         <div className="card-body">
           <div className="form-group" style={{ maxWidth: '400px', marginBottom: '1.5rem' }}>
-            <label className="form-label">Select Job Posting <span style={{ color: 'var(--danger)' }}>*</span></label>
+            <label className="form-label">Select Job Listed <span style={{ color: 'var(--danger)' }}>*</span></label>
             <select 
               className="form-select" 
               value={selectedJob} 
