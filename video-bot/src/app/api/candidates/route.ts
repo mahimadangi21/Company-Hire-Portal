@@ -1,9 +1,27 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
     const supabase = getServiceSupabase();
+
+    if (id) {
+      const { data, error } = await supabase
+        .from("candidates")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching candidate:", error);
+        return NextResponse.json({ error: error.message }, { status: 404 });
+      }
+
+      return NextResponse.json(data);
+    }
+
     const { data, error } = await supabase
       .from("candidates")
       .select("*")
