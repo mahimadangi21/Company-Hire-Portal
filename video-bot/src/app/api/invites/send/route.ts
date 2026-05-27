@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Create the interview in Supabase
-    const expiry = expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const expiry = expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     
     const { data: interview, error: insertError } = await supabase
       .from("interviews")
@@ -75,7 +75,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Send Email via internal API call
-    const emailRes = await fetch(new URL("/api/emails/send", req.url).toString(), {
+    const emailUrl = new URL("/api/emails/send", req.url).toString().replace("localhost", "127.0.0.1");
+    const emailRes = await fetch(emailUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -90,13 +91,18 @@ export async function POST(req: NextRequest) {
 
     // 6. Sync status in candidates table
     try {
-      await supabase
+      const { error: syncError } = await supabase
         .from("candidates")
         .update({
           video_status: "Pending",
           stage: "Video Interview"
         })
-        .eq("email", candidate_email);
+        .ilike("email", candidate_email.trim());
+      if (syncError) {
+        console.error("Failed to sync candidate invite status in candidates table:", syncError);
+      } else {
+        console.log(`Synced candidate ${candidate_email} status to Video Interview (Pending)`);
+      }
     } catch (dbErr) {
       console.error("Failed to sync candidate invite status:", dbErr);
     }
@@ -111,4 +117,8 @@ export async function POST(req: NextRequest) {
     console.error("Invite send error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 });
 }

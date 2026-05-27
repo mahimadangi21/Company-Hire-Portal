@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, getServiceSupabase } from "@/lib/supabase/server";
 
 export async function GET(
   req: NextRequest,
@@ -33,7 +33,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const supabase = await createAdminClient();
+    const supabase = getServiceSupabase();
 
 
     // Perform Groq Whisper transcription on completed interviews
@@ -137,14 +137,20 @@ export async function PATCH(
     if (body.status === "completed" && data) {
       try {
         const videoScore = Math.round(80 + Math.random() * 15);
-        await supabase
+        const { error: syncError } = await supabase
           .from("candidates")
           .update({
             video_status: "Completed",
             video_score: videoScore,
             stage: "Technical Scheduler"
           })
-          .eq("email", data.candidate_email);
+          .ilike("email", data.candidate_email.trim());
+        
+        if (syncError) {
+          console.error("Failed to sync candidate completion status in candidates table:", syncError);
+        } else {
+          console.log(`Synced candidate ${data.candidate_email} status to Completed`);
+        }
       } catch (dbErr) {
         console.error("Failed to sync candidate completion status:", dbErr);
       }

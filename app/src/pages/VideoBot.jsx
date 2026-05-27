@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2 } from 'lucide-react';
+import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import QuestionBankModal from '../components/QuestionBankModal';
 
 const NEXT_JS_URL = 'http://localhost:3000';
 
 const VideoBot = () => {
-  const { candidates, jobs } = useAppContext();
+  const { candidates, jobs, refreshCandidates } = useAppContext();
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   
   // Dashboard state
@@ -18,6 +18,7 @@ const VideoBot = () => {
   const [inviteJobRole, setInviteJobRole] = useState('');
   const [inviteQuestionCount, setInviteQuestionCount] = useState(3);
   const [sending, setSending] = useState(false);
+  const [emailModal, setEmailModal] = useState(null);
   
   // Copied indicator state
   const [copiedId, setCopiedId] = useState(null);
@@ -71,9 +72,8 @@ const VideoBot = () => {
     setLoading(false);
   };
 
-  const handleSendInvite = async () => {
-    const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
-    if (!candidate || !inviteJobRole || inviteQuestionCount < 1) return;
+  const handleSendInvite = async (candidate, targetEmail, jobRole, questionCount) => {
+    if (!candidate || !jobRole || questionCount < 1) return;
 
     setSending(true);
     try {
@@ -82,16 +82,34 @@ const VideoBot = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           candidate_name: candidate.name,
-          candidate_email: candidate.email,
-          job_role: inviteJobRole,
-          number_of_questions: inviteQuestionCount
+          candidate_email: targetEmail,
+          job_role: jobRole,
+          number_of_questions: questionCount
         })
       });
 
       if (res.ok) {
+        // Update the candidate's email in the backend if it was edited
+        if (targetEmail !== candidate.email) {
+          try {
+            await fetch(`${NEXT_JS_URL}/api/candidates`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: candidate.id,
+                email: targetEmail
+              })
+            });
+            refreshCandidates();
+          } catch (patchErr) {
+            console.error("Failed to update candidate email:", patchErr);
+          }
+        }
+        
         alert("Invite sent successfully!");
         fetchInterviews();
         setInviteCandidateId('');
+        setEmailModal(null);
       } else {
         const err = await res.json();
         alert(err.error || "Failed to send invite");
@@ -174,10 +192,20 @@ const VideoBot = () => {
             <button 
               className="btn btn-primary" 
               style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
-              onClick={handleSendInvite}
+              onClick={() => {
+                const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
+                if (candidate) {
+                  setEmailModal({
+                    candidate,
+                    email: candidate.email,
+                    jobRole: inviteJobRole,
+                    questionCount: inviteQuestionCount
+                  });
+                }
+              }}
               disabled={sending || !inviteCandidateId || !inviteJobRole}
             >
-              {sending ? 'Sending...' : <><Send size={16} /> Send Interview Link</>}
+              <Send size={16} /> Send Interview Link
             </button>
             
           </div>
@@ -286,6 +314,91 @@ const VideoBot = () => {
             </table>
           </div>
         </div>
+
+      {/* Email Verification Modal */}
+      {emailModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '2rem',
+          animation: 'fadeIn 0.2s ease-out'
+        }} onClick={() => !sending && setEmailModal(null)}>
+          <div style={{
+            backgroundColor: 'var(--surface)',
+            borderRadius: 'var(--radius-xl)',
+            width: '100%',
+            maxWidth: '450px',
+            boxShadow: 'var(--shadow-xl)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            border: '1px solid var(--border)'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            <div style={{
+              padding: '1.5rem 2rem',
+              borderBottom: '1px solid var(--gray-100)',
+              backgroundColor: '#f8fafb'
+            }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--brand-navy)' }}>
+                Verify Email Address
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Please confirm or edit the email address for <strong style={{ color: 'var(--brand-navy)' }}>{emailModal.candidate.name}</strong> before sending the video interview link.
+              </p>
+            </div>
+
+            <div style={{ padding: '2rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Email Address</label>
+                <input 
+                  type="email" 
+                  className="form-input" 
+                  value={emailModal.email}
+                  onChange={(e) => setEmailModal({ ...emailModal, email: e.target.value })}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div style={{
+              padding: '1.25rem 2rem',
+              borderTop: '1px solid var(--gray-100)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '1rem',
+              backgroundColor: '#f8fafb'
+            }}>
+              <button 
+                className="btn btn-outline" 
+                onClick={() => setEmailModal(null)}
+                disabled={sending}
+                style={{ padding: '0.5rem 1.5rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                disabled={sending || !emailModal.email}
+                style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                onClick={() => handleSendInvite(emailModal.candidate, emailModal.email, emailModal.jobRole, emailModal.questionCount)}
+              >
+                {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : 'Send Mail'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       </div>
     </div>

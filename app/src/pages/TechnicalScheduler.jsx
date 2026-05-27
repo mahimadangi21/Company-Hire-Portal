@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, Users, Link as LinkIcon, Edit2, X, Send } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const TechnicalScheduler = () => {
   const { candidates, refreshCandidates } = useAppContext();
+
+  useEffect(() => {
+    refreshCandidates();
+  }, []);
   const eligibleCandidates = candidates.filter(c => c.videoStatus === 'Completed' && c.techStatus !== 'Scheduled');
   const scheduledCandidates = candidates.filter(c => c.techStatus === 'Scheduled');
   
@@ -164,60 +168,87 @@ const TechnicalScheduler = () => {
                 </tr>
               </thead>
               <tbody>
-                {scheduledCandidates.map(candidate => (
+                {[...eligibleCandidates, ...scheduledCandidates].map(candidate => {
+                  const isScheduled = candidate.techStatus === 'Scheduled';
+                  return (
                   <tr key={candidate.id}>
                     <td>
                       <div style={{ fontWeight: '500' }}>{candidate.name}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{candidate.jobApplied}</div>
                     </td>
                     <td>
-                      <div style={{ fontSize: '0.875rem' }}>May 28, 2026</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>10:00 AM (45m)</div>
+                      {isScheduled ? (
+                        <>
+                          <div style={{ fontSize: '0.875rem' }}>May 28, 2026</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>10:00 AM (45m)</div>
+                        </>
+                      ) : (
+                        <span className="badge badge-warning">Pending Schedule</span>
+                      )}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Users size={14} color="var(--gray-500)" />
-                        <span style={{ fontSize: '0.875rem' }}>John D.</span>
-                      </div>
+                      {isScheduled ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Users size={14} color="var(--gray-500)" />
+                          <span style={{ fontSize: '0.875rem' }}>John D.</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.875rem', color: 'var(--gray-400)' }}>-</span>
+                      )}
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button className="btn btn-ghost" title="Edit" style={{ padding: '0.25rem' }}><Edit2 size={16}/></button>
-                        <button className="btn btn-ghost" title="Resend" style={{ padding: '0.25rem' }}><Send size={16}/></button>
-                        <button 
-                          className="btn btn-ghost" 
-                          title="Cancel" 
-                          style={{ padding: '0.25rem', color: 'var(--danger)' }}
-                          onClick={async () => {
-                            if (window.confirm(`Cancel scheduled interview for ${candidate.name}?`)) {
-                              try {
-                                const res = await fetch('http://localhost:3000/api/candidates', {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    id: candidate.id,
-                                    tech_status: 'Pending',
-                                    stage: 'Video Interview'
-                                  })
-                                });
-                                if (res.ok) {
-                                  refreshCandidates();
+                        {isScheduled ? (
+                          <>
+                            <button className="btn btn-ghost" title="Edit" style={{ padding: '0.25rem' }}><Edit2 size={16}/></button>
+                            <button className="btn btn-ghost" title="Resend" style={{ padding: '0.25rem' }}><Send size={16}/></button>
+                            <button 
+                              className="btn btn-ghost" 
+                              title="Cancel" 
+                              style={{ padding: '0.25rem', color: 'var(--danger)' }}
+                              onClick={async () => {
+                                if (window.confirm(`Cancel scheduled interview for ${candidate.name}?`)) {
+                                  try {
+                                    const res = await fetch('http://localhost:3000/api/candidates', {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        id: candidate.id,
+                                        tech_status: 'Pending',
+                                        stage: 'Video Interview'
+                                      })
+                                    });
+                                    if (res.ok) {
+                                      refreshCandidates();
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                  }
                                 }
-                              } catch (e) {
-                                console.error(e);
-                              }
-                            }
-                          }}
-                        >
-                          <X size={16}/>
-                        </button>
+                              }}
+                            >
+                              <X size={16}/>
+                            </button>
+                          </>
+                        ) : (
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
+                            onClick={() => {
+                              setSelectedCandidateId(candidate.id.toString());
+                              setSelectedCandidate(candidate);
+                            }}
+                          >
+                            Schedule Now
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
-                {scheduledCandidates.length === 0 && (
+                )})}
+                {[...eligibleCandidates, ...scheduledCandidates].length === 0 && (
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No upcoming interviews scheduled.</td>
+                    <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No upcoming interviews or eligible candidates found.</td>
                   </tr>
                 )}
               </tbody>

@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { Mail, CheckCircle, Clock, Search, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, CheckCircle, Clock, Search, ExternalLink, Loader2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const CandidateForms = () => {
   const { candidates, refreshCandidates } = useAppContext();
+
+  useEffect(() => {
+    refreshCandidates();
+  }, []);
   const [filterJob, setFilterJob] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [emailModal, setEmailModal] = useState(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const stats = [
     { label: 'Forms Sent', value: candidates.length, color: 'var(--info)' },
@@ -123,27 +129,18 @@ const CandidateForms = () => {
                             <>
                               <button 
                                 className="btn btn-primary" 
-                                style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}
-                                onClick={async () => {
-                                  try {
-                                    const res = await fetch('http://localhost:3000/api/candidates', {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({
-                                        id: candidate.id,
-                                        form_status: 'Submitted',
-                                        stage: 'Video Interview'
-                                      })
-                                    });
-                                    if (res.ok) refreshCandidates();
-                                  } catch (e) {
-                                    console.error(e);
-                                  }
-                                }}
+                                style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}
+                                onClick={() => setEmailModal({ candidate, email: candidate.email })}
                               >
-                                Mark Submitted
+                                <Send size={14} style={{ marginRight: '4px' }}/> Send Form
                               </button>
-                              <button className="btn btn-outline" style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}><Mail size={14}/> Resend</button>
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}
+                                onClick={() => setEmailModal({ candidate, email: candidate.email })}
+                              >
+                                <Mail size={14} style={{ marginRight: '4px' }}/> Resend
+                              </button>
                             </>
                           )}
                         </div>
@@ -203,6 +200,132 @@ const CandidateForms = () => {
         </div>
 
       </div>
+
+      {/* Email Verification Modal */}
+      {emailModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '2rem',
+          animation: 'fadeIn 0.2s ease-out'
+        }} onClick={() => !isSendingEmail && setEmailModal(null)}>
+          <div style={{
+            backgroundColor: 'var(--surface)',
+            borderRadius: 'var(--radius-xl)',
+            width: '100%',
+            maxWidth: '450px',
+            boxShadow: 'var(--shadow-xl)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            border: '1px solid var(--border)'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            <div style={{
+              padding: '1.5rem 2rem',
+              borderBottom: '1px solid var(--gray-100)',
+              backgroundColor: '#f8fafb'
+            }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--brand-navy)' }}>
+                Verify Email Address
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Please confirm or edit the email address for <strong style={{ color: 'var(--brand-navy)' }}>{emailModal.candidate.name}</strong> before sending the form link.
+              </p>
+            </div>
+
+            <div style={{ padding: '2rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Email Address</label>
+                <input 
+                  type="email" 
+                  className="form-input" 
+                  value={emailModal.email}
+                  onChange={(e) => setEmailModal({ ...emailModal, email: e.target.value })}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div style={{
+              padding: '1.25rem 2rem',
+              borderTop: '1px solid var(--gray-100)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '1rem',
+              backgroundColor: '#f8fafb'
+            }}>
+              <button 
+                className="btn btn-outline" 
+                onClick={() => setEmailModal(null)}
+                disabled={isSendingEmail}
+                style={{ padding: '0.5rem 1.5rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                disabled={isSendingEmail || !emailModal.email}
+                style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                onClick={async () => {
+                  setIsSendingEmail(true);
+                  try {
+                    const res = await fetch('http://localhost:3000/api/emails/send', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        type: 'form_invite',
+                        to: emailModal.email,
+                        candidateName: emailModal.candidate.name,
+                        jobRole: emailModal.candidate.jobApplied,
+                        candidateId: emailModal.candidate.id
+                      })
+                    });
+                    
+                    if (res.ok) {
+                      // Update candidate email, reset form_status to 'Pending', and stage to 'Candidate Form'
+                      await fetch('http://localhost:3000/api/candidates', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          id: emailModal.candidate.id,
+                          email: emailModal.email,
+                          form_status: 'Pending',
+                          stage: 'Candidate Form'
+                        })
+                      });
+                      refreshCandidates();
+
+                      alert(`Form invitation link sent successfully to ${emailModal.candidate.name} (${emailModal.email})!`);
+                      setEmailModal(null);
+                    } else {
+                      alert('Failed to send form invitation');
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    alert('Error sending form invitation');
+                  } finally {
+                    setIsSendingEmail(false);
+                  }
+                }}
+              >
+                {isSendingEmail ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : 'Send Mail'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

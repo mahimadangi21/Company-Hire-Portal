@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, Share2, Eye, FileText, CheckCircle, Clock } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const Reports = () => {
-  const { candidates } = useAppContext();
+  const { candidates, refreshCandidates } = useAppContext();
+
+  useEffect(() => {
+    refreshCandidates();
+  }, []);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   // Focus only on candidates who have at least reached technical interview
-  const evaluatedCandidates = candidates.filter(c => c.techScore || c.videoScore);
+  const evaluatedCandidates = candidates.filter(c => 
+    (c.techScore !== null && c.techScore !== undefined && c.techScore !== '') || 
+    (c.videoScore !== null && c.videoScore !== undefined && c.videoScore !== '')
+  );
 
   const avgVideoScore = evaluatedCandidates.filter(c => c.videoScore).length > 0
     ? Math.round(evaluatedCandidates.reduce((acc, c) => acc + (c.videoScore || 0), 0) / evaluatedCandidates.filter(c => c.videoScore).length)

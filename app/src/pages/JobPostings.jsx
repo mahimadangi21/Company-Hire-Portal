@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Archive } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -8,6 +8,10 @@ const JobPostings = () => {
   const [title, setTitle] = useState('');
   const [department, setDepartment] = useState('Engineering');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    refreshJobs();
+  }, []);
 
   const handlePublishJob = async () => {
     if (!title.trim() || !department) return;
@@ -38,8 +42,11 @@ const JobPostings = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      <div className="flex justify-between items-center">
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)' }}>Job Listed</h2>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)' }}>Job Listed</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Manage active job roles and application forms</p>
+        </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
           <Plus size={16} /> Create New Job
         </button>
