@@ -8,6 +8,12 @@ const JobPostings = () => {
   const [title, setTitle] = useState('');
   const [department, setDepartment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Edit state
+  const [editJobId, setEditJobId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   useEffect(() => {
     refreshJobs();
@@ -39,6 +45,30 @@ const JobPostings = () => {
       alert("Error publishing job");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim() || !editDepartment.trim() || !editJobId) return;
+
+    setIsSavingEdit(true);
+    try {
+      const res = await apiFetch('/api/jobs', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: editJobId, title: editTitle, department: editDepartment })
+      });
+
+      if (res.ok) {
+        setEditJobId(null);
+        refreshJobs();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to update job");
+      }
+    } catch (e) {
+      alert("Error updating job");
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -145,15 +175,78 @@ const JobPostings = () => {
                   <tbody>
                     {subDepts.map(job => (
                       <tr key={job.id}>
-                        <td style={{ fontWeight: '500', paddingLeft: '1.5rem' }}>{job.title}</td>
-                        <td><span className="badge badge-success">{job.status || 'Active'}</span></td>
-                        <td>{job.applicants || 0} applied</td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button className="btn btn-ghost" style={{ padding: '0.25rem' }}><Edit2 size={16} /></button>
-                            <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--warning)' }}><Archive size={16} /></button>
-                          </div>
-                        </td>
+                        {editJobId === job.id ? (
+                          <>
+                            <td style={{ paddingLeft: '1.5rem' }}>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                style={{ padding: '0.25rem 0.5rem', height: '30px' }}
+                                value={editTitle} 
+                                onChange={e => setEditTitle(e.target.value)} 
+                              />
+                            </td>
+                            <td colSpan="2">
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                style={{ padding: '0.25rem 0.5rem', height: '30px', width: '100%' }}
+                                placeholder="Parent Department"
+                                value={editDepartment} 
+                                onChange={e => setEditDepartment(e.target.value)} 
+                                list="departments-list-edit"
+                              />
+                              <datalist id="departments-list-edit">
+                                {uniqueDepartments.map(dept => (
+                                  <option key={dept} value={dept} />
+                                ))}
+                              </datalist>
+                            </td>
+                            <td>
+                              <div className="flex gap-2">
+                                <button 
+                                  className="btn btn-primary" 
+                                  style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
+                                  onClick={handleSaveEdit}
+                                  disabled={isSavingEdit || !editTitle.trim() || !editDepartment.trim()}
+                                >
+                                  {isSavingEdit ? 'Saving...' : 'Save'}
+                                </button>
+                                <button 
+                                  className="btn btn-outline" 
+                                  style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
+                                  onClick={() => setEditJobId(null)}
+                                  disabled={isSavingEdit}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{ fontWeight: '500', paddingLeft: '1.5rem' }}>{job.title}</td>
+                            <td><span className="badge badge-success">{job.status || 'Active'}</span></td>
+                            <td>{job.applicants || 0} applied</td>
+                            <td>
+                              <div className="flex gap-2">
+                                <button 
+                                  className="btn btn-ghost" 
+                                  style={{ padding: '0.25rem' }}
+                                  onClick={() => {
+                                    setEditJobId(job.id);
+                                    setEditTitle(job.title);
+                                    setEditDepartment(job.department || '');
+                                  }}
+                                  title="Edit Sub-Department"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                                <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--warning)' }}><Archive size={16} /></button>
+                              </div>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
