@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Create the interview in Supabase
-    const expiry = expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const expiry = expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     
     const { data: interview, error: insertError } = await supabase
       .from("interviews")
