@@ -6,7 +6,7 @@ import { CheckCircle2, User, Mail, Wrench, Loader2 } from "lucide-react";
 
 export default function CandidateFormPage() {
   const params = useParams();
-  const id = params.id as string;
+  const id = params?.id as string;
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -160,10 +160,9 @@ export default function CandidateFormPage() {
           <div className="space-y-2">
             <label className="text-xs font-semibold text-white/60 uppercase tracking-wider block">Full Name</label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="text"
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-white/20 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white placeholder-white/20 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                 placeholder="Your full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -175,10 +174,9 @@ export default function CandidateFormPage() {
           <div className="space-y-2">
             <label className="text-xs font-semibold text-white/60 uppercase tracking-wider block">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="email"
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-white/20 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white placeholder-white/20 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                 placeholder="your.email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -190,9 +188,8 @@ export default function CandidateFormPage() {
           <div className="space-y-2">
             <label className="text-xs font-semibold text-white/60 uppercase tracking-wider block">Skills (Comma-separated)</label>
             <div className="relative">
-              <Wrench className="absolute left-4 top-4 w-4 h-4 text-white/40" />
               <textarea
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/20 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all h-28 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-4 text-sm text-white placeholder-white/20 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all h-28 resize-none"
                 placeholder="e.g. React, Node.js, Python, CSS"
                 value={skills}
                 onChange={(e) => setSkills(e.target.value)}
@@ -208,13 +205,7 @@ export default function CandidateFormPage() {
             disabled={submitting}
             className="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 text-sm shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
-              </>
-            ) : (
-              "Submit Application"
-            )}
+            {submitting ? "Submitting..." : "Submit Application"}
           </button>
         </form>
       </div>

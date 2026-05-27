@@ -5,7 +5,7 @@ import { LayoutDashboard, Briefcase, FileText, FileSpreadsheet, Video, Calendar,
 const Sidebar = () => {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Job Postings', path: '/jobs', icon: Briefcase },
+    { name: 'Listed Jobs', path: '/jobs', icon: Briefcase },
     { name: 'Resume Upload', path: '/resumes', icon: FileText },
     { name: 'Candidate Forms', path: '/forms', icon: FileSpreadsheet },
     { name: 'Video Bot Interview', path: '/video-bot', icon: Video },
