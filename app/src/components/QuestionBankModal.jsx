@@ -12,7 +12,6 @@ const QuestionBankModal = ({ onClose }) => {
   const [newDepartment, setNewDepartment] = useState('Technology and Delivery');
   const [newSubDepartment, setNewSubDepartment] = useState('PHP');
   const [newQuestionText, setNewQuestionText] = useState('');
-  const [isMandatory, setIsMandatory] = useState(false);
   
   // Unique departments combined from existing questions
   const allDepartments = [...new Set(questions.map(q => q.department || 'General'))].filter(Boolean);
@@ -61,12 +60,11 @@ const QuestionBankModal = ({ onClose }) => {
           department: newDepartment,
           sub_department: newSubDepartment,
           question_text: newQuestionText.trim(),
-          is_mandatory: isMandatory
+          is_mandatory: false
         })
       });
       if (res.ok) {
         setNewQuestionText('');
-        setIsMandatory(false);
         fetchQuestions();
       }
     } catch (e) {
@@ -88,38 +86,40 @@ const QuestionBankModal = ({ onClose }) => {
       }
     } catch (e) {
       console.error(e);
-      alert("Error deleting question");
     }
   };
 
-  const filteredQuestions = questions.filter(q => 
-    (!selectedDepartment || (q.department || 'General') === selectedDepartment) &&
-    (!selectedSubDepartment || (q.sub_department || 'General') === selectedSubDepartment)
-  );
+  const filteredQuestions = questions.filter(q => {
+    if (selectedDepartment && q.department !== selectedDepartment) return false;
+    if (selectedSubDepartment && q.sub_department !== selectedSubDepartment) return false;
+    return true;
+  });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-      <div className="card" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="card-title">Manage Question Bank</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} color="var(--gray-500)"/></button>
+    <div className="modal-backdrop">
+      <div className="modal-content" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Question Bank Manager</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-500)' }}>
+            <X size={20} />
+          </button>
         </div>
-        
-        <div className="card-body">
-          {/* Add New Section */}
-          <div style={{ backgroundColor: 'var(--gray-50)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Add Question Form */}
+          <div style={{ background: 'var(--gray-50)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
             <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>Add New Question</h4>
             
-            <div className="grid grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div>
                 <label className="form-label">Department</label>
                 <select 
-                  className="form-select" 
+                  className="form-select"
                   value={newDepartment}
                   onChange={e => {
                     setNewDepartment(e.target.value);
-                    const subs = DEFAULT_SUB_DEPARTMENTS[e.target.value] || ['General'];
-                    setNewSubDepartment(subs[0]);
+                    const subs = DEFAULT_SUB_DEPARTMENTS[e.target.value] || [];
+                    setNewSubDepartment(subs[0] || '');
                   }}
                 >
                   {DEFAULT_DEPARTMENTS.map(d => (
@@ -127,14 +127,15 @@ const QuestionBankModal = ({ onClose }) => {
                   ))}
                 </select>
               </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              
+              <div>
                 <label className="form-label">Sub-Department</label>
                 <select 
                   className="form-select"
                   value={newSubDepartment}
                   onChange={e => setNewSubDepartment(e.target.value)}
                 >
-                  {(DEFAULT_SUB_DEPARTMENTS[newDepartment] || ['General']).map(sd => (
+                  {(DEFAULT_SUB_DEPARTMENTS[newDepartment] || []).map(sd => (
                     <option key={sd} value={sd}>{sd}</option>
                   ))}
                 </select>
@@ -152,16 +153,7 @@ const QuestionBankModal = ({ onClose }) => {
               ></textarea>
             </div>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={isMandatory}
-                  onChange={e => setIsMandatory(e.target.checked)}
-                />
-                Make this a mandatory question
-              </label>
-              
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               <button className="btn btn-primary" onClick={handleAddQuestion} disabled={!newQuestionText.trim()}>
                 <Plus size={16} /> Add Question
               </button>
@@ -214,7 +206,6 @@ const QuestionBankModal = ({ onClose }) => {
                   <div>
                     <span style={{ fontSize: '0.875rem', fontWeight: 500, display: 'block' }}>Q{i+1}. {q.question_text}</span>
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                      {q.is_mandatory && <span className="badge badge-success">Mandatory</span>}
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.department || 'General'}</span>
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.sub_department || 'General'}</span>
                     </div>
