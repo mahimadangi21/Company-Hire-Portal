@@ -125,7 +125,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
                         <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <User className="w-2.5 h-2.5 text-slate-500" />
                         </div>
-                        <p className={`text-sm leading-relaxed ${isActive ? "text-slate-750" : "text-slate-500"}`}>
+                        <p className={`text-sm leading-relaxed ${isActive ? "text-slate-700 font-medium" : "text-slate-500"}`}>
                           {entry.text || <span className="italic opacity-50">Transcribing...</span>}
                         </p>
                       </div>
@@ -149,7 +149,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
             <Sparkles className="w-4 h-4 text-blue-500" />
             AI Interview Summary
           </h3>
-          <div className="prose prose-slate prose-sm max-w-none text-slate-650 whitespace-pre-wrap">
+          <div className="prose prose-slate prose-sm max-w-none text-slate-600 whitespace-pre-wrap">
             {interview.summary}
           </div>
         </div>
