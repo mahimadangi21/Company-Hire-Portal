@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, CheckCircle, Clock, Search, ExternalLink, Loader2 } from 'lucide-react';
+import { Mail, CheckCircle, Clock, Search, ExternalLink, Loader2, Send } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const CandidateForms = () => {
