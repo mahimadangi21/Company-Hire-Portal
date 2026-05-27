@@ -10,8 +10,6 @@ import CandidateForms from './pages/CandidateForms';
 import VideoBot from './pages/VideoBot';
 import TechnicalScheduler from './pages/TechnicalScheduler';
 import Reports from './pages/Reports';
-import EmailHistory from './pages/EmailHistory';
-import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -27,8 +25,6 @@ function App() {
             <Route path="/video-bot" element={<VideoBot />} />
             <Route path="/scheduler" element={<TechnicalScheduler />} />
             <Route path="/reports" element={<Reports />} />
-            <Route path="/emails" element={<EmailHistory />} />
-            <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

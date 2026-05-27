@@ -173,25 +173,7 @@ const ResumeUpload = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {/* Status banner */}
-      {status.type && (
-        <div style={{
-          padding: '1rem',
-          borderRadius: 'var(--radius-lg)',
-          backgroundColor: status.type === 'success' ? 'var(--success-bg)' : status.type === 'error' ? 'var(--danger-bg)' : 'var(--info-bg)',
-          color: status.type === 'success' ? '#4d7300' : status.type === 'error' ? '#991b1b' : 'var(--brand-navy)',
-          border: `1px solid ${status.type === 'success' ? 'rgba(125, 186, 0, 0.3)' : status.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(14, 45, 123, 0.3)'}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          fontSize: '0.875rem'
-        }}>
-          {status.type === 'success' && <CheckCircle size={18} style={{ color: 'var(--brand-green)' }} />}
-          {status.type === 'error' && <AlertCircle size={18} style={{ color: 'var(--danger)' }} />}
-          {status.type === 'info' && <Loader2 size={18} className="animate-spin" style={{ color: 'var(--brand-navy)' }} />}
-          <div style={{ fontWeight: '500' }}>{status.message}</div>
-        </div>
-      )}
+
 
       {/* Upload Section */}
       <div className="card">
@@ -265,6 +247,27 @@ const ResumeUpload = () => {
               Browse Files
             </button>
           </div>
+
+          {/* Status banner positioned below dropzone */}
+          {status.type && (
+            <div style={{
+              padding: '1rem',
+              borderRadius: 'var(--radius-lg)',
+              backgroundColor: status.type === 'success' ? 'var(--success-bg)' : status.type === 'error' ? 'var(--danger-bg)' : 'var(--info-bg)',
+              color: status.type === 'success' ? '#4d7300' : status.type === 'error' ? '#991b1b' : 'var(--brand-navy)',
+              border: `1px solid ${status.type === 'success' ? 'rgba(125, 186, 0, 0.3)' : status.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(14, 45, 123, 0.3)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              fontSize: '0.875rem',
+              marginTop: '1.5rem'
+            }}>
+              {status.type === 'success' && <CheckCircle size={18} style={{ color: 'var(--brand-green)' }} />}
+              {status.type === 'error' && <AlertCircle size={18} style={{ color: 'var(--danger)' }} />}
+              {status.type === 'info' && <Loader2 size={18} className="animate-spin" style={{ color: 'var(--brand-navy)' }} />}
+              <div style={{ fontWeight: '500' }}>{status.message}</div>
+            </div>
+          )}
         </div>
       </div>
 

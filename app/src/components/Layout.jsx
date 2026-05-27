@@ -15,8 +15,6 @@ const Layout = () => {
       case '/video-bot': return 'Video Bot Screening';
       case '/scheduler': return 'Technical Interview Scheduler';
       case '/reports': return 'Reports & Evaluation';
-      case '/emails': return 'Email & Notification History';
-      case '/settings': return 'System Settings';
       default: return 'InterviewOS';
     }
   };
