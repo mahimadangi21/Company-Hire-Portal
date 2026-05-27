@@ -11,6 +11,7 @@ export interface Interview {
   video_url: string | null;
   transcript: TranscriptEntry[] | null;
   summary?: string;
+  scores?: Record<string, number>;
   share_token: string;
 }
 

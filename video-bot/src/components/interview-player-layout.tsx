@@ -143,15 +143,42 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
         </div>
       </div>
 
-      {interview.summary ? (
-        <div className="p-6 rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
-          <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-500" />
-            AI Interview Summary
-          </h3>
-          <div className="prose prose-slate prose-sm max-w-none text-slate-600 whitespace-pre-wrap">
-            {interview.summary}
+      {interview.summary || interview.scores ? (
+        <div className="p-6 rounded-2xl border border-[#E2E8F0] bg-white shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-500" />
+              AI Interview Summary
+            </h3>
+            <div className="prose prose-slate prose-sm max-w-none text-slate-600 whitespace-pre-wrap">
+              {interview.summary}
+            </div>
           </div>
+          
+          {interview.scores && Object.keys(interview.scores).length > 0 && (
+            <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
+              <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                Performance Scores
+              </h3>
+              <div className="space-y-4">
+                {Object.entries(interview.scores).map(([category, score]) => (
+                  <div key={category}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium text-slate-700 capitalize">{category}</span>
+                      <span className="text-slate-500 font-semibold">{score as number}/5</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div 
+                        className={`bg-blue-500 h-2 rounded-full transition-all duration-1000 ease-out`} 
+                        style={{ width: `${((score as number) / 5) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : interview.status === "completed" ? (
         <div className="p-6 rounded-2xl border border-[#E2E8F0] bg-white shadow-sm flex flex-col items-center justify-center text-center">

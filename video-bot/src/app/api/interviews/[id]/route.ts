@@ -95,8 +95,15 @@ export async function PATCH(
                   },
                   body: JSON.stringify({
                     model: "llama-3.1-8b-instant",
+                    response_format: { type: "json_object" },
                     messages: [
-                      { role: "system", content: "You are an expert HR recruiter. Summarize the following interview transcript in 3-4 concise bullet points highlighting the candidate's key qualifications, experience, and communication style." },
+                      { 
+                        role: "system", 
+                        content: `You are an expert HR recruiter. Analyze the following interview transcript and return a JSON object with two keys:
+1. "summary": A concise 3-4 bullet point summary highlighting the candidate's key qualifications, experience, and communication style. Use markdown bullet points.
+2. "scores": An object containing ratings out of 5 for "Communication", "Clarity", "Confidence", and "Relevance". Example: {"Communication": 4, "Clarity": 5, "Confidence": 3, "Relevance": 4}.
+Respond ONLY with the JSON object.` 
+                      },
                       { role: "user", content: fullText }
                     ]
                   })
@@ -104,8 +111,16 @@ export async function PATCH(
                 
                 if (chatRes.ok) {
                   const chatData = await chatRes.json();
-                  body.summary = chatData.choices[0]?.message?.content || "";
-                  console.log(`Successfully generated AI Summary`);
+                  const contentStr = chatData.choices[0]?.message?.content || "{}";
+                  try {
+                    const parsed = JSON.parse(contentStr);
+                    body.summary = parsed.summary || "";
+                    body.scores = parsed.scores || null;
+                    console.log(`Successfully generated AI Summary and Scores`);
+                  } catch (e) {
+                    console.error("Failed to parse AI JSON response", e);
+                    body.summary = contentStr; // Fallback
+                  }
                 } else {
                   console.error("Groq Chat API returned an error:", await chatRes.text());
                 }

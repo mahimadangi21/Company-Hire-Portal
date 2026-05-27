@@ -10,9 +10,9 @@ interface LogoProps {
 }
 
 const sizeConfig = {
-  sm: { img: 82 }, 
-  md: { img: 112 }, 
-  lg: { img: 154 }, 
+  sm: { img: 82 },
+  md: { img: 112 },
+  lg: { img: 154 },
 };
 
 export function Logo({ className, size = "md", href, showTagline }: LogoProps) {

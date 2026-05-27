@@ -53,10 +53,17 @@ ALTER TABLE public.interviews ADD COLUMN IF NOT EXISTS summary text;
 create table if not exists public.questions_bank (
   id uuid default gen_random_uuid() primary key,
   job_role text not null,
+  department text default 'General',
+  sub_department text default 'General',
   question_text text not null,
   is_mandatory boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- Note: Run these if tables already exist:
+-- ALTER TABLE public.questions_bank ADD COLUMN IF NOT EXISTS department text DEFAULT 'General';
+-- ALTER TABLE public.questions_bank ADD COLUMN IF NOT EXISTS sub_department text DEFAULT 'General';
+-- ALTER TABLE public.interviews ADD COLUMN IF NOT EXISTS scores jsonb;
 
 -- Enable RLS on questions_bank
 alter table public.questions_bank enable row level security;

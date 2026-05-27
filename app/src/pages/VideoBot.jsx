@@ -16,9 +16,19 @@ const VideoBot = () => {
   // Invite Form state
   const [inviteCandidateId, setInviteCandidateId] = useState('');
   const [inviteJobRole, setInviteJobRole] = useState('');
-  const [inviteQuestionCount, setInviteQuestionCount] = useState(3);
+  const [inviteDepartment, setInviteDepartment] = useState('Technology and Delivery');
+  const [inviteSubDepartment, setInviteSubDepartment] = useState('PHP');
   const [sending, setSending] = useState(false);
   const [emailModal, setEmailModal] = useState(null);
+  
+  // Define some default examples as requested
+  const DEFAULT_DEPARTMENTS = ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
+  const DEFAULT_SUB_DEPARTMENTS = {
+    'Technology and Delivery': ['PHP', 'QA', 'Frontend', 'Backend'],
+    'Engineering': ['DevOps', 'Data Science', 'SRE'],
+    'HR': ['Recruitment', 'Operations'],
+    'Marketing': ['SEO', 'Content', 'Social Media']
+  };
   
   // Copied indicator state
   const [copiedId, setCopiedId] = useState(null);
@@ -72,8 +82,8 @@ const VideoBot = () => {
     setLoading(false);
   };
 
-  const handleSendInvite = async (candidate, targetEmail, jobRole, questionCount) => {
-    if (!candidate || !jobRole || questionCount < 1) return;
+  const handleSendInvite = async (candidate, targetEmail, jobRole, department, subDepartment) => {
+    if (!candidate || !department || !subDepartment) return;
 
     setSending(true);
     try {
@@ -84,7 +94,8 @@ const VideoBot = () => {
           candidate_name: candidate.name,
           candidate_email: targetEmail,
           job_role: jobRole,
-          number_of_questions: questionCount
+          department: department,
+          sub_department: subDepartment
         })
       });
 
@@ -164,18 +175,36 @@ const VideoBot = () => {
               </select>
             </div>
 
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label">Department</label>
+              <select 
+                className="form-select" 
+                value={inviteDepartment}
+                onChange={e => {
+                  setInviteDepartment(e.target.value);
+                  const subs = DEFAULT_SUB_DEPARTMENTS[e.target.value] || ['General'];
+                  setInviteSubDepartment(subs[0]);
+                }}
+              >
+                {DEFAULT_DEPARTMENTS.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Number of Questions to Ask</label>
-              <input 
-                type="number" 
-                className="form-input" 
-                min="1" 
-                max="20"
-                value={inviteQuestionCount}
-                onChange={e => setInviteQuestionCount(parseInt(e.target.value))}
-              />
+              <label className="form-label">Sub-Department</label>
+              <select 
+                className="form-select"
+                value={inviteSubDepartment}
+                onChange={e => setInviteSubDepartment(e.target.value)}
+              >
+                {(DEFAULT_SUB_DEPARTMENTS[inviteDepartment] || ['General']).map(sd => (
+                  <option key={sd} value={sd}>{sd}</option>
+                ))}
+              </select>
               <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
-                Will prioritize mandatory questions first, then random.
+                Candidate will be asked all questions configured for this sub-department.
               </span>
             </div>
 
@@ -189,7 +218,8 @@ const VideoBot = () => {
                     candidate,
                     email: candidate.email,
                     jobRole: candidate.jobApplied || 'Common',
-                    questionCount: inviteQuestionCount
+                    department: inviteDepartment,
+                    subDepartment: inviteSubDepartment
                   });
                 }
               }}
@@ -381,7 +411,7 @@ const VideoBot = () => {
                 className="btn btn-primary"
                 disabled={sending || !emailModal.email}
                 style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => handleSendInvite(emailModal.candidate, emailModal.email, emailModal.jobRole, emailModal.questionCount)}
+                onClick={() => handleSendInvite(emailModal.candidate, emailModal.email, emailModal.jobRole, emailModal.department, emailModal.subDepartment)}
               >
                 {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : 'Send Mail'}
               </button>

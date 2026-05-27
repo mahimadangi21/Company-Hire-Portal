@@ -4,50 +4,31 @@ import { getServiceSupabase } from "@/lib/supabase/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { candidate_name, candidate_email, job_role, number_of_questions, expires_at } = body;
+    const { candidate_name, candidate_email, job_role, department, sub_department, expires_at } = body;
 
-    if (!candidate_name || !candidate_email || !job_role || !number_of_questions) {
+    if (!candidate_name || !candidate_email || !department || !sub_department) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const supabase = getServiceSupabase();
 
-    // 1. Fetch questions from the common question bank
+    // 1. Fetch questions from the common question bank for this department and sub-department
     const { data: questions, error: qError } = await supabase
       .from("questions_bank")
-      .select("*");
+      .select("*")
+      .eq("department", department)
+      .eq("sub_department", sub_department);
 
     if (qError) {
       return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 });
     }
 
     if (!questions || questions.length === 0) {
-      return NextResponse.json({ error: "No questions found for this job role" }, { status: 400 });
+      return NextResponse.json({ error: `No questions found for ${department} - ${sub_department}` }, { status: 400 });
     }
 
-    // 2. Separate mandatory and optional
-    const mandatory = questions.filter(q => q.is_mandatory);
-    const optional = questions.filter(q => !q.is_mandatory);
-
-    // 3. Select the questions
-    let selectedQuestions: string[] = [];
-    const targetCount = parseInt(number_of_questions);
-
-    // Always include all mandatory questions first (up to the target count, but typically we want all mandatory)
-    // If mandatory count > targetCount, we just take targetCount mandatory questions
-    if (mandatory.length >= targetCount) {
-      selectedQuestions = mandatory.slice(0, targetCount).map(q => q.question_text);
-    } else {
-      // Add all mandatory
-      selectedQuestions = [...mandatory.map(q => q.question_text)];
-      
-      // Randomly pick the rest from optional
-      const remainingNeeded = targetCount - mandatory.length;
-      const shuffledOptional = optional.sort(() => 0.5 - Math.random());
-      
-      const additional = shuffledOptional.slice(0, remainingNeeded).map(q => q.question_text);
-      selectedQuestions = [...selectedQuestions, ...additional];
-    }
+    // Select all questions configured for this sub-department
+    let selectedQuestions = questions.map(q => q.question_text);
 
     if (selectedQuestions.length === 0) {
       return NextResponse.json({ error: "Could not select any questions" }, { status: 400 });
