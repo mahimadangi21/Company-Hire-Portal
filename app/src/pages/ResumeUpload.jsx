@@ -3,7 +3,7 @@ import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, 
 import { useAppContext } from '../context/AppContext';
 
 const ResumeUpload = () => {
-  const { jobs, candidates, refreshCandidates } = useAppContext();
+  const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
   const [selectedJob, setSelectedJob] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -136,9 +136,8 @@ const ResumeUpload = () => {
           extracted_data: data
         };
 
-        const dbRes = await fetch('http://localhost:3000/api/candidates', {
+        const dbRes = await apiFetch('/api/candidates', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
@@ -369,7 +368,7 @@ const ResumeUpload = () => {
                                   setActiveDropdown(null);
                                   if(window.confirm(`Are you sure you want to delete ${candidate.name}?`)) {
                                     try {
-                                      const res = await fetch(`http://localhost:3000/api/candidates?id=${candidate.id}`, {
+                                      const res = await apiFetch(`/api/candidates?id=${candidate.id}`, {
                                         method: 'DELETE'
                                       });
                                       if(res.ok) {

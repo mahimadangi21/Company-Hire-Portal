@@ -197,7 +197,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = requireInternalSecret(req);
+  const authError = await requireInternalSecret(req);
   if (authError) return authError;
   try {
     const { id } = await params;

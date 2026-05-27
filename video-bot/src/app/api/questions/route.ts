@@ -26,7 +26,7 @@ export async function GET() {
 
 // Add a new question to a job role
 export async function POST(request: NextRequest) {
-  const authError = requireInternalSecret(request);
+  const authError = await requireInternalSecret(request);
   if (authError) return authError;
   try {
     const body = await request.json();
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = requireInternalSecret(request);
+  const authError = await requireInternalSecret(request);
   if (authError) return authError;
   try {
     const { searchParams } = new URL(request.url);

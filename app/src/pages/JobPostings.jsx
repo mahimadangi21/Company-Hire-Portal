@@ -3,7 +3,7 @@ import { Plus, Edit2, Archive, Folder, Subtitles } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const JobPostings = () => {
-  const { jobs, refreshJobs } = useAppContext();
+  const { jobs, refreshJobs, apiFetch } = useAppContext();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [department, setDepartment] = useState('');
@@ -21,9 +21,8 @@ const JobPostings = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('http://localhost:3000/api/jobs', {
+      const res = await apiFetch('/api/jobs', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, department })
       });
 

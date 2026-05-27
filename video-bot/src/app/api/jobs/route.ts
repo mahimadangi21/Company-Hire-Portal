@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = requireInternalSecret(request);
+  const authError = await requireInternalSecret(request);
   if (authError) return authError;
   try {
     const body = await request.json();

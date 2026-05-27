@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { requireInternalSecret } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const authError = requireInternalSecret(req);
+  const authError = await requireInternalSecret(req);
   if (authError) return authError;
   try {
     const body = await req.json();
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const authError = requireInternalSecret(req);
+  const authError = await requireInternalSecret(req);
   if (authError) return authError;
   try {
     const supabase = await createAdminClient();

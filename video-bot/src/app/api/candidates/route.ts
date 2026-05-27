@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   // GET all candidates requires auth; GET by id is public (candidate-form uses it)
   if (!id) {
-    const authError = requireInternalSecret(request);
+    const authError = await requireInternalSecret(request);
     if (authError) return authError;
   }
 
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = requireInternalSecret(request);
+  const authError = await requireInternalSecret(request);
   if (authError) return authError;
   try {
     const body = await request.json();
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const authError = requireInternalSecret(request);
+  const authError = await requireInternalSecret(request);
   if (authError) return authError;
   try {
     const body = await request.json();
@@ -149,7 +149,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = requireInternalSecret(request);
+  const authError = await requireInternalSecret(request);
   if (authError) return authError;
   try {
     const { searchParams } = new URL(request.url);

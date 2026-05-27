@@ -578,7 +578,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
    MAIN REPORTS PAGE
 ═══════════════════════════════════════════════════════════════ */
 const Reports = () => {
-  const { candidates, jobs, refreshCandidates } = useAppContext();
+  const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [shareModalOpen, setShareModalOpen] = useState(null);
   const [search, setSearch] = useState('');
@@ -632,9 +632,8 @@ const Reports = () => {
 
     setGeneratingId(candidate.id);
     try {
-      const res = await fetch('http://localhost:3000/api/reports/share', {
+      const res = await apiFetch('/api/reports/share', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           candidateId: candidate.id,
           candidateEmail: candidate.email,
@@ -668,9 +667,8 @@ const Reports = () => {
     setShareLoading(true);
     setShareResult(null);
     try {
-      const res = await fetch('http://localhost:3000/api/reports/share', {
+      const res = await apiFetch('/api/reports/share', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           candidateId: candidate.id,
           candidateEmail: candidate.email,

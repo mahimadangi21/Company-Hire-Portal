@@ -6,7 +6,7 @@ import QuestionBankModal from '../components/QuestionBankModal';
 const NEXT_JS_URL = 'http://localhost:3000';
 
 const VideoBot = () => {
-  const { candidates, jobs, refreshCandidates } = useAppContext();
+  const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   
   // Dashboard state
@@ -73,7 +73,7 @@ const VideoBot = () => {
 
   const fetchInterviews = async () => {
     try {
-      const res = await fetch(`${NEXT_JS_URL}/api/interviews/list`);
+      const res = await apiFetch('/api/interviews/list');
       const data = await res.json();
       setInterviews(data || []);
     } catch (e) {
@@ -87,9 +87,8 @@ const VideoBot = () => {
 
     setSending(true);
     try {
-      const res = await fetch(`${NEXT_JS_URL}/api/invites/send`, {
+      const res = await apiFetch('/api/invites/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           candidate_name: candidate.name,
           candidate_email: targetEmail,
@@ -103,9 +102,8 @@ const VideoBot = () => {
         // Update the candidate's email in the backend if it was edited
         if (targetEmail !== candidate.email) {
           try {
-            await fetch(`${NEXT_JS_URL}/api/candidates`, {
+            await apiFetch('/api/candidates', {
               method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 id: candidate.id,
                 email: targetEmail
@@ -135,7 +133,7 @@ const VideoBot = () => {
     if (!window.confirm("Are you sure you want to delete this interview record?")) return;
 
     try {
-      const res = await fetch(`${NEXT_JS_URL}/api/interviews/${id}`, {
+      const res = await apiFetch(`/api/interviews/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
