@@ -264,7 +264,7 @@ ul, ol {
   border-radius: 9999px;
 }
 
-.badge-success { background-color: rgba(125, 186, 0, 0.15); color: #4d7300; }
+.badge-success { background-color: var(--brand-green); color: #ffffff; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.08); border: 1px solid var(--brand-green-hover); }
 .badge-warning { background-color: var(--warning-bg); color: #92400e; }
 .badge-danger { background-color: var(--danger-bg); color: #991b1b; }
 .badge-info { background-color: rgba(14, 45, 123, 0.1); color: var(--brand-navy); }
