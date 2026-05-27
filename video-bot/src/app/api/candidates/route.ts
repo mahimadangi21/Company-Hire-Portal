@@ -1,10 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { requireInternalSecret } from "@/lib/auth";
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  // GET all candidates requires auth; GET by id is public (candidate-form uses it)
+  if (!id) {
+    const authError = requireInternalSecret(request);
+    if (authError) return authError;
+  }
     const supabase = getServiceSupabase();
 
     if (id) {
@@ -39,7 +45,9 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const authError = requireInternalSecret(request);
+  if (authError) return authError;
   try {
     const body = await request.json();
     const {
@@ -104,7 +112,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
+  const authError = requireInternalSecret(request);
+  if (authError) return authError;
   try {
     const body = await request.json();
     const { id, ...updates } = body;
@@ -136,7 +146,9 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
+  const authError = requireInternalSecret(request);
+  if (authError) return authError;
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

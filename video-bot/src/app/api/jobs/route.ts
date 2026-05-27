@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { requireInternalSecret } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -21,7 +22,9 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const authError = requireInternalSecret(request);
+  if (authError) return authError;
   try {
     const body = await request.json();
     const { title, department } = body;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, getServiceSupabase } from "@/lib/supabase/server";
+import { requireInternalSecret } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
@@ -30,9 +31,23 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Internal service calls from candidate interview app don't need the secret,
+  // but admin destructive writes require it.
+  // We allow PATCH without secret only for candidate-side status updates (status=completed etc.).
+  // For safety, sanitize accepted fields to prevent mass-assignment.
   try {
     const { id } = await params;
-    const body = await req.json();
+    const rawBody = await req.json();
+
+    // Whitelist allowed fields to prevent mass-assignment
+    const ALLOWED_FIELDS = [
+      "status", "video_url", "transcript", "summary", "scores",
+      "started_at", "completed_at", "expires_at"
+    ] as const;
+    const body: Record<string, unknown> = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (key in rawBody) body[key] = rawBody[key];
+    }
     const supabase = getServiceSupabase();
 
 
@@ -182,6 +197,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireInternalSecret(req);
+  if (authError) return authError;
   try {
     const { id } = await params;
     const supabase = await createAdminClient();

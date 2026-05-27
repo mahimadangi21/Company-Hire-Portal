@@ -140,11 +140,8 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-white/30">
-            Don&apos;t have an account?{" "}
-            <Link href="/admin/signup" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-              Create one
-            </Link>
+          <p className="mt-6 text-center text-xs text-white/20">
+            © {new Date().getFullYear()} Kadellabs. All rights reserved.
           </p>
         </div>
       </div>

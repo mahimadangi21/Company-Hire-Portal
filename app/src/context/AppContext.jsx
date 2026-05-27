@@ -4,7 +4,20 @@ const AppContext = createContext();
 
 export const useAppContext = () => useContext(AppContext);
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET;
+
+/** Authenticated fetch — automatically attaches the internal API secret header */
+export const apiFetch = (path, options = {}) => {
+  return fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_SECRET,
+      ...(options.headers || {}),
+    },
+  });
+};
 
 export const AppProvider = ({ children }) => {
   const [jobs, setJobs] = useState([]);
@@ -13,7 +26,7 @@ export const AppProvider = ({ children }) => {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/jobs`);
+      const res = await apiFetch('/api/jobs');
       if (res.ok) {
         const data = await res.json();
         setJobs(data);
@@ -25,7 +38,7 @@ export const AppProvider = ({ children }) => {
 
   const fetchCandidates = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/candidates`);
+      const res = await apiFetch('/api/candidates');
       if (res.ok) {
         const data = await res.json();
         setCandidates(data.map(c => ({
@@ -60,7 +73,8 @@ export const AppProvider = ({ children }) => {
       candidates, setCandidates,
       notifications, setNotifications,
       refreshJobs: fetchJobs,
-      refreshCandidates: fetchCandidates
+      refreshCandidates: fetchCandidates,
+      apiFetch,
     }}>
       {children}
     </AppContext.Provider>

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, CheckCircle, Save } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
-
-const NEXT_JS_URL = 'http://localhost:3000';
+import { X, Plus, Trash2 } from 'lucide-react';
+import { useAppContext, apiFetch } from '../context/AppContext';
 
 const QuestionBankModal = ({ onClose }) => {
   const { jobs } = useAppContext();
@@ -39,7 +37,7 @@ const QuestionBankModal = ({ onClose }) => {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${NEXT_JS_URL}/api/questions`);
+      const res = await apiFetch('/api/questions');
       const data = await res.json();
       setQuestions(data || []);
     } catch (e) {
@@ -52,7 +50,7 @@ const QuestionBankModal = ({ onClose }) => {
     if (!newQuestionText.trim()) return;
 
     try {
-      const res = await fetch(`${NEXT_JS_URL}/api/questions`, {
+      const res = await apiFetch('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -76,7 +74,7 @@ const QuestionBankModal = ({ onClose }) => {
     if (!window.confirm("Are you sure you want to delete this question?")) return;
 
     try {
-      const res = await fetch(`${NEXT_JS_URL}/api/questions?id=${id}`, {
+      const res = await apiFetch(`/api/questions?id=${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {

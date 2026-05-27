@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { requireInternalSecret } from "@/lib/auth";
 
 // Fetch all global questions
 export async function GET() {
@@ -24,7 +25,9 @@ export async function GET() {
 }
 
 // Add a new question to a job role
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const authError = requireInternalSecret(request);
+  if (authError) return authError;
   try {
     const body = await request.json();
     const { job_role, question_text, is_mandatory, department, sub_department } = body;
@@ -61,7 +64,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
+  const authError = requireInternalSecret(request);
+  if (authError) return authError;
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

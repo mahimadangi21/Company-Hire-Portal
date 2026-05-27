@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import JobPostings from './pages/JobPostings';
@@ -15,8 +16,15 @@ function App() {
     <AppProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public route — login only */}
           <Route path="/login" element={<Login />} />
-          <Route element={<Layout />}>
+
+          {/* Protected routes — require admin session */}
+          <Route element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
             <Route path="/" element={<Dashboard />} />
             <Route path="/jobs" element={<JobPostings />} />
             <Route path="/resumes" element={<ResumeUpload />} />
@@ -24,6 +32,8 @@ function App() {
             <Route path="/scheduler" element={<TechnicalScheduler />} />
             <Route path="/reports" element={<Reports />} />
           </Route>
+
+          {/* Catch-all: redirect to home (ProtectedRoute will handle auth check) */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
