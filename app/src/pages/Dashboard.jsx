@@ -81,7 +81,7 @@ const Dashboard = () => {
       {/* Active Jobs Quick View */}
       <div className="card">
         <div className="card-header">
-          <h3 className="card-title">Active Job Postings</h3>
+          <h3 className="card-title">Active Jobs Listed</h3>
         </div>
         <div className="table-container">
           <table className="table">

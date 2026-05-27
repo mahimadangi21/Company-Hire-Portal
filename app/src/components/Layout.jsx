@@ -9,7 +9,7 @@ const Layout = () => {
   const getPageTitle = () => {
     switch(location.pathname) {
       case '/': return 'Dashboard Overview';
-      case '/jobs': return 'Job Postings';
+      case '/jobs': return 'Job Listed';
       case '/resumes': return 'Resume Upload & Parsing';
       case '/forms': return 'Candidate Forms';
       case '/video-bot': return 'Video Bot Interviews';
