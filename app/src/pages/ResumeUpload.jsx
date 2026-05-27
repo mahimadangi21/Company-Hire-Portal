@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send, Share2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import StandardResume from '../components/StandardResume';
 
 const ResumeUpload = () => {
   const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
@@ -354,6 +355,32 @@ const ResumeUpload = () => {
                                   textAlign: 'left', 
                                   padding: '0.5rem 1rem', 
                                   fontSize: '0.875rem', 
+                                  color: 'var(--brand-navy)',
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem'
+                                }}
+                                className="hover:bg-gray-50 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdown(null);
+                                  const shareUrl = `${window.location.origin.replace('5173', '3000')}/resume/share/${candidate.id}`;
+                                  navigator.clipboard.writeText(shareUrl).then(() => {
+                                    alert("Read-only resume link copied to clipboard:\n" + shareUrl);
+                                  });
+                                }}
+                              >
+                                <Share2 size={14} /> Share Resume
+                              </button>
+                              <button 
+                                style={{ 
+                                  width: '100%', 
+                                  textAlign: 'left', 
+                                  padding: '0.5rem 1rem', 
+                                  fontSize: '0.875rem', 
                                   color: 'var(--danger)',
                                   background: 'none',
                                   border: 'none',
@@ -399,7 +426,7 @@ const ResumeUpload = () => {
         </div>
       </div>
 
-      {/* Details Modal */}
+      {/* Details Modal (Standard Resume) */}
       {selectedCandidate && (
         <div style={{
           position: 'fixed',
@@ -416,232 +443,11 @@ const ResumeUpload = () => {
           padding: '2rem',
           animation: 'fadeIn 0.2s ease-out'
         }} onClick={() => setSelectedCandidate(null)}>
-          <div style={{
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-xl)',
-            width: '100%',
-            maxWidth: '900px',
-            maxHeight: '90vh',
-            boxShadow: 'var(--shadow-xl)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            border: '1px solid var(--border)'
-          }} onClick={(e) => e.stopPropagation()}>
-            
-            {/* Modal Header */}
-            <div style={{
-              padding: '1.5rem 2rem',
-              borderBottom: '1px solid var(--gray-100)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: '#f8fafb'
-            }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--brand-navy)' }}>
-                  Candidate Profile Details
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  Extracted via AI for <strong style={{ color: 'var(--brand-green)' }}>{selectedCandidate.jobApplied}</strong>
-                </p>
-              </div>
-              <button 
-                onClick={() => setSelectedCandidate(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1.5rem',
-                  color: 'var(--gray-400)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  transition: 'background-color 0.2s'
-                }}
-                className="hover:bg-gray-100 hover:text-gray-700"
-              >
-                &times;
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div style={{ padding: '2rem', overflowY: 'auto', flex: 1 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '2rem' }}>
-                
-                {/* Left Column: Summary */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <div style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: 'var(--gray-50)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)' }}>
-                    <div style={{ 
-                      width: '64px', height: '64px', borderRadius: '50%', 
-                      backgroundColor: 'rgba(14, 45, 123, 0.1)', display: 'flex', 
-                      alignItems: 'center', justifyContent: 'center', 
-                      color: 'var(--brand-navy)', fontWeight: '700', 
-                      fontSize: '1.5rem', margin: '0 auto 1rem auto' 
-                    }}>
-                      {selectedCandidate.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <h4 style={{ fontSize: '1.125rem', fontWeight: '600', color: 'var(--brand-navy)' }}>
-                      {selectedCandidate.name}
-                    </h4>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                      {selectedCandidate.email}
-                    </p>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                      {selectedCandidate.phone}
-                    </p>
-                  </div>
-
-                  {/* Experience Section */}
-                  <div style={{ padding: '1.25rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-                    <h5 style={{ fontWeight: '600', color: 'var(--brand-navy)', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Experience Analysis
-                    </h5>
-                    {selectedCandidate.extractedData?.totalExperienceAnalysis ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Total:</span>
-                          <strong>{selectedCandidate.extractedData.totalExperienceAnalysis.totalExperience || 'N/A'}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Domain:</span>
-                          <strong>{selectedCandidate.extractedData.totalExperienceAnalysis.domainExperience} years</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Leadership:</span>
-                          <strong>{selectedCandidate.extractedData.totalExperienceAnalysis.leadershipExperience || '0.0 years'}</strong>
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Total:</span>
-                          <strong>N/A</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Domain:</span>
-                          <strong>N/A</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Leadership:</span>
-                          <strong>N/A</strong>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Skills Tag Cloud */}
-                  <div>
-                    <h5 style={{ fontWeight: '600', color: 'var(--brand-navy)', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Skills Profile
-                    </h5>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      {selectedCandidate.skills && selectedCandidate.skills.length > 0 ? (
-                        selectedCandidate.skills.map((skill, i) => (
-                          <span 
-                            key={i} 
-                            className="badge badge-info" 
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                          >
-                            {skill}
-                          </span>
-                        ))
-                      ) : (
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>No skills listed.</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column: Deep Data */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  
-                  {/* Education History */}
-                  <div>
-                    <h5 style={{ fontWeight: '600', color: 'var(--brand-navy)', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--gray-100)', paddingBottom: '0.375rem' }}>
-                      Education Detail
-                    </h5>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {selectedCandidate.extractedData?.educationDetails && selectedCandidate.extractedData.educationDetails.length > 0 ? (
-                        selectedCandidate.extractedData.educationDetails.map((edu, i) => (
-                          <div key={i} style={{ padding: '0.75rem 1rem', backgroundColor: '#fcfcfc', border: '1px solid var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
-                            <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.875rem' }}>
-                              {edu.degree || 'Degree details N/A'}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-                              <span>{edu.college || 'Institution N/A'}</span>
-                              <span>{edu.passingYear && `Class of ${edu.passingYear}`} {edu.cgpaOrPercentage && `| ${edu.cgpaOrPercentage}`}</span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '1rem', backgroundColor: 'var(--gray-50)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-                          No education records extracted.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Project Analysis */}
-                  <div>
-                    <h5 style={{ fontWeight: '600', color: 'var(--brand-navy)', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--gray-100)', paddingBottom: '0.375rem' }}>
-                      Project Highlights
-                    </h5>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {selectedCandidate.extractedData?.projectAnalysis && selectedCandidate.extractedData.projectAnalysis.length > 0 ? (
-                        selectedCandidate.extractedData.projectAnalysis.map((proj, i) => (
-                          <div key={i} style={{ padding: '0.875rem 1rem', border: '1px solid var(--gray-100)', borderRadius: 'var(--radius-md)', backgroundColor: '#fcfcfc' }}>
-                            <div style={{ fontWeight: '600', color: 'var(--brand-navy)', fontSize: '0.875rem' }}>
-                              {proj.projectName || 'Unnamed Project'}
-                            </div>
-                            <div style={{ fontSize: '0.825rem', color: 'var(--text-main)', marginTop: '0.375rem', lineHeight: '1.4' }}>
-                              {proj.projectDescription}
-                            </div>
-                            {proj.technologiesUsed && proj.technologiesUsed.length > 0 && (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.625rem' }}>
-                                {proj.technologiesUsed.map((t, idx) => (
-                                  <span key={idx} style={{ fontSize: '0.65rem', backgroundColor: 'var(--gray-100)', color: 'var(--gray-600)', padding: '0.125rem 0.375rem', borderRadius: '4px', fontWeight: '500' }}>
-                                    {t}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '1rem', backgroundColor: 'var(--gray-50)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-                          No projects extracted.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: '1.25rem 2rem',
-              borderTop: '1px solid var(--gray-100)',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              backgroundColor: '#f8fafb'
-            }}>
-              <button 
-                className="btn btn-outline" 
-                onClick={() => setSelectedCandidate(null)}
-                style={{ padding: '0.5rem 1.5rem' }}
-              >
-                Close Profile
-              </button>
-            </div>
-
-          </div>
+          <StandardResume 
+            candidate={selectedCandidate} 
+            onClose={() => setSelectedCandidate(null)} 
+            onUpdate={refreshCandidates} 
+          />
         </div>
       )}
 
