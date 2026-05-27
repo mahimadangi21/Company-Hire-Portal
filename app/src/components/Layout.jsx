@@ -11,7 +11,6 @@ const Layout = () => {
       case '/': return 'Dashboard Overview';
       case '/jobs': return 'Department';
       case '/resumes': return 'Resume Upload & Parsing';
-      case '/forms': return 'Candidate Forms';
       case '/video-bot': return 'Video Bot Screening';
       case '/scheduler': return 'Technical Interview Scheduler';
       case '/reports': return 'Reports & Evaluation';

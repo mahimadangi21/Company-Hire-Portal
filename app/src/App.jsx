@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import JobPostings from './pages/JobPostings';
 import ResumeUpload from './pages/ResumeUpload';
-import CandidateForms from './pages/CandidateForms';
 import VideoBot from './pages/VideoBot';
 import TechnicalScheduler from './pages/TechnicalScheduler';
 import Reports from './pages/Reports';
@@ -21,7 +20,6 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/jobs" element={<JobPostings />} />
             <Route path="/resumes" element={<ResumeUpload />} />
-            <Route path="/forms" element={<CandidateForms />} />
             <Route path="/video-bot" element={<VideoBot />} />
             <Route path="/scheduler" element={<TechnicalScheduler />} />
             <Route path="/reports" element={<Reports />} />

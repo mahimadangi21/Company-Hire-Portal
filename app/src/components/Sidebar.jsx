@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, FileText, FileSpreadsheet, Video, Calendar, BarChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Video, Calendar, BarChart, LogOut } from 'lucide-react';
 
 const Sidebar = () => {
   const [isLogoutHovered, setIsLogoutHovered] = useState(false);
@@ -8,7 +8,6 @@ const Sidebar = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Department', path: '/jobs', icon: Briefcase },
     { name: 'Resume Upload', path: '/resumes', icon: FileText },
-    { name: 'Candidate Forms', path: '/forms', icon: FileSpreadsheet },
     { name: 'Video Bot Screening', path: '/video-bot', icon: Video },
     { name: 'Technical Scheduler', path: '/scheduler', icon: Calendar },
     { name: 'Reports', path: '/reports', icon: BarChart },
@@ -24,7 +23,7 @@ const Sidebar = () => {
       boxShadow: '4px 0 15px rgba(14,45,123,0.1)'
     }}>
       <div style={{ 
-        height: '92px', 
+        height: '73px', 
         backgroundColor: '#ffffff', 
         display: 'flex', 
         alignItems: 'center', 
@@ -35,7 +34,7 @@ const Sidebar = () => {
         <img 
           src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
           alt="KadelLabs Logo" 
-          style={{ height: '54px', objectFit: 'contain' }}
+          style={{ height: '42px', objectFit: 'contain' }}
         />
       </div>
       
