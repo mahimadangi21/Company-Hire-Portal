@@ -654,8 +654,14 @@ export default function InterviewPage() {
             {/* Webcam */}
             <div className="relative">
               <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-200 aspect-video shadow-md">
-                <canvas ref={canvasRef} className="w-full h-full object-cover" />
-                <video ref={videoRef} className="hidden" muted playsInline />
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  style={{ transform: "scaleX(-1)" }}
+                />
+                <canvas ref={canvasRef} className="hidden" />
 
                 {isRecording && (
                   <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-500/90 rounded-full px-2.5 py-1">
