@@ -70,8 +70,8 @@ def main():
 
     try:
         text = extract_text_from_pdf(pdf_path)
-        # Write to stdout — Node.js subprocess reads this
-        sys.stdout.write(text)
+        # Write UTF-8 bytes to stdout safely to avoid Windows charmap encoding crashes
+        sys.stdout.buffer.write(text.encode('utf-8'))
         sys.stdout.flush()
         sys.exit(0)
     except Exception as e:
