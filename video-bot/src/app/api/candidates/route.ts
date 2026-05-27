@@ -136,6 +136,36 @@ export async function PATCH(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: "candidate id is required for deletion" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabase();
+    const { error } = await supabase
+      .from("candidates")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting candidate:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function OPTIONS() {
   return NextResponse.json({}, { status: 200 });
 }

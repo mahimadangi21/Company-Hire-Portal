@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 const ResumeUpload = () => {
@@ -13,6 +13,14 @@ const ResumeUpload = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [emailModal, setEmailModal] = useState(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveDropdown(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
   
   const fileInputRef = useRef(null);
 
@@ -339,7 +347,72 @@ const ResumeUpload = () => {
                         >
                           Send Form
                         </button>
-                        <button className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem' }}><MoreVertical size={16} /></button>
+                        <div style={{ position: 'relative' }}>
+                          <button 
+                            className="btn btn-ghost" 
+                            style={{ padding: '0.25rem 0.5rem' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdown(activeDropdown === candidate.id ? null : candidate.id);
+                            }}
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          
+                          {activeDropdown === candidate.id && (
+                            <div style={{ 
+                              position: 'absolute', 
+                              right: 0, 
+                              top: '100%', 
+                              backgroundColor: 'var(--surface)', 
+                              border: '1px solid var(--border)', 
+                              borderRadius: 'var(--radius-md)', 
+                              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', 
+                              zIndex: 10,
+                              minWidth: '150px',
+                              padding: '0.375rem 0'
+                            }}>
+                              <button 
+                                style={{ 
+                                  width: '100%', 
+                                  textAlign: 'left', 
+                                  padding: '0.5rem 1rem', 
+                                  fontSize: '0.875rem', 
+                                  color: 'var(--danger)',
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem'
+                                }}
+                                className="hover:bg-red-50 hover:bg-opacity-10 transition-colors"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdown(null);
+                                  if(window.confirm(`Are you sure you want to delete ${candidate.name}?`)) {
+                                    try {
+                                      const res = await fetch(`http://localhost:3000/api/candidates?id=${candidate.id}`, {
+                                        method: 'DELETE'
+                                      });
+                                      if(res.ok) {
+                                        refreshCandidates();
+                                        setStatus({ type: 'success', message: `${candidate.name} has been deleted.` });
+                                      } else {
+                                        setStatus({ type: 'error', message: `Failed to delete ${candidate.name}.` });
+                                      }
+                                    } catch(err) { 
+                                      console.error(err); 
+                                      setStatus({ type: 'error', message: `An error occurred while deleting.` });
+                                    }
+                                  }
+                                }}
+                              >
+                                <Trash2 size={14} /> Delete Profile
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
