@@ -15,8 +15,7 @@ const Navbar = ({ title }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '0 2rem',
-      zIndex: 10
+      padding: '0 2rem'
     }}>
       <h1 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--brand-navy)' }}>{title}</h1>
       
