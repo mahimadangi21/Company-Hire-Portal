@@ -688,19 +688,18 @@ const ResumeUpload = () => {
                     });
                     
                     if (res.ok) {
-                      // Optionally update the candidate's email in the backend here
-                      // if the email was edited
-                      if (emailModal.email !== emailModal.candidate.email) {
-                         await fetch('http://localhost:3000/api/candidates', {
-                           method: 'PATCH',
-                           headers: { 'Content-Type': 'application/json' },
-                           body: JSON.stringify({
-                             id: emailModal.candidate.id,
-                             email: emailModal.email
-                           })
-                         });
-                         refreshCandidates();
-                      }
+                      // Update candidate email, set form_status to 'Pending' and stage to 'Candidate Form'
+                      await fetch('http://localhost:3000/api/candidates', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          id: emailModal.candidate.id,
+                          email: emailModal.email,
+                          form_status: 'Pending',
+                          stage: 'Candidate Form'
+                        })
+                      });
+                      refreshCandidates();
 
                       alert(`Form invitation link sent successfully to ${emailModal.candidate.name} (${emailModal.email})!`);
                       setEmailModal(null);
