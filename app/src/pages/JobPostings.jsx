@@ -26,12 +26,12 @@ const JobPostings = () => {
       if (editingJob) {
         res = await apiFetch('/api/jobs', {
           method: 'PATCH',
-          body: JSON.stringify({ id: editingJob.id, title, department })
+          body: JSON.stringify({ id: editingJob.id, title: title.trim(), department: department.trim() })
         });
       } else {
         res = await apiFetch('/api/jobs', {
           method: 'POST',
-          body: JSON.stringify({ title, department })
+          body: JSON.stringify({ title: title.trim(), department: department.trim() })
         });
       }
 
