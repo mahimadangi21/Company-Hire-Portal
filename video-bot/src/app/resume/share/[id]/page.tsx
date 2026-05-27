@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
 import Image from 'next/image';
+import html2pdf from 'html2pdf.js';
 
 export default function SharedResumePage() {
   const { id } = useParams();
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchCandidate() {
@@ -37,7 +39,16 @@ export default function SharedResumePage() {
   }, [id]);
 
   const handlePrint = () => {
-    window.print();
+    if (printRef.current && candidate) {
+      const opt = {
+        margin: [10, 0, 10, 0],
+        filename: `${candidate.name.replace(/\\s+/g, '_')}_Resume.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(printRef.current).save();
+    }
   };
 
   if (loading) {
@@ -81,7 +92,7 @@ export default function SharedResumePage() {
       `}} />
 
       {/* Main Resume Paper */}
-      <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden border border-slate-200">
+      <div ref={printRef} className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden border border-slate-200">
         <div className="p-10 lg:p-14 text-slate-800">
           
           {/* Header */}

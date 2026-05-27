@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Edit2, Save, Printer } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
+import html2pdf from 'html2pdf.js';
+
 const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
   const { apiFetch } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
@@ -56,7 +58,16 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
   };
 
   const handlePrint = () => {
-    window.print();
+    if (printRef.current) {
+      const opt = {
+        margin: [10, 0, 10, 0],
+        filename: `${name.replace(/\\s+/g, '_')}_Resume.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(printRef.current).save();
+    }
   };
 
   if (!candidate) return null;
