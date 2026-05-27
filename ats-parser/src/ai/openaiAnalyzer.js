@@ -35,7 +35,11 @@ RULES (strictly enforced):
 - Skills: extract ONLY technologies, frameworks, databases, languages, libraries, tools, cloud services
 - Skills: NEVER extract soft skills (communication, teamwork, problem solving, OOP, DBMS, SDLC, etc.)
 - Education: normalize degrees (B.Tech→Bachelor of Technology, MCA→Master of Computer Applications, B.Sc→Bachelor of Science, BCA→Bachelor of Computer Applications, MBA→Master of Business Administration, M.Tech→Master of Technology)
-- Experience: domainExperience=0 for freshers; leadershipExperience="0.0 years" if none mentioned
+- Experience Calculation:
+  1. If the candidate is a fresher or has no distinct professional work experience history (or only academic/student projects), set "domainExperience" to 0 and "totalExperience" to null.
+  2. If the candidate has professional work experience, calculate "domainExperience" precisely as the sum of all distinct job durations in years (e.g. 2 years 6 months = 2.5). Avoid double-counting overlapping date ranges. If a job is active or listed as "Present", calculate the duration up to the current year 2026.
+  3. "totalExperience" must be a descriptive string of this total duration (e.g., "2 years 6 months"), or null for freshers.
+  4. "leadershipExperience" must be a string representing leadership duration (e.g. "1.5 years"), or "0.0 years" if none mentioned.
 - Return ONLY valid JSON matching this schema exactly — no extra keys, no markdown:
 
 {"isResume":true,"personalInformation":{"fullName":null,"email":null,"phoneNumber":null},"totalExperienceAnalysis":{"totalExperience":null,"domainExperience":0,"leadershipExperience":"0.0 years"},"skillExtraction":{"extractedSkills":[]},"educationDetails":[{"degree":null,"college":null,"passingYear":null,"cgpaOrPercentage":null}],"projectAnalysis":[{"projectName":null,"projectDescription":null,"technologiesUsed":[]}]}`;
