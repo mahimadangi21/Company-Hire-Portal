@@ -34,7 +34,7 @@ const Sidebar = () => {
         borderBottom: '1px solid rgba(14, 45, 123, 0.1)'
       }}>
         <img 
-          src="https://thoughtleadership.kadellabs.com/wp-content/uploads/2023/09/log-kl.png" 
+          src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
           alt="KadelLabs Logo" 
           style={{ height: '38px', objectFit: 'contain' }}
         />
