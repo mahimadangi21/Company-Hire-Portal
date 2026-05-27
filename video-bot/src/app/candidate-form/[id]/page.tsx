@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { CheckCircle2, User, Mail, Wrench, Loader2 } from "lucide-react";
 
 export default function CandidateFormPage() {
   const params = useParams();
@@ -90,7 +89,7 @@ export default function CandidateFormPage() {
     return (
       <div className="min-h-screen bg-[#050810] text-white flex flex-col items-center justify-center p-6">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-white/60 text-sm font-medium">Loading candidate form...</p>
         </div>
       </div>
@@ -120,7 +119,7 @@ export default function CandidateFormPage() {
         
         <div className="w-full max-w-md bg-white/[0.02] border border-white/10 rounded-3xl p-8 text-center backdrop-blur-xl relative overflow-hidden">
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+            <span className="text-emerald-400 text-3xl">✓</span>
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">Application Submitted!</h2>
           <p className="text-white/60 text-sm leading-relaxed mb-6">

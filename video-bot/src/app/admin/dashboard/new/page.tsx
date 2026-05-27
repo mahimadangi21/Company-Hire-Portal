@@ -149,7 +149,7 @@ export default function NewInterviewPage() {
               <div className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.04] border border-white/[0.08]">
                 <p className="text-white/60 text-xs flex-1 truncate font-mono">{interviewUrl}</p>
                 <button
-                  onClick={() => copyToClipboard(interviewUrl, "interview")}
+                  onClick={() => handleCopy(interviewUrl, "interview")}
                   className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-all flex-shrink-0"
                 >
                   {copied === "interview" ? (
@@ -166,7 +166,7 @@ export default function NewInterviewPage() {
               <div className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.04] border border-white/[0.08]">
                 <p className="text-white/60 text-xs flex-1 truncate font-mono">{shareUrl}</p>
                 <button
-                  onClick={() => copyToClipboard(shareUrl, "share")}
+                  onClick={() => handleCopy(shareUrl, "share")}
                   className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-all flex-shrink-0"
                 >
                   {copied === "share" ? (
