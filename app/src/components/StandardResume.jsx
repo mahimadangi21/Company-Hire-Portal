@@ -65,7 +65,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: 'css', avoid: '.print-avoid' }
       };
       html2pdf().set(opt).from(printRef.current).save();
     }
@@ -107,7 +107,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <button onClick={handlePrint} className="btn btn-outline" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
-              <Printer size={16} /> Print PDF
+              <Printer size={16} /> Download Resume
             </button>
             {isEditing ? (
               <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
@@ -237,7 +237,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
               {extractedData?.projectAnalysis && extractedData.projectAnalysis.length > 0 ? (
                 extractedData.projectAnalysis.map((proj, i) => (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div key={i} className="print-avoid" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                       <h3 style={{ fontWeight: '700', fontSize: '1.125rem', color: '#0f172a', margin: 0 }}>
                         {proj.projectName || 'Unnamed Project'}
@@ -283,7 +283,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {extractedData?.educationDetails && extractedData.educationDetails.length > 0 ? (
                 extractedData.educationDetails.map((edu, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div key={i} className="print-avoid" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <h4 style={{ fontWeight: '700', fontSize: '1.05rem', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
                         {edu.degree || 'Degree details N/A'}

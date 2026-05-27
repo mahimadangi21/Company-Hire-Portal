@@ -46,7 +46,7 @@ export default function SharedResumePage() {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: 'css', avoid: '.print-avoid' }
       };
       html2pdf().set(opt).from(printRef.current).save();
     }
@@ -79,7 +79,7 @@ export default function SharedResumePage() {
           onClick={handlePrint} 
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
         >
-          <Printer size={18} /> Download PDF
+          <Printer size={18} /> Download Resume
         </button>
       </div>
 
@@ -167,7 +167,7 @@ export default function SharedResumePage() {
               <div className="flex flex-col gap-8">
                 {extractedData?.projectAnalysis && extractedData.projectAnalysis.length > 0 ? (
                   extractedData.projectAnalysis.map((proj: any, i: number) => (
-                    <div key={i} className="flex flex-col gap-2">
+                    <div key={i} className="print-avoid flex flex-col gap-2">
                       <div className="flex justify-between items-baseline">
                         <h3 className="font-bold text-lg text-slate-900 m-0">
                           {proj.projectName || 'Unnamed Project'}
@@ -213,7 +213,7 @@ export default function SharedResumePage() {
               <div className="flex flex-col gap-5">
                 {extractedData?.educationDetails && extractedData.educationDetails.length > 0 ? (
                   extractedData.educationDetails.map((edu: any, i: number) => (
-                    <div key={i} className="flex justify-between items-start">
+                    <div key={i} className="print-avoid flex justify-between items-start">
                       <div>
                         <h4 className="font-bold text-[1.05rem] text-slate-900 m-0 mb-1">
                           {edu.degree || 'Degree details N/A'}
