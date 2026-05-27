@@ -40,7 +40,10 @@ const EducationDetailSchema = z.object({
 
 const ProjectSchema = z.object({
   projectName: z.string().nullable().default(null),
+  role: z.string().nullable().default(null),
+  duration: z.string().nullable().default(null),
   projectDescription: z.string().nullable().default(null),
+  responsibilities: z.array(z.string()).default([]),
   technologiesUsed: z.array(z.string()).default([]),
 });
 

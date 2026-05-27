@@ -42,9 +42,10 @@ RULES (strictly enforced):
   4. "totalExperience" must be a descriptive string of this total duration (e.g., "2 years 6 months" or "4.5 years"), or null for freshers.
   5. "domainExperience" is the exact numerical float representation of the "totalExperience" duration (e.g., if totalExperience is "8 years 6 months", domainExperience must be 8.5. domainExperience can NEVER exceed or differ from totalExperience).
   6. "leadershipExperience" must represent ONLY the duration where the candidate explicitly held a leadership or management role (e.g. Team Lead, Manager, Director, Head) in their work history. If no leadership role is explicitly mentioned in the resume with date ranges, set "leadershipExperience" to "0.0 years". Do NOT assume leadership.
+- Projects: You MUST extract the full, detailed descriptions and all listed bullet points for every project. Do not summarize or shorten. If there are multiple bullet points, put them in the "responsibilities" array. Also extract the "role" (e.g. Developer, Lead) and "duration" (e.g. Jan 2021 - May 2022) if mentioned.
 - Return ONLY valid JSON matching this schema exactly — no extra keys, no markdown:
 
-{"isResume":true,"personalInformation":{"fullName":null,"email":null,"phoneNumber":null},"totalExperienceAnalysis":{"totalExperience":null,"domainExperience":0,"leadershipExperience":"0.0 years"},"skillExtraction":{"extractedSkills":[]},"educationDetails":[{"degree":null,"college":null,"passingYear":null,"cgpaOrPercentage":null}],"projectAnalysis":[{"projectName":null,"projectDescription":null,"technologiesUsed":[]}]}`;
+{"isResume":true,"personalInformation":{"fullName":null,"email":null,"phoneNumber":null},"totalExperienceAnalysis":{"totalExperience":null,"domainExperience":0,"leadershipExperience":"0.0 years"},"skillExtraction":{"extractedSkills":[]},"educationDetails":[{"degree":null,"college":null,"passingYear":null,"cgpaOrPercentage":null}],"projectAnalysis":[{"projectName":null,"role":null,"duration":null,"projectDescription":null,"responsibilities":[],"technologiesUsed":[]}]}`;
 
 // ─── Main Analyzer ────────────────────────────────────────────────────────────
 
