@@ -67,6 +67,24 @@ const QuestionBankModal = ({ onClose }) => {
     }
   };
 
+  const handleDeleteQuestion = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
+
+    try {
+      const res = await fetch(`${NEXT_JS_URL}/api/questions?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchQuestions();
+      } else {
+        alert("Failed to delete question");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error deleting question");
+    }
+  };
+
   const filteredQuestions = questions;
 
   return (
@@ -129,6 +147,22 @@ const QuestionBankModal = ({ onClose }) => {
                     <span style={{ fontSize: '0.875rem', fontWeight: 500, display: 'block' }}>Q{i+1}. {q.question_text}</span>
                     {q.is_mandatory && <span className="badge badge-success" style={{ marginTop: '0.25rem' }}>Mandatory</span>}
                   </div>
+                  <button 
+                    onClick={() => handleDeleteQuestion(q.id)}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer', 
+                      color: 'var(--danger)', 
+                      padding: '0.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Delete Question"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               ))}
             </div>
