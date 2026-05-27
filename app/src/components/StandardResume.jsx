@@ -64,7 +64,8 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
         filename: `${name.replace(/\\s+/g, '_')}_Resume.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
       html2pdf().set(opt).from(printRef.current).save();
     }
