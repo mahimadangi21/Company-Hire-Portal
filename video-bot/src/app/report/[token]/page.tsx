@@ -187,7 +187,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
             <div style={{ flex: 1 }}>
               <h1 style={{ fontSize: "1.4rem", fontWeight: "800", margin: "0 0 4px", color: "#fff" }}>{candidate.name}</h1>
               <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.85rem", margin: 0 }}>
-                {candidate.job_applied} · {candidate.email}
+                {candidate.job_applied}
               </p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
