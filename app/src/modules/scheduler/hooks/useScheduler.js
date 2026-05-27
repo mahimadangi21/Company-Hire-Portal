@@ -12,7 +12,10 @@ import { createMeeting, cancelMeeting } from '../services/calendarProviders/inde
 
 // ─── Panelists Constant (extendable to API later) ──────────────────────────────
 
-export const PANELISTS = [];
+export const PANELISTS = [
+  { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B' },
+  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00' }
+];
 
 export const INTERVIEW_TEMPLATES = [
   { id: 'technical',     label: 'Technical Interview',    defaultDuration: 60 },
