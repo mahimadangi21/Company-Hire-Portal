@@ -22,7 +22,87 @@
       "created_at": "2026-05-25T09:00:00.000Z"
     }
   ],
-  "candidates": [],
+  "candidates": [
+    {
+      "id": "candidate-1779864718740-842",
+      "created_at": "2026-05-27T06:51:58.740Z",
+      "name": "Nikhil Raj Mali",
+      "email": "nikhilrajmali042@gmail.com",
+      "phone": "+91 95879 21877",
+      "skills": [
+        "Java",
+        "Manual Testing",
+        "UI Testing",
+        "Functional Testing",
+        "Non-Functional Testing",
+        "Monkey Testing",
+        "Postman",
+        "Robot Framework",
+        "MySQL"
+      ],
+      "job_applied": "AI Research Scientist",
+      "resume_status": "Parsed",
+      "form_status": "Pending",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Candidate Form",
+      "resume_score": 77,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "isResume": true,
+        "personalInformation": {
+          "fullName": "Nikhil Raj Mali",
+          "email": "nikhilrajmali042@gmail.com",
+          "phoneNumber": "+91 95879 21877"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "Java",
+            "Manual Testing",
+            "UI Testing",
+            "Functional Testing",
+            "Non-Functional Testing",
+            "Monkey Testing",
+            "Postman",
+            "Robot Framework",
+            "MySQL"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Bachelor of Technology in Computer Science and Engineering",
+            "college": "Techno India NJR Institute of Technology, Udaipur",
+            "passingYear": "2026",
+            "cgpaOrPercentage": "8.0 / 10"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "Login Page Testing",
+            "projectDescription": "Performed manual testing on a login module of a sample web application",
+            "technologiesUsed": [
+              "Manual Testing",
+              "UI Testing"
+            ]
+          },
+          {
+            "projectName": "REST API Testing Using Postman",
+            "projectDescription": "Tested public REST APIs to validate request-response behavior and API functionality",
+            "technologiesUsed": [
+              "Postman",
+              "REST API"
+            ]
+          }
+        ]
+      }
+    }
+  ],
   "interviews": [],
   "questions_bank": [
     {
