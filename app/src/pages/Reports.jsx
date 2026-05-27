@@ -341,7 +341,6 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflowX: 'auto' }}>
                   {[
                     { label: 'Resume', status: candidate.resumeStatus },
-                    { label: 'Form', status: candidate.formStatus },
                     { label: 'Video', status: candidate.videoStatus },
                     { label: 'Technical', status: candidate.techStatus },
                     { label: 'Report', status: candidate.reportStatus },
