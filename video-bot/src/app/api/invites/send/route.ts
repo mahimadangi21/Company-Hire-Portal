@@ -4,7 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { candidate_name, candidate_email, job_role, department, sub_department, expires_at } = body;
+    const { candidate_name, candidate_email, job_role, department, sub_department, expires_at, subject, body: customBody } = body;
 
     if (!candidate_name || !candidate_email || !department || !sub_department) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -66,6 +66,8 @@ export async function POST(req: NextRequest) {
         jobRole: job_role,
         interviewId: interview.id,
         expiresAt: expiry,
+        subject,
+        bodyText: customBody,
       }),
     });
 

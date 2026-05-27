@@ -97,7 +97,8 @@ function inviteEmailTemplate(
   candidateName: string,
   jobRole: string,
   interviewId: string,
-  expiresAt: string
+  expiresAt: string,
+  customBody?: string
 ): string {
   const link = getInterviewUrl(interviewId);
   const expiryDate = new Date(expiresAt).toLocaleDateString("en-US", {
@@ -106,6 +107,19 @@ function inviteEmailTemplate(
     month: "long",
     day: "numeric",
   });
+
+  const bodyContent = customBody
+    ? customBody.replace(/\n/g, "<br />")
+    : `Hello, ${candidateName} 👋<br /><br />
+       You've been invited to complete a video interview for the <strong style="color:#0f172a;">${jobRole}</strong> position. 
+       Our AI-powered platform will guide you through the process.<br /><br />
+       <strong>What to expect:</strong>
+       <ul style="color:#475569;font-size:14px;line-height:1.8;padding-left:20px;margin:12px 0 28px;">
+         <li>The AI will ask you questions using voice</li>
+         <li>You control when to start and stop recording each answer</li>
+         <li>Your webcam will be on during the interview</li>
+         <li>Ensure you are in a quiet, well-lit space</li>
+       </ul>`;
 
   return `
 <!DOCTYPE html>
@@ -133,11 +147,9 @@ function inviteEmailTemplate(
         <tr>
           <td style="padding:40px;">
             <p style="color:#64748b;font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Interview Invitation</p>
-            <h1 style="color:#0f172a;font-size:26px;font-weight:700;margin:0 0 16px;line-height:1.3;">Hello, ${candidateName} 👋</h1>
-            <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 24px;">
-              You've been invited to complete a video interview for the <strong style="color:#0f172a;">${jobRole}</strong> position. 
-              Our AI-powered platform will guide you through the process.
-            </p>
+            <div style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 24px;">
+              ${bodyContent}
+            </div>
             
             <!-- Info Box -->
             <div style="background:#f1f5f9;border-radius:12px;padding:20px 24px;margin:0 0 28px;">
@@ -157,15 +169,6 @@ function inviteEmailTemplate(
               </table>
             </div>
 
-            <!-- What to expect -->
-            <h3 style="color:#0f172a;font-size:15px;font-weight:600;margin:0 0 12px;">What to expect:</h3>
-            <ul style="color:#475569;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 28px;">
-              <li>The AI will ask you questions using voice</li>
-              <li>You control when to start and stop recording each answer</li>
-              <li>Your webcam will be on during the interview</li>
-              <li>Ensure you are in a quiet, well-lit space</li>
-            </ul>
-            
             <!-- CTA Button -->
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
@@ -257,7 +260,7 @@ function completionEmailTemplate(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, to, candidateName, jobRole, interviewId, expiresAt, reviewUrl, candidateId } = body;
+    const { type, to, candidateName, jobRole, interviewId, expiresAt, reviewUrl, candidateId, subject: customSubject, bodyText } = body;
 
     if (!type || !to) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -267,8 +270,8 @@ export async function POST(req: NextRequest) {
     let html = "";
 
     if (type === "invite") {
-      subject = `Your Interview Invitation — ${jobRole} Position`;
-      html = inviteEmailTemplate(candidateName, jobRole, interviewId, expiresAt);
+      subject = customSubject || `Your Interview Invitation — ${jobRole} Position`;
+      html = inviteEmailTemplate(candidateName, jobRole, interviewId, expiresAt, bodyText);
     } else if (type === "form_invite") {
       subject = `Candidate Form — ${jobRole} Position`;
       html = formInviteEmailTemplate(candidateName, jobRole, candidateId);

@@ -82,7 +82,7 @@ const VideoBot = () => {
     setLoading(false);
   };
 
-  const handleSendInvite = async (candidate, targetEmail, jobRole, department, subDepartment) => {
+  const handleSendInvite = async (candidate, targetEmail, jobRole, department, subDepartment, subject, body) => {
     if (!candidate || !department || !subDepartment) return;
 
     setSending(true);
@@ -94,7 +94,9 @@ const VideoBot = () => {
           candidate_email: targetEmail,
           job_role: jobRole,
           department: department,
-          sub_department: subDepartment
+          sub_department: subDepartment,
+          subject: subject,
+          body: body
         })
       });
 
@@ -212,12 +214,26 @@ const VideoBot = () => {
               onClick={() => {
                 const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
                 if (candidate) {
+                  const jobRole = candidate.jobApplied || 'Common';
+                  const defaultSubject = `Your Interview Invitation — ${jobRole} Position`;
+                  const defaultBody = `Hello ${candidate.name} 👋,
+
+You've been invited to complete a video interview for the ${jobRole} position. Our AI-powered platform will guide you through the process.
+
+What to expect:
+• The AI will ask you questions using voice
+• You control when to start and stop recording each answer
+• Your webcam will be on during the interview
+• Ensure you are in a quiet, well-lit space`;
+                  
                   setEmailModal({
                     candidate,
                     email: candidate.email,
-                    jobRole: candidate.jobApplied || 'Common',
+                    jobRole: jobRole,
                     department: inviteDepartment,
-                    subDepartment: inviteSubDepartment
+                    subDepartment: inviteSubDepartment,
+                    subject: defaultSubject,
+                    body: defaultBody
                   });
                 }
               }}
@@ -354,7 +370,7 @@ const VideoBot = () => {
             backgroundColor: 'var(--surface)',
             borderRadius: 'var(--radius-xl)',
             width: '100%',
-            maxWidth: '450px',
+            maxWidth: '600px',
             boxShadow: 'var(--shadow-xl)',
             display: 'flex',
             flexDirection: 'column',
@@ -369,23 +385,46 @@ const VideoBot = () => {
               backgroundColor: '#f8fafb'
             }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--brand-navy)' }}>
-                Verify Email Address
+                Verify & Edit Invite Email
               </h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                Please confirm or edit the email address for <strong style={{ color: 'var(--brand-navy)' }}>{emailModal.candidate.name}</strong> before sending the video interview link.
+                Review and customize the invitation details for <strong style={{ color: 'var(--brand-navy)' }}>{emailModal.candidate.name}</strong> before sending.
               </p>
             </div>
 
-            <div style={{ padding: '2rem' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Email Address</label>
+            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '70vh', overflowY: 'auto' }}>
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: '600' }}>Email Address</label>
                 <input 
                   type="email" 
                   className="form-input" 
                   value={emailModal.email}
                   onChange={(e) => setEmailModal({ ...emailModal, email: e.target.value })}
-                  autoFocus
                 />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: '600' }}>Subject</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  value={emailModal.subject}
+                  onChange={(e) => setEmailModal({ ...emailModal, subject: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: '600' }}>Email Body</label>
+                <textarea 
+                  className="form-input" 
+                  rows="7"
+                  style={{ fontFamily: 'inherit', resize: 'vertical', minHeight: '120px' }}
+                  value={emailModal.body}
+                  onChange={(e) => setEmailModal({ ...emailModal, body: e.target.value })}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
+                  The candidate portal link (Begin Interview) and template branding will be wrapped around this text.
+                </span>
               </div>
             </div>
 
@@ -407,9 +446,17 @@ const VideoBot = () => {
               </button>
               <button 
                 className="btn btn-primary"
-                disabled={sending || !emailModal.email}
+                disabled={sending || !emailModal.email || !emailModal.subject || !emailModal.body}
                 style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => handleSendInvite(emailModal.candidate, emailModal.email, emailModal.jobRole, emailModal.department, emailModal.subDepartment)}
+                onClick={() => handleSendInvite(
+                  emailModal.candidate, 
+                  emailModal.email, 
+                  emailModal.jobRole, 
+                  emailModal.department, 
+                  emailModal.subDepartment,
+                  emailModal.subject,
+                  emailModal.body
+                )}
               >
                 {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : 'Send Mail'}
               </button>
