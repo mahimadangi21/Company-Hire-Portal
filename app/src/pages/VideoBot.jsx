@@ -22,13 +22,21 @@ const VideoBot = () => {
   const [inviteSubject, setInviteSubject] = useState('');
   const [inviteBody, setInviteBody] = useState('');
   
-  // Define some default examples as requested
-  const DEFAULT_DEPARTMENTS = ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
-  const DEFAULT_SUB_DEPARTMENTS = {
-    'Technology and Delivery': ['PHP', 'QA', 'Frontend', 'Backend'],
-    'Engineering': ['DevOps', 'Data Science', 'SRE'],
-    'HR': ['Recruitment', 'Operations'],
-    'Marketing': ['SEO', 'Content', 'Social Media']
+  // Dynamic Departments from jobs
+  const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
+  const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
+  
+  const getAvailableSubDepartments = (dept) => {
+    const subDepts = jobs.filter(j => j.department === dept).map(j => j.title);
+    if (subDepts.length > 0) return subDepts;
+    
+    const defaults = {
+      'Technology and Delivery': ['PHP', 'QA', 'Frontend', 'Backend'],
+      'Engineering': ['DevOps', 'Data Science', 'SRE'],
+      'HR': ['Recruitment', 'Operations'],
+      'Marketing': ['SEO', 'Content', 'Social Media']
+    };
+    return defaults[dept] || ['General'];
   };
   
   // Copied indicator state
@@ -37,6 +45,17 @@ const VideoBot = () => {
   useEffect(() => {
     fetchInterviews();
   }, [showQuestionModal]); // refresh when modal closes
+  
+  // Set default selected department/sub-department once jobs load
+  useEffect(() => {
+    if (jobs.length > 0) {
+      if (!inviteDepartment || !dynamicDepartments.includes(inviteDepartment)) {
+        const firstDept = availableDepartments[0];
+        setInviteDepartment(firstDept);
+        setInviteSubDepartment(getAvailableSubDepartments(firstDept)[0]);
+      }
+    }
+  }, [jobs]);
 
   useEffect(() => {
     if (inviteCandidateId) {
@@ -150,16 +169,14 @@ const VideoBot = () => {
   const filteredCandidatesForDropdown = candidates.filter(c => {
     const job = jobs.find(j => j.title === c.jobApplied);
     if (!job) return false;
+    
     // Strict Department check based on the selected Department
     if (job.department !== inviteDepartment) return false;
     
-    // Optional: Filter by Sub-Department (if the job title includes it loosely)
+    // Strict Sub-Department check (Sub-Department is stored as Job Title)
     if (inviteSubDepartment && inviteSubDepartment !== 'General') {
-       if (!job.title.toLowerCase().includes(inviteSubDepartment.toLowerCase()) && 
-           !c.jobApplied.toLowerCase().includes(inviteSubDepartment.toLowerCase())) {
-          // If we want strictly hierarchical, we can uncomment the return false below.
-          // For now, we just rely on Department, as Jobs don't strictly have a Sub-Department.
-          // return false; 
+       if (job.title !== inviteSubDepartment) {
+          return false; 
        }
     }
     return true;
@@ -205,13 +222,14 @@ const VideoBot = () => {
                 className="form-select" 
                 value={inviteDepartment}
                 onChange={e => {
-                  setInviteDepartment(e.target.value);
-                  const subs = DEFAULT_SUB_DEPARTMENTS[e.target.value] || ['General'];
+                  const newDept = e.target.value;
+                  setInviteDepartment(newDept);
+                  const subs = getAvailableSubDepartments(newDept);
                   setInviteSubDepartment(subs[0]);
                   setInviteCandidateId('');
                 }}
               >
-                {DEFAULT_DEPARTMENTS.map(d => (
+                {availableDepartments.map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -227,7 +245,7 @@ const VideoBot = () => {
                   setInviteCandidateId('');
                 }}
               >
-                {(DEFAULT_SUB_DEPARTMENTS[inviteDepartment] || ['General']).map(sd => (
+                {(getAvailableSubDepartments(inviteDepartment)).map(sd => (
                   <option key={sd} value={sd}>{sd}</option>
                 ))}
               </select>

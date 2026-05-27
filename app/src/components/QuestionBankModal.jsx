@@ -15,18 +15,36 @@ const QuestionBankModal = ({ onClose }) => {
   const allDepartments = [...new Set(questions.map(q => q.department || 'General'))].filter(Boolean);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedSubDepartment, setSelectedSubDepartment] = useState('');
-  // Define some default examples as requested
-  const DEFAULT_DEPARTMENTS = ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
-  const DEFAULT_SUB_DEPARTMENTS = {
-    'Technology and Delivery': ['PHP', 'QA', 'Frontend', 'Backend'],
-    'Engineering': ['DevOps', 'Data Science', 'SRE'],
-    'HR': ['Recruitment', 'Operations'],
-    'Marketing': ['SEO', 'Content', 'Social Media']
+  // Dynamic Departments from jobs
+  const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
+  const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
+  
+  const getAvailableSubDepartments = (dept) => {
+    const subDepts = jobs.filter(j => j.department === dept).map(j => j.title);
+    if (subDepts.length > 0) return subDepts;
+    
+    const defaults = {
+      'Technology and Delivery': ['PHP', 'QA', 'Frontend', 'Backend'],
+      'Engineering': ['DevOps', 'Data Science', 'SRE'],
+      'HR': ['Recruitment', 'Operations'],
+      'Marketing': ['SEO', 'Content', 'Social Media']
+    };
+    return defaults[dept] || ['General'];
   };
 
   useEffect(() => {
     fetchQuestions();
   }, []);
+
+  useEffect(() => {
+    if (jobs.length > 0 && availableDepartments.length > 0) {
+      if (!newDepartment || !dynamicDepartments.includes(newDepartment)) {
+        const firstDept = availableDepartments[0];
+        setNewDepartment(firstDept);
+        setNewSubDepartment(getAvailableSubDepartments(firstDept)[0]);
+      }
+    }
+  }, [jobs]);
 
   useEffect(() => {
     if (allDepartments.length > 0 && !selectedDepartment) {
@@ -115,12 +133,13 @@ const QuestionBankModal = ({ onClose }) => {
                   className="form-select"
                   value={newDepartment}
                   onChange={e => {
-                    setNewDepartment(e.target.value);
-                    const subs = DEFAULT_SUB_DEPARTMENTS[e.target.value] || [];
+                    const newDept = e.target.value;
+                    setNewDepartment(newDept);
+                    const subs = getAvailableSubDepartments(newDept);
                     setNewSubDepartment(subs[0] || '');
                   }}
                 >
-                  {DEFAULT_DEPARTMENTS.map(d => (
+                  {availableDepartments.map(d => (
                     <option key={d} value={d}>{d}</option>
                   ))}
                 </select>
@@ -133,7 +152,7 @@ const QuestionBankModal = ({ onClose }) => {
                   value={newSubDepartment}
                   onChange={e => setNewSubDepartment(e.target.value)}
                 >
-                  {(DEFAULT_SUB_DEPARTMENTS[newDepartment] || []).map(sd => (
+                  {(getAvailableSubDepartments(newDepartment)).map(sd => (
                     <option key={sd} value={sd}>{sd}</option>
                   ))}
                 </select>
@@ -175,7 +194,7 @@ const QuestionBankModal = ({ onClose }) => {
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
-              {selectedDepartment && DEFAULT_SUB_DEPARTMENTS[selectedDepartment] && (
+              {selectedDepartment && (
                 <select 
                   className="form-select" 
                   style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}
@@ -183,7 +202,7 @@ const QuestionBankModal = ({ onClose }) => {
                   onChange={e => setSelectedSubDepartment(e.target.value)}
                 >
                   <option value="">All Sub-Departments</option>
-                  {DEFAULT_SUB_DEPARTMENTS[selectedDepartment].map(sd => (
+                  {(getAvailableSubDepartments(selectedDepartment)).map(sd => (
                     <option key={sd} value={sd}>{sd}</option>
                   ))}
                 </select>
