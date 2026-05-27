@@ -197,7 +197,7 @@ const ResumeUpload = () => {
                 setStatus({ type: '', message: '' });
               }}
             >
-              <option value="">-- Choose Job --</option>
+              <option value="">-- Choose Department --</option>
               {jobs.map(job => (
                 <option key={job.id} value={job.title}>{job.title} ({job.department})</option>
               ))}
