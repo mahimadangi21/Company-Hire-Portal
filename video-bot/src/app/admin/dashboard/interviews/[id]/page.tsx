@@ -113,7 +113,7 @@ export default function InterviewReviewPage() {
           <a href={PORTAL_URL} className="text-slate-500 hover:text-slate-800 transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </a>
-          <Logo href={PORTAL_URL} size="sm" />
+          <Logo href={PORTAL_URL} size="md" />
           <span className="text-slate-300">/</span>
           <span className="text-slate-600 text-sm font-semibold">Interview Review</span>
         </div>
@@ -156,11 +156,17 @@ export default function InterviewReviewPage() {
             <h1 className="text-slate-900 font-bold text-lg">{interview.candidate_name}</h1>
             <p className="text-slate-500 text-sm">{interview.candidate_email} · {interview.job_role}</p>
           </div>
-          <Badge variant={interview.status === "completed" ? "completed" : "pending"}>
+          <Badge 
+            className={
+              interview.status === "completed"
+                ? "bg-emerald-600 hover:bg-emerald-600 text-white border-none font-semibold flex items-center gap-1.5 px-3 py-1 rounded-full text-xs shadow-sm"
+                : "bg-amber-100 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold flex items-center gap-1.5 px-3 py-1 rounded-full text-xs shadow-sm"
+            }
+          >
             {interview.status === "completed" ? (
-              <CheckCircle2 className="w-3 h-3" />
+              <CheckCircle2 className="w-3 h-3 text-white" />
             ) : (
-              <Clock className="w-3 h-3" />
+              <Clock className="w-3 h-3 text-amber-600" />
             )}
             {interview.status.charAt(0).toUpperCase() + interview.status.slice(1)}
           </Badge>
