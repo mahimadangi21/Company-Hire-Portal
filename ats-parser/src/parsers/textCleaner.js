@@ -43,20 +43,20 @@ function removeDecorativeSymbols(text) {
  */
 function removeDuplicateLines(text) {
   const lines = text.split('\n');
-  const seen = new Set();
   const result = [];
+  let prevLineTrimmed = null;
 
   for (const line of lines) {
-    const key = line.trim().toLowerCase();
-    if (key === '') {
-      result.push(''); // Keep blank lines for structure
+    const trimmed = line.trim();
+    if (trimmed === '') {
+      result.push('');
       continue;
     }
-    if (!seen.has(key)) {
-      seen.add(key);
+    const key = trimmed.toLowerCase();
+    if (key !== prevLineTrimmed) {
       result.push(line);
+      prevLineTrimmed = key;
     }
-    // Silently drop duplicates
   }
 
   return result.join('\n');
