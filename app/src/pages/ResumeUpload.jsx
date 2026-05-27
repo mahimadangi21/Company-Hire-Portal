@@ -368,9 +368,15 @@ const ResumeUpload = () => {
                                   e.stopPropagation();
                                   setActiveDropdown(null);
                                   const shareUrl = `${window.location.origin.replace('5173', '3000')}/resume/share/${candidate.id}`;
-                                  navigator.clipboard.writeText(shareUrl).then(() => {
-                                    alert("Read-only resume link copied to clipboard:\n" + shareUrl);
-                                  });
+                                  if (navigator.clipboard && window.isSecureContext) {
+                                    navigator.clipboard.writeText(shareUrl).then(() => {
+                                      alert("Read-only resume link copied to clipboard.");
+                                    }).catch(err => {
+                                      prompt("Copy this link to share:", shareUrl);
+                                    });
+                                  } else {
+                                    prompt("Copy this link to share:", shareUrl);
+                                  }
                                 }}
                               >
                                 <Share2 size={14} /> Share Resume

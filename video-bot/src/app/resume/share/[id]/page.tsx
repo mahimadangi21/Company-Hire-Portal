@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
 import Image from 'next/image';
@@ -55,13 +55,13 @@ export default function SharedResumePage() {
   const expLeadership = extractedData?.totalExperienceAnalysis?.leadershipExperience || '0';
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
       
       {/* Print Hide Block */}
       <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Standardized Candidate Profile</h2>
-          <p className="text-slate-500 text-sm">Read-only view • Contact details omitted for unbiased screening</p>
+          <p className="text-slate-500 text-sm">Read-only view • Single Column Format</p>
         </div>
         <button 
           onClick={handlePrint} 
@@ -82,16 +82,16 @@ export default function SharedResumePage() {
 
       {/* Main Resume Paper */}
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden border border-slate-200">
-        <div className="p-10 lg:p-12 text-slate-800">
+        <div className="p-10 lg:p-14 text-slate-800">
           
           {/* Header */}
-          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
-            <div>
-              <h1 className="text-4xl font-extrabold text-slate-900 m-0 leading-tight">
+          <div className="flex justify-between items-center border-b-[3px] border-slate-900 pb-6 mb-10">
+            <div className="flex-1">
+              <h1 className="text-[2.5rem] font-black text-slate-900 m-0 leading-tight tracking-tight">
                 {candidate.name.toUpperCase()}
               </h1>
-              <p className="text-xl font-semibold text-slate-500 mt-2">
-                {candidate.jobApplied} Candidate
+              <p className="text-xl font-medium text-slate-600 mt-2 tracking-wide">
+                {candidate.jobApplied} Professional
               </p>
             </div>
             <div>
@@ -105,108 +105,133 @@ export default function SharedResumePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+          {/* Notice */}
+          <div className="p-3 bg-blue-50 border-l-4 border-blue-500 text-slate-500 text-sm mb-10 rounded-r-md">
+            <strong>Note:</strong> Contact details (Email, Phone) have been hidden for unbiased review.
+          </div>
+
+          <div className="flex flex-col gap-10">
             
-            {/* Left Column */}
-            <div className="md:col-span-5 flex flex-col gap-8">
-              
-              <section>
-                <h2 className="text-lg font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-2 mb-4">
-                  Experience Summary
-                </h2>
-                <div className="flex flex-col gap-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Total Experience:</span>
-                    <strong className="text-slate-900">{expTotal}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Domain Experience:</span>
-                    <strong className="text-slate-900">{expDomain} years</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Leadership:</span>
-                    <strong className="text-slate-900">{expLeadership} years</strong>
-                  </div>
+            {/* Experience Summary */}
+            <section>
+              <h2 className="text-xl font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2 mb-5">
+                Experience Overview
+              </h2>
+              <div className="flex gap-8 flex-wrap">
+                <div className="flex flex-col gap-1">
+                  <span className="text-slate-500 text-[0.85rem] font-semibold uppercase">Total Experience</span>
+                  <span className="text-lg font-semibold text-slate-900">{expTotal}</span>
                 </div>
-              </section>
-
-              <section>
-                <h2 className="text-lg font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-2 mb-4">
-                  Core Competencies
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {skills.split(',').filter(Boolean).map((skill: string, i: number) => (
-                    <span key={i} className="bg-blue-50 text-blue-900 px-3 py-1.5 rounded-md text-xs font-medium border border-blue-100">
-                      {skill.trim()}
-                    </span>
-                  ))}
+                <div className="flex flex-col gap-1">
+                  <span className="text-slate-500 text-[0.85rem] font-semibold uppercase">Domain Experience</span>
+                  <span className="text-lg font-semibold text-slate-900">{expDomain} years</span>
                 </div>
-              </section>
+                <div className="flex flex-col gap-1">
+                  <span className="text-slate-500 text-[0.85rem] font-semibold uppercase">Leadership</span>
+                  <span className="text-lg font-semibold text-slate-900">{expLeadership}</span>
+                </div>
+              </div>
+            </section>
 
-            </div>
+            {/* Core Competencies */}
+            <section>
+              <h2 className="text-xl font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2 mb-5">
+                Core Competencies
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {skills.split(',').filter(Boolean).map((skill: string, i: number) => (
+                  <span key={i} className="bg-slate-100 text-slate-700 border border-slate-200 px-4 py-1.5 rounded-full text-sm font-medium">
+                    {skill.trim()}
+                  </span>
+                ))}
+              </div>
+            </section>
 
-            {/* Right Column */}
-            <div className="md:col-span-7 flex flex-col gap-8">
-              
-              <section>
-                <h2 className="text-lg font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-2 mb-4">
-                  Project Highlights
-                </h2>
-                <div className="flex flex-col gap-6">
-                  {extractedData?.projectAnalysis && extractedData.projectAnalysis.length > 0 ? (
-                    extractedData.projectAnalysis.map((proj: any, i: number) => (
-                      <div key={i}>
-                        <h4 className="font-bold text-base text-slate-900 mb-1">
+            {/* Project Highlights */}
+            <section>
+              <h2 className="text-xl font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2 mb-6">
+                Project Highlights & Experience
+              </h2>
+              <div className="flex flex-col gap-8">
+                {extractedData?.projectAnalysis && extractedData.projectAnalysis.length > 0 ? (
+                  extractedData.projectAnalysis.map((proj: any, i: number) => (
+                    <div key={i} className="flex flex-col gap-2">
+                      <div className="flex justify-between items-baseline">
+                        <h3 className="font-bold text-lg text-slate-900 m-0">
                           {proj.projectName || 'Unnamed Project'}
-                        </h4>
-                        <p className="text-sm text-slate-600 leading-relaxed m-0">
-                          {proj.projectDescription || 'No description provided.'}
-                        </p>
-                        {proj.techStack && proj.techStack.length > 0 && (
-                          <div className="mt-2 text-xs text-slate-500">
-                            <strong>Technologies: </strong> {proj.techStack.join(', ')}
-                          </div>
-                        )}
+                        </h3>
+                        {proj.duration && <span className="text-slate-500 text-sm font-medium">{proj.duration}</span>}
                       </div>
-                    ))
-                  ) : (
-                    <p className="italic text-slate-400 text-sm">No project history available.</p>
-                  )}
-                </div>
-              </section>
+                      
+                      {proj.role && (
+                        <div className="text-slate-700 font-semibold text-[0.95rem]">Role: {proj.role}</div>
+                      )}
 
-              <section>
-                <h2 className="text-lg font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-2 mb-4">
-                  Education
-                </h2>
-                <div className="flex flex-col gap-4">
-                  {extractedData?.educationDetails && extractedData.educationDetails.length > 0 ? (
-                    extractedData.educationDetails.map((edu: any, i: number) => (
-                      <div key={i}>
-                        <h4 className="font-bold text-sm text-slate-900 m-0">
+                      <p className="text-[0.95rem] text-slate-600 leading-relaxed my-1">
+                        {proj.projectDescription || 'No description provided.'}
+                      </p>
+
+                      {proj.responsibilities && proj.responsibilities.length > 0 && (
+                        <ul className="list-disc pl-5 my-1 text-slate-600 text-[0.95rem] leading-relaxed space-y-1">
+                          {proj.responsibilities.map((resp: string, rIdx: number) => (
+                            <li key={rIdx}>{resp}</li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {(proj.techStack && proj.techStack.length > 0) || (proj.technologiesUsed && proj.technologiesUsed.length > 0) ? (
+                        <div className="mt-2 text-sm text-slate-500">
+                          <strong className="text-slate-700">Technologies: </strong> 
+                          {(proj.techStack || proj.technologiesUsed).join(', ')}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                ) : (
+                  <p className="italic text-slate-400 text-[0.95rem]">No project history available.</p>
+                )}
+              </div>
+            </section>
+
+            {/* Education */}
+            <section>
+              <h2 className="text-xl font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2 mb-5">
+                Education
+              </h2>
+              <div className="flex flex-col gap-5">
+                {extractedData?.educationDetails && extractedData.educationDetails.length > 0 ? (
+                  extractedData.educationDetails.map((edu: any, i: number) => (
+                    <div key={i} className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-[1.05rem] text-slate-900 m-0 mb-1">
                           {edu.degree || 'Degree details N/A'}
                         </h4>
-                        <div className="text-sm text-slate-600 mt-1">
+                        <div className="text-[0.95rem] text-slate-600 font-medium">
                           {edu.college || 'Institution N/A'}
                         </div>
-                        <div className="text-xs text-slate-400 mt-0.5">
-                          {edu.passingYear && `Class of ${edu.passingYear}`} {edu.cgpaOrPercentage && `| ${edu.cgpaOrPercentage}`}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[0.9rem] text-slate-900 font-semibold">
+                          {edu.passingYear ? `Class of ${edu.passingYear}` : ''}
+                        </div>
+                        <div className="text-[0.85rem] text-slate-500 mt-0.5">
+                          {edu.cgpaOrPercentage ? `Grade: ${edu.cgpaOrPercentage}` : ''}
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="italic text-slate-400 text-sm">No education records available.</p>
-                  )}
-                </div>
-              </section>
+                    </div>
+                  ))
+                ) : (
+                  <p className="italic text-slate-400 text-[0.95rem]">No education records available.</p>
+                )}
+              </div>
+            </section>
 
-            </div>
           </div>
           
           {/* Footer */}
-          <div className="mt-12 pt-6 border-t border-slate-100 text-center text-slate-400 text-xs">
-            This resume was automatically generated and standardized via Kadel Labs Interview Platform. <br/>
-            Contact details have been omitted for unbiased screening.
+          <div className="mt-16 p-6 bg-slate-50 rounded-lg border border-dashed border-slate-300 text-center text-slate-500 text-sm">
+            This resume was standardized and automatically generated via the Kadel Labs Interview Platform. <br/>
+            Original contact details have been omitted to promote unbiased, skills-first evaluation.
           </div>
 
         </div>
