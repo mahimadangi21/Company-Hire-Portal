@@ -5,6 +5,7 @@ import StandardResume from '../components/StandardResume';
 
 const ResumeUpload = () => {
   const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
+  const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedJob, setSelectedJob] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -13,6 +14,12 @@ const ResumeUpload = () => {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
+
+  const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
+  
+  const getAvailableSubDepartments = (dept) => {
+    return jobs.filter(j => j.department === dept).map(j => j.title);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -188,21 +195,44 @@ const ResumeUpload = () => {
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Select a job listed and upload applicant resumes for AI parsing.</p>
         </div>
         <div className="card-body">
-          <div className="form-group" style={{ maxWidth: '400px', marginBottom: '1.5rem' }}>
-            <label className="form-label">Select Department <span style={{ color: 'var(--danger)' }}>*</span></label>
-            <select 
-              className="form-select" 
-              value={selectedJob} 
-              onChange={(e) => {
-                setSelectedJob(e.target.value);
-                setStatus({ type: '', message: '' });
-              }}
-            >
-              <option value="">-- Choose Department --</option>
-              {jobs.map(job => (
-                <option key={job.id} value={job.title}>{job.title} ({job.department})</option>
-              ))}
-            </select>
+          <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <div className="form-group" style={{ flex: 1, minWidth: '250px' }}>
+              <label className="form-label">Select Department <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <select 
+                className="form-select" 
+                value={selectedDepartment} 
+                onChange={(e) => {
+                  const newDept = e.target.value;
+                  setSelectedDepartment(newDept);
+                  const subDepts = getAvailableSubDepartments(newDept);
+                  setSelectedJob(subDepts.length === 1 ? subDepts[0] : '');
+                  setStatus({ type: '', message: '' });
+                }}
+              >
+                <option value="">-- Choose Department --</option>
+                {dynamicDepartments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="form-group" style={{ flex: 1, minWidth: '250px' }}>
+              <label className="form-label">Select Sub Department <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <select 
+                className="form-select" 
+                value={selectedJob} 
+                onChange={(e) => {
+                  setSelectedJob(e.target.value);
+                  setStatus({ type: '', message: '' });
+                }}
+                disabled={!selectedDepartment}
+              >
+                <option value="">-- Choose Sub Department --</option>
+                {selectedDepartment && getAvailableSubDepartments(selectedDepartment).map(subDept => (
+                  <option key={subDept} value={subDept}>{subDept}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <input 
