@@ -70,7 +70,7 @@ const QuestionBankModal = ({ onClose }) => {
   const filteredQuestions = questions;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
       <div className="card" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 className="card-title">Manage Question Bank</h3>

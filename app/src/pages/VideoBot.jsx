@@ -318,7 +318,7 @@ const VideoBot = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
+          zIndex: 9999,
           padding: '2rem',
           animation: 'fadeIn 0.2s ease-out'
         }} onClick={() => !sending && setEmailModal(null)}>
