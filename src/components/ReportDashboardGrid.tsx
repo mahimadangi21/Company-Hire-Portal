@@ -78,7 +78,8 @@ interface ReportDashboardGridProps {
 }
 
 export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardGridProps) {
-  const [activeModal, setActiveModal] = useState<'scores' | 'resume' | 'strengths' | 'transcript' | null>(null);
+  const [activeModal, setActiveModal] = useState<'scores' | 'resume' | 'strengths' | 'transcript' | 'videoTranscript' | null>(null);
+  const [scoresViewMode, setScoresViewMode] = useState<'radial' | 'bar'>('radial');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -251,10 +252,22 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
             </div>
           </div>
         );
+      case 'videoTranscript':
+        return (
+          <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '2rem', width: '100%', maxWidth: '850px', display: 'flex', flexDirection: 'column', gap: '1.5rem', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>🎥 VIDEO SCREENING & TRANSCRIPT</h3>
+              <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}><X size={20} /></button>
+            </div>
+            <div style={{ padding: '0.5rem 0' }}>
+              <TranscriptAnalysis transcript={transcript} />
+            </div>
+          </div>
+        );
     }
   };
 
-  const renderViewMoreButton = (modalType: 'scores' | 'resume' | 'strengths' | 'transcript') => (
+  const renderViewMoreButton = (modalType: 'scores' | 'resume' | 'strengths' | 'transcript' | 'videoTranscript') => (
     <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'auto', paddingTop: '10px' }}>
       <button
         style={{ 
@@ -285,21 +298,67 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
       {/* COLUMN 1: Scores & Skill Match (width: 32%) */}
       <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflow: 'hidden' }}>
         
-        {/* Overview / Score Radial Circles */}
+        {/* Overview / Score Radial Circles with Toggle Options */}
         <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem', flexShrink: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assessment Scores</p>
+            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '750', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assessment Scores</p>
+            <div style={{ display: 'flex', gap: '4px', backgroundColor: 'var(--gray-100)', padding: '2px', borderRadius: '8px' }}>
+              <button 
+                onClick={() => setScoresViewMode('radial')}
+                style={{
+                  padding: '3px 8px', fontSize: '0.64rem', fontWeight: '700', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                  backgroundColor: scoresViewMode === 'radial' ? '#fff' : 'transparent',
+                  color: scoresViewMode === 'radial' ? 'var(--brand-navy)' : 'var(--gray-500)',
+                  boxShadow: scoresViewMode === 'radial' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s'
+                }}
+              >
+                Radial
+              </button>
+              <button 
+                onClick={() => setScoresViewMode('bar')}
+                style={{
+                  padding: '3px 8px', fontSize: '0.64rem', fontWeight: '700', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                  backgroundColor: scoresViewMode === 'bar' ? '#fff' : 'transparent',
+                  color: scoresViewMode === 'bar' ? 'var(--brand-navy)' : 'var(--gray-500)',
+                  boxShadow: scoresViewMode === 'bar' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s'
+                }}
+              >
+                Bar
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
-            <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume" size={76} />
-            <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video" size={76} />
-            <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical" size={76} />
-          </div>
-          {renderViewMoreButton('scores')}
+          
+          {scoresViewMode === 'radial' ? (
+            <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+              <RadialProgress value={candidate.resumeScore || 0} color="#3b82f6" label="Resume" size={76} />
+              <RadialProgress value={candidate.videoScore || 0} color="#10b981" label="Video" size={76} />
+              <RadialProgress value={candidate.techScore || 0} color="#8b5cf6" label="Technical" size={76} />
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '4px' }}>
+              {[
+                { label: 'Resume', value: candidate.resumeScore || 0, color: '#3b82f6' },
+                { label: 'Video', value: candidate.videoScore || 0, color: '#10b981' },
+                { label: 'Technical', value: candidate.techScore || 0, color: '#8b5cf6' },
+              ].map((b, idx) => (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--gray-700)' }}>{b.label}</span>
+                    <span style={{ fontSize: '0.74rem', fontWeight: '800', color: b.color }}>{b.value}%</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: 'var(--gray-100)', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${b.value}%`, backgroundColor: b.color, borderRadius: '999px', transition: 'width 0.5s ease-in-out' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Resume Parsed Box */}
-        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflow: 'hidden' }}>
+        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 'none', height: 'fit-content', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px', gap: '6px' }}>
             <p style={{ fontSize: '0.85rem', fontWeight: '750', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <FileText size={16} /> Resume Parsed
@@ -332,18 +391,42 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
             <p style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Code2 size={14} /> Extracted Skills
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', overflow: 'hidden', maxHeight: '56px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', overflow: 'hidden', maxHeight: '56px', marginBottom: '4px' }}>
               {skills.length > 0 ? skills.slice(0, 4).map((s: string, i: number) => (
                 <span key={i} style={{ padding: '2px 6px', borderRadius: '999px', fontSize: '0.64rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.12)' }}>{s}</span>
               )) : <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
               {skills.length > 4 && <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)', alignSelf: 'center', marginLeft: '4px', fontWeight: '700' }}>+{skills.length - 4} more</span>}
             </div>
           </div>
-          {renderViewMoreButton('resume')}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+            <button
+              style={{ 
+                padding: '4px 14px', 
+                fontSize: '0.72rem', 
+                height: '26px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                cursor: 'pointer',
+                backgroundColor: '#fff',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                color: 'var(--brand-navy)',
+                fontWeight: '700',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                transition: 'all 0.2s'
+              }}
+              onClick={() => setActiveModal('resume')}
+            >
+              View More
+            </button>
+          </div>
         </div>
 
       </div>
 
+      {/* COLUMN 2: Video Screening & Tech Video Interview (width: 38%) */}
+      <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflow: 'hidden' }}>
+        
         {/* Video Screening Summary Card */}
         <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.65rem', flex: 1, overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
@@ -375,7 +458,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
               <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No video screening transcript uploaded.</p>
             </div>
           )}
-          {transcript.length > 0 && renderViewMoreButton('transcript')}
+          {transcript.length > 0 && renderViewMoreButton('videoTranscript')}
         </div>
 
         {/* Tech Video Interview Box */}
@@ -402,6 +485,8 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
             </div>
           </div>
         </div>
+
+      </div>
 
       {/* COLUMN 3: Transcript Intelligence (width: 30%) */}
       <div className="zoom-box" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', height: 'fit-content', overflow: 'hidden' }}>

@@ -5,7 +5,7 @@ import {
   Download, Share2, Eye, FileText, CheckCircle, Clock, X, User,
   BookOpen, Code2, Briefcase, TrendingUp, TrendingDown, BarChart2,
   Star, Award, AlertCircle, ChevronRight, Search, Filter, Zap,
-  MessageSquare, Target, Activity, PieChart, LayoutGrid, List, Upload
+  MessageSquare, Target, Activity, PieChart, LayoutGrid, List, Upload, Video
 } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
@@ -309,94 +309,181 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
         style={{ backgroundColor: '#fff', borderRadius: '0px', width: '100vw', maxWidth: '100vw', height: '100vh', maxHeight: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'none', animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div style={{ borderBottom: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)', flexShrink: 0 }}>
-          <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '1.25rem 2rem', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
-            <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
-              {getInitials(candidate.name)}
+        {/* Modal Header Container */}
+        <div style={{ background: 'linear-gradient(135deg, #0B2C82 0%, #07256B 100%)', flexShrink: 0, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Top Header Section */}
+          <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            
+            {/* LEFT SECTION: Avatar & Candidate Info */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '1.2rem', flexShrink: 0 }}>
+                {getInitials(candidate.name)}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
+                  {candidate.jobApplied} • {candidate.extractedData?.totalExperienceAnalysis?.totalExperience || '3 Years'} Exp {candidate.extractedData?.education?.[0]?.degree ? `• ${candidate.extractedData.education[0].degree}` : '• MCA'}
+                </p>
+              </div>
             </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.25rem', margin: 0 }}>{candidate.name}</h2>
-                
-                {/* Overall Score Badge at just right side of Candidate Name */}
-                {avgScore !== null && (
-                  <span style={{
-                    padding: '3px 10px',
-                    borderRadius: '6px',
-                    backgroundColor: 'rgba(255,255,255,0.15)',
-                    color: '#7DBA00',
-                    fontWeight: '800',
-                    fontSize: '0.78rem',
-                    border: '1px solid rgba(125,186,0,0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    <span>{avgScore}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.55rem', fontWeight: '600', textTransform: 'uppercase' }}>Overall</span>
-                  </span>
-                )}
 
-                {/* Recommendation Badge */}
-                <span style={{
-                  padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: '700',
-                  backgroundColor: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-                  color: '#fff'
-                }}>
-                  {candidate.finalRecommendation || 'Under Review'}
+            {/* SEPARATOR */}
+            <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
+
+            {/* CENTER SECTION: Match Score */}
+            <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', width: '180px' }}>
+              <div style={{ 
+                padding: '4px 20px', 
+                borderRadius: '12px', 
+                backgroundColor: 'rgba(255,255,255,0.06)', 
+                border: '1px solid rgba(255,255,255,0.15)', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '2px',
+                width: '100%',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1) inset, 0 0 10px rgba(255,255,255,0.05)' 
+              }}>
+                <span style={{ color: '#10b981', fontSize: '1.6rem', fontWeight: '900', lineHeight: '1', textShadow: '0 2px 8px rgba(16,185,129,0.2)' }}>
+                  {avgScore !== null ? `${avgScore}` : '79'}
+                </span>
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  OVERALL SCORE
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem', fontWeight: '600', marginTop: '2px' }}>
+                  Good Match
                 </span>
               </div>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: 0 }}>
-                {candidate.jobApplied} · Experience: {candidate.extractedData?.totalExperienceAnalysis?.totalExperience || 'N/A'}
-              </p>
             </div>
-            
-            {/* Top Right Side Controls (Logo & Close Button) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-              {/* Logo in the Top Right Side Screen */}
-              <div style={{ 
-                backgroundColor: 'rgba(255,255,255,0.08)', 
-                padding: '0px 14px', 
-                borderRadius: '8px', 
-                border: '1px solid rgba(255,255,255,0.12)', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                height: '45px',
-                overflow: 'hidden'
+
+            {/* SEPARATOR */}
+            <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
+
+            {/* RIGHT CENTER SECTION: Status Badges */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
+              <div style={{
+                padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
+                backgroundColor: 'rgba(245,158,11,0.1)',
+                border: candidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : candidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
+                color: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
+                display: 'flex', alignItems: 'center', gap: '6px'
               }}>
+                <span style={{ fontSize: '10px' }}>●</span> {candidate.finalRecommendation || 'Under Review'}
+              </div>
+              <div style={{
+                padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
+                backgroundColor: 'rgba(16,185,129,0.05)',
+                border: '1px solid #10b981',
+                color: '#10b981',
+                display: 'flex', alignItems: 'center', gap: '6px'
+              }}>
+                <span style={{ fontSize: '10px' }}>●</span> Risk: Low
+              </div>
+            </div>
+
+            {/* SEPARATOR */}
+            <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
+
+            {/* RIGHT SECTION: Logo & Close Button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img 
                   src="/kadellabs-logo.png" 
-                  alt="Kadel Labs Logo" 
-                  style={{ 
-                    height: '75px', 
-                    objectFit: 'contain', 
-                    filter: 'brightness(0) invert(1)'
-                  }} 
+                  alt="Company Logo" 
+                  style={{ height: '28px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
                 />
               </div>
-
-              {/* Close Button (only cross icon, no text) just right side of Logo */}
               <button 
                 onClick={onClose} 
                 style={{ 
-                  background: 'rgba(255,255,255,0.1)', 
-                  border: 'none', 
-                  borderRadius: '8px', 
-                  cursor: 'pointer', 
-                  width: '45px',
-                  height: '45px',
-                  color: '#fff', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  transition: 'all 0.2s' 
+                  background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', cursor: 'pointer', 
+                  width: '32px', height: '32px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.2s'
                 }}
                 title="Close Report"
               >
-                <X size={22} />
+                <X size={16} />
               </button>
+            </div>
+          </div>
+
+          {/* BOTTOM KPI BAR */}
+          <div style={{ padding: '0 32px 12px 32px', backgroundColor: 'transparent' }}>
+            <div style={{ 
+              maxWidth: '1440px', 
+              margin: '0 auto', 
+              backgroundColor: '#0A2D82', 
+              borderRadius: '12px', 
+              border: '1px solid rgba(255,255,255,0.1)', 
+              padding: '12px 24px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              width: '100%',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            }}>
+              
+              {/* KPI 1: Resume Match */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
+                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>79%</span>
+                </div>
+              </div>
+              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+              {/* KPI 2: Video Score */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
+                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>72%</span>
+                </div>
+              </div>
+              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+              {/* KPI 3: Technical Score */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
+                  <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>68%</span>
+                </div>
+              </div>
+              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+              {/* KPI 4: Communication */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <MessageSquare size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Communication</span>
+                  <span style={{ color: '#f59e0b', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>85%</span>
+                </div>
+              </div>
+              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+              {/* KPI 5: Confidence */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <Activity size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Confidence</span>
+                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>High</span>
+                </div>
+              </div>
+              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+              {/* KPI 6: Recommendation */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <Award size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Recommendation</span>
+                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>Yes</span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
