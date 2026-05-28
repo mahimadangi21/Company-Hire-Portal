@@ -342,31 +342,32 @@ export default async function CandidateReportPage({ params }: { params: Promise<
 
       {/* Custom Styles for Hover Zoom / Expansion */}
       <style dangerouslySetInnerHTML={{__html: `
-        .resume-parsed-box {
+        /* Strictly remove any Vertical and Horizontal scrollbars */
+        *::-webkit-scrollbar {
+          display: none !important;
+        }
+        * {
+          -ms-overflow-style: none !important;  /* IE and Edge */
+          scrollbar-width: none !important;  /* Firefox */
+        }
+        
+        .report-box {
           transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, max-height 0.25s ease;
           transform: scale(0.97);
-          transform-origin: top center;
-          max-height: 380px;
-          overflow: hidden;
+          transform-origin: center center; /* zoom at middle */
           position: relative;
         }
-        .resume-parsed-box:hover {
-          transform: scale(1.02);
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          max-height: 1200px;
-          overflow-y: auto;
+        .report-box:hover {
+          transform: scale(1.03); /* zoom at middle */
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
           z-index: 100;
         }
-        /* Custom Scrollbar for hovered box */
-        .resume-parsed-box::-webkit-scrollbar {
-          width: 4px;
+        .resume-parsed-box {
+          max-height: 380px;
+          overflow: hidden;
         }
-        .resume-parsed-box::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .resume-parsed-box::-webkit-scrollbar-thumb {
-          background: rgba(14, 45, 123, 0.2);
-          border-radius: 4px;
+        .resume-parsed-box:hover {
+          max-height: 1200px;
         }
       `}} />
 
@@ -377,7 +378,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
         <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
           
           {/* Overview / Score Radial Circles */}
-          <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="report-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assessment Scores</p>
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px' }}>
               <RadialProgress value={mappedCandidate.resumeScore || 0} color={scoreColor(mappedCandidate.resumeScore)} label="Resume" size={76} />
@@ -387,7 +388,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
           </div>
 
           {/* Resume Parsed Box */}
-          <div className="resume-parsed-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="report-box resume-parsed-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <p style={{ fontSize: '0.85rem', fontWeight: '750', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
               <FileText size={16} /> Resume Parsed
             </p>
@@ -442,7 +443,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
         <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {/* Strengths & Weaknesses */}
-          <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="report-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#065f46', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -484,7 +485,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
         </div>
 
         {/* COLUMN 3: Interview Q&A Transcript (width: 30%) */}
-        <div style={{ width: '30%', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="report-box" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
             <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
@@ -503,7 +504,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
             )}
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.25rem' }}>
+          <div style={{ flex: 1, overflowY: 'hidden', paddingRight: '0.25rem' }}>
             <TranscriptAnalysis transcript={transcript} />
           </div>
 
