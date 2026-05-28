@@ -86,6 +86,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: any) {
     console.error('Upload Error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to process request.', code: 'SERVER_ERROR' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Failed to process request.', code: 'SERVER_ERROR', details: error.stack }, { status: 500 });
   }
 }

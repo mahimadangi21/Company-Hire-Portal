@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["nodemailer"],
+  serverExternalPackages: ["nodemailer", "pdf-parse"],
   images: {
     remotePatterns: [
       {
