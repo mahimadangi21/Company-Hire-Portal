@@ -287,7 +287,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             {/* Top Right Side Controls (Logo & Close Button) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
               {/* Logo in the Top Right Side Screen */}
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '2px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center' }}>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '0px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center' }}>
                 <img src="/kadellabs-logo.png" alt="Kadel Labs Logo" style={{ height: '80px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
               </div>
 
