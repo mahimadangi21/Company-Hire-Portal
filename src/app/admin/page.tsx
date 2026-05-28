@@ -15,7 +15,7 @@ const Dashboard = () => {
   const analytics = [
     { title: 'Total Candidates', value: candidates.length, icon: Users, color: 'var(--brand-navy)', bg: 'rgba(14, 45, 123, 0.08)' },
     { title: 'Resumes Parsed', value: candidates.filter(c => c.resumeStatus === 'Parsed').length, icon: FileText, color: 'var(--info)', bg: 'var(--info-bg)' },
-    { title: 'Forms Submitted', value: candidates.filter(c => c.formStatus === 'Submitted').length, icon: CheckCircle, color: 'var(--success)', bg: 'var(--success-bg)' },
+
     { title: 'Screening Completed', value: candidates.filter(c => c.videoStatus === 'Completed').length, icon: Video, color: 'var(--brand-green)', bg: 'rgba(125, 186, 0, 0.15)' },
     { title: 'Tech Interviews', value: candidates.filter(c => c.techStatus === 'Scheduled' || c.techStatus === 'Completed').length, icon: Calendar, color: 'var(--warning)', bg: 'var(--warning-bg)' },
     { title: 'Reports Generated', value: candidates.filter(c => c.reportStatus !== 'Not Shared').length, icon: BarChart2, color: 'var(--gray-600)', bg: 'var(--gray-100)' }
