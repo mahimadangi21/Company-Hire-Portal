@@ -89,33 +89,45 @@ function extractWithPyMuPDF(filePath) {
   });
 }
 
-// ─── pdf-parse Fallback ──────────────────────────────────────────────────────
+// ─── pdf2json Fallback ──────────────────────────────────────────────────────
 
 /**
- * Fallback extractor using pdf-parse (Node.js).
- * Less accurate for multi-column but widely compatible.
+ * Fallback extractor using pdf2json (Node.js).
+ * Pure JavaScript, extremely stable on serverless.
  */
-async function extractWithPdfParse(filePath) {
-  let pdfParse;
+async function extractWithPdf2Json(filePath) {
+  let PDFParser;
   try {
-    if (typeof global.DOMMatrix === 'undefined') {
-      global.DOMMatrix = class DOMMatrix {
-        constructor(init) {}
-      };
-    }
-    pdfParse = require('pdf-parse');
+    PDFParser = require('pdf2json');
   } catch (e) {
-    throw new Error('pdf-parse not available or crashed on load. Error: ' + e.message);
-  }
-  const buffer = fs.readFileSync(filePath);
-  const parseFn = typeof pdfParse === 'function' ? pdfParse : pdfParse.default || pdfParse;
-  const data = await parseFn(buffer);
-
-  if (!data.text || data.text.trim().length < MIN_TEXT_LENGTH) {
-    throw new Error('pdf-parse returned empty or too-short text');
+    throw new Error('pdf2json not available. Error: ' + e.message);
   }
 
-  return data.text.trim();
+  return new Promise((resolve, reject) => {
+    const pdfParser = new PDFParser(this, 1);
+    
+    pdfParser.on("pdfParser_dataError", errData => {
+      reject(new Error(errData.parserError));
+    });
+    
+    pdfParser.on("pdfParser_dataReady", pdfData => {
+      const text = pdfParser.getRawTextContent();
+      if (!text || text.trim().length < MIN_TEXT_LENGTH) {
+        reject(new Error('pdf2json returned empty or too-short text'));
+      } else {
+        // pdf2json returns URI-encoded text strings often separated by \r\n
+        // so we decode it and clean it up
+        try {
+          const decoded = decodeURIComponent(text);
+          resolve(decoded.trim());
+        } catch (e) {
+          resolve(text.trim());
+        }
+      }
+    });
+
+    pdfParser.loadPDF(filePath);
+  });
 }
 
 // ─── Main Orchestrator ───────────────────────────────────────────────────────
@@ -146,10 +158,10 @@ async function extractText(filePath) {
     console.warn(`[pdfExtractor] PyMuPDF failed: ${pyErr.message} — trying fallback`);
   }
 
-  // Step 3: Fallback to pdf-parse
+  // Step 3: Fallback to pdf2json
   try {
-    const text = await extractWithPdfParse(filePath);
-    return { text, source: 'pdf-parse' };
+    const text = await extractWithPdf2Json(filePath);
+    return { text, source: 'pdf2json' };
   } catch (fallbackErr) {
     const err = new Error(
       `Both extractors failed. Last error: ${fallbackErr.message}`
