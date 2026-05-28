@@ -98,6 +98,11 @@ function extractWithPyMuPDF(filePath) {
 async function extractWithPdfParse(filePath) {
   let pdfParse;
   try {
+    if (typeof global.DOMMatrix === 'undefined') {
+      global.DOMMatrix = class DOMMatrix {
+        constructor(init) {}
+      };
+    }
     pdfParse = require('pdf-parse');
   } catch (e) {
     throw new Error('pdf-parse not available or crashed on load. Error: ' + e.message);
