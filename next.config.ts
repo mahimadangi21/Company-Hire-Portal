@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["nodemailer", "pdf2json"],
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/admin',
+        permanent: true,
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       {
