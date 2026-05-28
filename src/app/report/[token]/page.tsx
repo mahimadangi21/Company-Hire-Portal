@@ -356,47 +356,6 @@ export default async function CandidateReportPage({ params }: { params: Promise<
             </div>
           </div>
 
-          {/* Experience Summary */}
-          <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div>
-              <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px 0' }}>Experience Summary</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.78rem', color: 'var(--gray-700)' }}>
-                <span>⏱️ Total: {data.totalExperienceAnalysis?.totalExperience || 'N/A'}</span>
-                <span>🎯 Domain: {data.totalExperienceAnalysis?.domainExperience ? data.totalExperienceAnalysis.domainExperience + ' yrs' : 'N/A'}</span>
-                <span>👑 Leadership: {data.totalExperienceAnalysis?.leadershipExperience || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-
-
-          {/* Skills & Match Visualizer */}
-          <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Target size={14} /> Job vs. Candidate Skill Match
-            </p>
-            {jobSkills.length > 0 ? (
-              <div>
-                <SkillMatch jobSkills={jobSkills} candidateSkills={skills} />
-                {(() => {
-                  const norm = (s: string) => s.trim().toLowerCase();
-                  const cSet = new Set(skills.map(norm));
-                  const matched = jobSkills.filter((s: string) => cSet.has(norm(s))).length;
-                  const pct = Math.round((matched / jobSkills.length) * 100);
-                  return (
-                    <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '8px', backgroundColor: pct >= 70 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.06)', border: `1px solid ${pct >= 70 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--gray-800)' }}>Match Score</span>
-                      <span style={{ fontSize: '0.95rem', fontWeight: '800', color: pct >= 70 ? '#10b981' : '#ef4444' }}>{pct}%</span>
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div style={{ padding: '0.75rem', fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '8px', textAlign: 'center' }}>
-                No required skills defined for this job.
-              </div>
-            )}
-          </div>
-
           {/* Candidate Skill Set Cloud */}
           <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -452,27 +411,8 @@ export default async function CandidateReportPage({ params }: { params: Promise<
                 )}
               </div>
             </div>
-
-            {/* Score Breakdown Bar Chart */}
-            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--gray-50)', marginTop: '4px' }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>Score Breakdown</p>
-              <BarChart
-                data={[
-                  { label: 'Resume Score', value: mappedCandidate.resumeScore || 0 },
-                  { label: 'Video Interview', value: mappedCandidate.videoScore || 0 },
-                  { label: 'Technical Score', value: mappedCandidate.techScore || 0 },
-                  { label: 'Skill Match', value: (() => {
-                    const norm = (s: string) => s.trim().toLowerCase();
-                    const cSet = new Set(skills.map(norm));
-                    const jSkills = (matchedJob?.required_skills || matchedJob?.skills || []);
-                    if (!jSkills.length) return 0;
-                    return Math.round((jSkills.filter((s: string) => cSet.has(norm(s))).length / jSkills.length) * 100);
-                  })() },
-                ]}
-                color="var(--brand-navy)"
-              />
-            </div>
           </div>
+
 
           {/* Education History */}
           <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
