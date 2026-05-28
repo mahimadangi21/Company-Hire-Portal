@@ -246,66 +246,71 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10,18,40,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1.5rem' }}
+      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10,18,40,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 0 }}
       onClick={onClose}
     >
       <div
-        style={{ backgroundColor: '#fff', borderRadius: '20px', width: '100%', maxWidth: '960px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 80px rgba(0,0,0,0.2)', animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)' }}
+        style={{ backgroundColor: '#fff', borderRadius: '0px', width: '100vw', maxWidth: '100vw', height: '100vh', maxHeight: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'none', animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '1rem', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)' }}>
-          <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
-            {getInitials(candidate.name)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.15rem', margin: 0 }}>{candidate.name}</h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: '2px 0 0' }}>{candidate.jobApplied} · {candidate.email}</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {avgScore !== null && (
-              <div style={{ textAlign: 'center', padding: '6px 14px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '10px' }}>
-                <div style={{ color: '#7DBA00', fontWeight: '800', fontSize: '1.2rem' }}>{avgScore}</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '600' }}>Overall</div>
-              </div>
-            )}
-            <span style={{
-              padding: '4px 12px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
-              backgroundColor: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-              color: '#fff'
-            }}>
-              {candidate.finalRecommendation || 'Under Review'}
-            </span>
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '6px', color: 'rgba(255,255,255,0.7)', display: 'flex' }}>
-              <X size={18} />
-            </button>
+        <div style={{ borderBottom: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)', flexShrink: 0 }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.25rem 2rem', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
+              {getInitials(candidate.name)}
+            </div>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.15rem', margin: 0 }}>{candidate.name}</h2>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: '2px 0 0' }}>{candidate.jobApplied} · {candidate.email}</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {avgScore !== null && (
+                <div style={{ textAlign: 'center', padding: '6px 14px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '10px' }}>
+                  <div style={{ color: '#7DBA00', fontWeight: '800', fontSize: '1.2rem' }}>{avgScore}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '600' }}>Overall</div>
+                </div>
+              )}
+              <span style={{
+                padding: '4px 12px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
+                backgroundColor: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
+                color: '#fff'
+              }}>
+                {candidate.finalRecommendation || 'Under Review'}
+              </span>
+              <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '8px 12px', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.8rem', transition: 'all 0.2s' }}>
+                <X size={16} /> Close
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid var(--border)', overflowX: 'auto', backgroundColor: '#fafbff', flexShrink: 0 }}>
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 16px', border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '600', whiteSpace: 'nowrap', transition: 'all 0.2s',
-                  backgroundColor: 'transparent',
-                  color: tab === t.id ? 'var(--brand-navy)' : 'var(--text-muted)',
-                  borderBottom: tab === t.id ? '2px solid var(--brand-navy)' : '2px solid transparent',
-                }}
-              >
-                <Icon size={13} />
-                {t.label}
-              </button>
-            );
-          })}
+        <div style={{ borderBottom: '1px solid var(--border)', backgroundColor: '#fafbff', flexShrink: 0, overflowX: 'auto' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', gap: '0', width: '100%', padding: '0 2rem' }}>
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', padding: '14px 16px', border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '600', whiteSpace: 'nowrap', transition: 'all 0.2s',
+                    backgroundColor: 'transparent',
+                    color: tab === t.id ? 'var(--brand-navy)' : 'var(--text-muted)',
+                    borderBottom: tab === t.id ? '2px solid var(--brand-navy)' : '2px solid transparent',
+                  }}
+                >
+                  <Icon size={13} />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Tab Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 2rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#ffffff' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', width: '100%' }}>
 
           {/* ── OVERVIEW ── */}
           {tab === 'overview' && (
@@ -570,6 +575,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
               <TranscriptAnalysis transcript={transcript} />
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
