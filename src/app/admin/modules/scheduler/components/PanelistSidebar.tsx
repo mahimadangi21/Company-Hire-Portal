@@ -6,11 +6,10 @@
  * and click-to-highlight on calendar.
  */
 
-import React, { memo } from 'react';
-import { Users, Clock } from 'lucide-react';
+import React, { memo, useState } from 'react';
+import { Users, Clock, UserPlus, Trash2, X } from 'lucide-react';
 import { useSchedulerContext, ACTIONS } from '../store/schedulerReducer.js';
 import { useAvailability } from '../hooks/useAvailability.js';
-import { PANELISTS } from '../hooks/useScheduler.js';
 import { getWeekDays, getDateKey, formatDateShort } from '../utils/calendarUtils.js';
 
 const STATUS_COLORS = {
@@ -81,31 +80,60 @@ WorkloadBar.displayName = 'WorkloadBar';
 
 // ─── Panelist Row ──────────────────────────────────────────────────────────────
 
-const PanelistRow = memo(({ panelist, workload, weekDays, getPanelistStatus, isSelected, onSelect }) => (
-  <button
+const PanelistRow = memo(({ panelist, workload, weekDays, getPanelistStatus, isSelected, onSelect, onDelete }) => (
+  <div
     className={`panelist-row ${isSelected ? 'panelist-row--selected' : ''}`}
     onClick={() => onSelect(panelist.id)}
+    role="button"
+    tabIndex={0}
+    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem' }}
     aria-pressed={isSelected}
     title={`Click to highlight ${panelist.name}'s interviews`}
+    onKeyDown={(e) => e.key === 'Enter' && onSelect(panelist.id)}
   >
-    <div className="panelist-row__left">
+    <div className="panelist-row__left" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, overflow: 'hidden' }}>
       <div
         className="panelist-avatar"
-        style={{ backgroundColor: panelist.color }}
+        style={{ backgroundColor: panelist.color, flexShrink: 0 }}
       >
         {panelist.avatar}
       </div>
-      <div className="panelist-row__info">
-        <span className="panelist-row__name">{panelist.name}</span>
-        <span className="panelist-row__role">{panelist.role}</span>
+      <div className="panelist-row__info" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span className="panelist-row__name" style={{ fontWeight: 600 }}>{panelist.name}</span>
+        <span className="panelist-row__role" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{panelist.role}</span>
         <WorkloadBar
           percent={workload.busyPercent}
           scheduledMinutes={workload.scheduledMinutes}
         />
       </div>
     </div>
-    <WeeklyDots panelistId={panelist.id} weekDays={weekDays} getPanelistStatus={getPanelistStatus} />
-  </button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+      <WeeklyDots panelistId={panelist.id} weekDays={weekDays} getPanelistStatus={getPanelistStatus} />
+      <button
+        style={{
+          background: 'none',
+          border: 'none',
+          color: '#ef4444',
+          cursor: 'pointer',
+          padding: '4px',
+          borderRadius: '4px',
+          opacity: 0.6,
+          transition: 'all 0.2s',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        className="hover:opacity-100 hover:bg-red-50"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(panelist.id, panelist.name);
+        }}
+        title={`Delete ${panelist.name}`}
+      >
+        <Trash2 size={13} />
+      </button>
+    </div>
+  </div>
 ));
 PanelistRow.displayName = 'PanelistRow';
 
@@ -114,24 +142,108 @@ PanelistRow.displayName = 'PanelistRow';
 export default function PanelistSidebar() {
   const { state, dispatch } = useSchedulerContext();
   const { workloads, getPanelistStatus } = useAvailability();
-  const { currentDate, selectedPanelistId } = state;
+  const { currentDate, selectedPanelistId, panelists } = state;
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('');
 
   const weekDays = getWeekDays(currentDate);
 
   const totalScheduled = state.interviews.filter(iv => iv.status === 'scheduled').length;
 
+  const handleAdd = (e) => {
+    e.preventDefault();
+    if (!name.trim() || !role.trim()) return;
+
+    const initials = name
+      .trim()
+      .split(/\s+/)
+      .map(p => p[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+
+    const colors = ['#0E2D7B', '#7DBA00', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    dispatch({
+      type: ACTIONS.ADD_PANELIST,
+      payload: {
+        id: 'p_' + Date.now(),
+        name: name.trim(),
+        role: role.trim(),
+        avatar: initials || '?',
+        color: randomColor,
+      }
+    });
+
+    setName('');
+    setRole('');
+    setShowAddForm(false);
+  };
+
   return (
     <aside className="panelist-sidebar">
-      <div className="panelist-sidebar__header">
-        <div className="panelist-sidebar__title">
+      <div className="panelist-sidebar__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="panelist-sidebar__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Users size={15} />
           Panel Availability
         </div>
-        <div className="panelist-sidebar__week">
-          <Clock size={12} />
-          This week
-        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          style={{
+            background: 'var(--brand-green)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '4px 8px',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.2s'
+          }}
+          className="hover:bg-opacity-90"
+        >
+          <UserPlus size={12} /> Add
+        </button>
       </div>
+
+      {showAddForm && (
+        <form onSubmit={handleAdd} style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', margin: '0 1rem 1rem', display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: 'var(--gray-50)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--brand-navy)' }}>New Panelist</span>
+            <button type="button" onClick={() => setShowAddForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+              <X size={14} />
+            </button>
+          </div>
+          <input
+            type="text"
+            className="form-input"
+            style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+            placeholder="Full Name (e.g. Bob Martin)"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            autoFocus
+          />
+          <input
+            type="text"
+            className="form-input"
+            style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+            placeholder="Role (e.g. QA Automation)"
+            value={role}
+            onChange={e => setRole(e.target.value)}
+            required
+          />
+          <button type="submit" className="btn btn-primary" style={{ padding: '0.4rem', fontSize: '0.8rem', width: '100%', marginTop: '4px' }}>
+            Save Panelist
+          </button>
+        </form>
+      )}
 
       {/* Legend */}
       <div className="panelist-legend">
@@ -145,7 +257,7 @@ export default function PanelistSidebar() {
 
       {/* Panelist list */}
       <div className="panelist-list">
-        {PANELISTS.map(panelist => (
+        {panelists.map(panelist => (
           <PanelistRow
             key={panelist.id}
             panelist={panelist}
@@ -154,6 +266,11 @@ export default function PanelistSidebar() {
             getPanelistStatus={getPanelistStatus}
             isSelected={selectedPanelistId === panelist.id}
             onSelect={(id) => dispatch({ type: ACTIONS.SET_SELECTED_PANELIST, payload: id })}
+            onDelete={(id, name) => {
+              if (window.confirm(`Are you sure you want to remove ${name} from the panel?`)) {
+                dispatch({ type: ACTIONS.REMOVE_PANELIST, payload: id });
+              }
+            }}
           />
         ))}
       </div>
@@ -172,4 +289,3 @@ export default function PanelistSidebar() {
     </aside>
   );
 }
-

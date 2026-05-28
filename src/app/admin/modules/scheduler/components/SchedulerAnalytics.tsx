@@ -2,6 +2,8 @@
 
 /**
  * SchedulerAnalytics.jsx
+/**
+ * SchedulerAnalytics.jsx
  * Interview analytics: workload, funnel, efficiency metrics.
  * CSS-based charts — no external chart library.
  */
@@ -10,7 +12,6 @@ import React, { useMemo } from 'react';
 import { TrendingUp, Users, Clock, Calendar, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useSchedulerContext } from '../store/schedulerReducer.js';
 import { useAvailability } from '../hooks/useAvailability.js';
-import { PANELISTS } from '../hooks/useScheduler.js';
 import { formatDuration } from '../utils/calendarUtils.js';
 
 function MetricCard({ icon: Icon, label, value, sub, color }) {
@@ -87,16 +88,6 @@ export default function SchedulerAnalytics() {
     teams: 'Microsoft Teams', google: 'Google Meet', zoom: 'Zoom', inperson: 'In Person'
   };
 
-  // ── Round breakdown ───────────────────────────────────────────────────────
-
-  const roundStats = useMemo(() => {
-    const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-    interviews.filter(iv => iv.status !== 'cancelled').forEach(iv => {
-      if (counts[iv.round] !== undefined) counts[iv.round]++;
-    });
-    return counts;
-  }, [interviews]);
-
   const maxWorkload = useMemo(
     () => Math.max(...Object.values(workloads).map(w => w.scheduledMinutes), 1),
     [workloads]
@@ -123,7 +114,7 @@ export default function SchedulerAnalytics() {
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>This week</span>
           </div>
           <div className="card-body">
-            {PANELISTS.map(p => {
+            {state.panelists.map(p => {
               const w = workloads[p.id] || { scheduledMinutes: 0, busyPercent: 0, interviewCount: 0 };
               const color = w.busyPercent >= 70 ? '#ef4444' : w.busyPercent >= 40 ? '#f59e0b' : '#10b981';
               return (
@@ -137,7 +128,7 @@ export default function SchedulerAnalytics() {
                 />
               );
             })}
-            {!PANELISTS.length && (
+            {!state.panelists.length && (
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No data</p>
             )}
           </div>
@@ -171,30 +162,6 @@ export default function SchedulerAnalytics() {
         </div>
       </div>
 
-      {/* Round Breakdown */}
-      <div className="card" style={{ marginTop: '1.5rem' }}>
-        <div className="card-header">
-          <h3 className="card-title" style={{ fontSize: '1rem' }}>Interview Rounds</h3>
-        </div>
-        <div className="card-body">
-          <div className="analytics-rounds-grid">
-            {[
-              { round: 1, label: '1st Round',  color: '#0E2D7B' },
-              { round: 2, label: '2nd Round',  color: '#6366f1' },
-              { round: 3, label: '3rd Round',  color: '#7DBA00' },
-              { round: 4, label: 'Final Round',color: '#10b981' },
-            ].map(r => (
-              <div key={r.round} className="analytics-round-card" style={{ borderTopColor: r.color }}>
-                <div className="analytics-round-card__num" style={{ color: r.color }}>
-                  {roundStats[r.round] || 0}
-                </div>
-                <div className="analytics-round-card__label">{r.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Summary */}
       <div className="analytics-summary-row">
         <div className="analytics-summary-item">
@@ -207,10 +174,9 @@ export default function SchedulerAnalytics() {
         </div>
         <div className="analytics-summary-item">
           <Users size={14} color="#7DBA00" />
-          <span>Active panelists: <strong>{PANELISTS.filter(p => (workloads[p.id]?.interviewCount || 0) > 0).length} / {PANELISTS.length}</strong></span>
+          <span>Active panelists: <strong>{state.panelists.filter(p => (workloads[p.id]?.interviewCount || 0) > 0).length} / {state.panelists.length}</strong></span>
         </div>
       </div>
     </div>
   );
 }
-

@@ -12,13 +12,6 @@ import { useSchedulerContext, ACTIONS } from '../store/schedulerReducer.js';
 import { fetchInterviews, createInterview, updateInterview, deleteInterview } from '../services/schedulerAPI.js';
 import { createMeeting, cancelMeeting } from '../services/calendarProviders/index.js';
 
-// ─── Panelists Constant (extendable to API later) ──────────────────────────────
-
-export const PANELISTS = [
-  { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B' },
-  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00' }
-];
-
 export const INTERVIEW_TEMPLATES = [
   { id: 'technical',     label: 'Technical Interview',    defaultDuration: 60 },
   { id: 'system-design', label: 'System Design',          defaultDuration: 90 },
@@ -85,37 +78,47 @@ export const useScheduler = () => {
 
   const scheduleInterview = useCallback(async (formData) => {
     dispatch({ type: ACTIONS.SET_MODAL_LOADING, payload: true });
+    
+    // Strict requirement: Platform is MS Teams, notifyTeams is mandatory
+    const strictFormData = {
+      ...formData,
+      platform: 'teams',
+      notifyTeams: true,
+      notifyEmail: false,
+      notifySlack: false,
+    };
+
     try {
-      // 1. Generate meeting link via provider
-      const meeting = await createMeeting(formData.platform, {
-        title:     `${formData.template} Interview – ${formData.candidateName}`,
-        date:      formData.date,
-        time:      formData.time,
-        duration:  formData.duration,
+      // 1. Generate meeting link via Teams provider
+      const meeting = await createMeeting(strictFormData.platform, {
+        title:     `Technical Interview – ${strictFormData.candidateName}`,
+        date:      strictFormData.date,
+        time:      strictFormData.time,
+        duration:  strictFormData.duration,
         attendees: [],
-        notes:     formData.notes,
+        notes:     strictFormData.notes,
       });
 
       // 2. Build interview record
       const interview = {
-        candidate_id:   formData.candidateId,
-        candidate_name: formData.candidateName,
-        candidate_email:formData.candidateEmail,
-        job_role:       formData.jobRole,
-        round:          formData.round,
-        template:       formData.template,
-        panelists:      formData.panelistIds,
-        date:           formData.date,
-        time:           formData.time,
-        duration:       formData.duration,
-        platform:       formData.platform,
+        candidate_id:   strictFormData.candidateId,
+        candidate_name: strictFormData.candidateName,
+        candidate_email:strictFormData.candidateEmail,
+        job_role:       strictFormData.jobRole,
+        round:          strictFormData.round || 1,
+        template:       'technical',
+        panelists:      strictFormData.panelistIds,
+        date:           strictFormData.date,
+        time:           strictFormData.time,
+        duration:       strictFormData.duration,
+        platform:       strictFormData.platform,
         meeting_link:   meeting.link,
         meeting_id:     meeting.id,
         status:         'scheduled',
-        notes:          formData.notes,
-        timezone:       formData.timezone || 'Asia/Kolkata',
-        notify_email:   formData.notifyEmail,
-        notify_teams:   formData.notifyTeams,
+        notes:          strictFormData.notes,
+        timezone:       strictFormData.timezone || 'Asia/Kolkata',
+        notify_email:   false,
+        notify_teams:   true,
       };
 
       // 3. Persist
@@ -124,7 +127,27 @@ export const useScheduler = () => {
       // 4. Add to state
       dispatch({ type: ACTIONS.ADD_INTERVIEW, payload: created });
       dispatch({ type: ACTIONS.CLOSE_MODAL });
-      notify('success', `Interview scheduled for ${formData.candidateName} on ${formData.date} at ${formData.time}`);
+      
+      // Strict Teams message dispatch simulator notifications (Candidate + Panelists)
+      notify('success', `Technical Interview scheduled for ${strictFormData.candidateName} on ${strictFormData.date} at ${strictFormData.time}`);
+
+      // Candidate Teams Notification
+      setTimeout(() => {
+        notify('info', `💬 [Teams Message Sent to Candidate (${strictFormData.candidateEmail})]
+Hello ${strictFormData.candidateName}, your Technical Interview is confirmed for ${strictFormData.date} at ${strictFormData.time}.
+Teams Meeting Link: ${meeting.link}
+Please join promptly.`);
+      }, 1000);
+
+      // Panelist Teams Notification
+      setTimeout(() => {
+        const panelistsList = (strictFormData.panelistIds || []).map(id => state.panelists.find(p => p.id === id)).filter(Boolean);
+        panelistsList.forEach(p => {
+          notify('info', `💬 [Teams Message Sent to Panelist (${p.name})]
+You are assigned to conduct a Technical Interview for ${strictFormData.candidateName} on ${strictFormData.date} at ${strictFormData.time}.
+Teams Meeting Link: ${meeting.link}`);
+        });
+      }, 2000);
 
       return created;
     } catch (err) {
@@ -134,7 +157,7 @@ export const useScheduler = () => {
     } finally {
       dispatch({ type: ACTIONS.SET_MODAL_LOADING, payload: false });
     }
-  }, [dispatch, notify]);
+  }, [dispatch, notify, state.panelists]);
 
   // ── Reschedule (drag/drop or edit) ────────────────────────────────────────
 
@@ -209,8 +232,7 @@ export const useScheduler = () => {
     closeDrawer,
     notify,
     // Constants
-    PANELISTS,
+    panelists: state.panelists,
     INTERVIEW_TEMPLATES,
   };
 };
-

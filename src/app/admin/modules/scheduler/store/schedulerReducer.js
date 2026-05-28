@@ -8,6 +8,12 @@
 
 import React, { createContext, useContext, useReducer, useCallback } from 'react';
 
+// ─── Initial Panelists Constant ───────────────────────────────────────────────
+export const INITIAL_PANELISTS = [
+  { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B' },
+  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00' }
+];
+
 // ─── Action Constants ─────────────────────────────────────────────────────────
 
 export const ACTIONS = {
@@ -15,6 +21,10 @@ export const ACTIONS = {
   SET_VIEW:              'SET_VIEW',
   NAVIGATE_DATE:         'NAVIGATE_DATE',
   GO_TO_TODAY:           'GO_TO_TODAY',
+
+  // Panelists management
+  ADD_PANELIST:          'ADD_PANELIST',
+  REMOVE_PANELIST:       'REMOVE_PANELIST',
 
   // Interviews (server state)
   SET_INTERVIEWS:        'SET_INTERVIEWS',
@@ -91,57 +101,79 @@ const DEFAULT_MODAL_FORM = {
 
 // ─── Initial State ────────────────────────────────────────────────────────────
 
-const getInitialState = () => ({
-  // View
-  view: 'week',
-  currentDate: new Date(),
-  activeTab: 'calendar',   // 'calendar' | 'analytics'
-  selectedPanelistId: null, // highlight panelist on calendar
-  darkMode: typeof window !== 'undefined' ? localStorage.getItem('scheduler-theme') === 'dark' : false,
+const getInitialState = () => {
+  let storedPanelists = [];
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('kl_scheduler_panelists');
+      if (raw) storedPanelists = JSON.parse(raw);
+    } catch (e) {
+      console.error('Failed to load panelists', e);
+    }
+  }
 
-  // Server state
-  interviews: [],
-  optimisticQueue: [],   // pending ops to rollback on failure
-  loading: true,  // true on mount → prevents blank-calendar flash before first fetch
+  if (!storedPanelists || storedPanelists.length === 0) {
+    storedPanelists = [...INITIAL_PANELISTS];
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('kl_scheduler_panelists', JSON.stringify(storedPanelists));
+      } catch {}
+    }
+  }
 
-  // Modal state
-  modal: {
-    open:    false,
-    step:    1,
-    loading: false,
-    formData: { ...DEFAULT_MODAL_FORM },
-  },
+  return {
+    // View
+    view: 'week',
+    currentDate: new Date(),
+    activeTab: 'calendar',   // 'calendar' | 'analytics'
+    selectedPanelistId: null, // highlight panelist on calendar
+    darkMode: typeof window !== 'undefined' ? localStorage.getItem('scheduler-theme') === 'dark' : false,
 
-  // Drag state (UI only — not persisted)
-  drag: {
-    active:       false,
-    eventId:      null,
-    originalDate: null,
-    originalTime: null,
-    ghostDate:    null,
-    ghostTime:    null,
-  },
+    // Server state
+    interviews: [],
+    panelists: storedPanelists,
+    optimisticQueue: [],   // pending ops to rollback on failure
+    loading: true,  // true on mount → prevents blank-calendar flash before first fetch
 
-  // Resize state
-  resize: {
-    active:           false,
-    eventId:          null,
-    originalDuration: null,
-    ghostDuration:    null,
-  },
+    // Modal state
+    modal: {
+      open:    false,
+      step:    1,
+      loading: false,
+      formData: { ...DEFAULT_MODAL_FORM },
+    },
 
-  // Drawer (candidate detail)
-  drawer: {
-    open:        false,
-    interviewId: null,
-  },
+    // Drag state (UI only — not persisted)
+    drag: {
+      active:       false,
+      eventId:      null,
+      originalDate: null,
+      originalTime: null,
+      ghostDate:    null,
+      ghostTime:    null,
+    },
 
-  // Conflict detection results
-  conflicts: [],
+    // Resize state
+    resize: {
+      active:           false,
+      eventId:          null,
+      originalDuration: null,
+      ghostDuration:    null,
+    },
 
-  // Notification toasts
-  notifications: [],
-});
+    // Drawer (candidate detail)
+    drawer: {
+      open:        false,
+      interviewId: null,
+    },
+
+    // Conflict detection results
+    conflicts: [],
+
+    // Notification toasts
+    notifications: [],
+  };
+};
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
 
@@ -349,6 +381,32 @@ function schedulerReducer(state, action) {
         localStorage.setItem('scheduler-theme', nextMode ? 'dark' : 'light');
       }
       return { ...state, darkMode: nextMode };
+    }
+
+    case ACTIONS.ADD_PANELIST: {
+      const nextPanelists = [...state.panelists, action.payload];
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('kl_scheduler_panelists', JSON.stringify(nextPanelists));
+        } catch {}
+      }
+      return {
+        ...state,
+        panelists: nextPanelists
+      };
+    }
+
+    case ACTIONS.REMOVE_PANELIST: {
+      const nextPanelists = state.panelists.filter(p => p.id !== action.payload);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('kl_scheduler_panelists', JSON.stringify(nextPanelists));
+        } catch {}
+      }
+      return {
+        ...state,
+        panelists: nextPanelists
+      };
     }
 
     default:

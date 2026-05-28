@@ -15,27 +15,26 @@ import {
   getPanelistDayStatus,
 } from '../utils/availabilityUtils.js';
 import { getDateKey } from '../utils/calendarUtils.js';
-import { PANELISTS } from './useScheduler.js';
 
 export const useAvailability = () => {
   const { state } = useSchedulerContext();
-  const { interviews, currentDate, modal } = state;
+  const { interviews, currentDate, modal, panelists } = state;
 
   // Memoized matrix — only recomputes when interviews or week changes
   const matrix = useMemo(
-    () => generateAvailabilityMatrix(PANELISTS, interviews, currentDate),
-    [interviews, currentDate]
+    () => generateAvailabilityMatrix(panelists, interviews, currentDate),
+    [panelists, interviews, currentDate]
   );
 
   // Workload for each panelist in current week
   const workloads = useMemo(
     () => Object.fromEntries(
-      PANELISTS.map(p => [
+      panelists.map(p => [
         p.id,
         calculatePanelistWorkload(p.id, interviews, currentDate)
       ])
     ),
-    [interviews, currentDate]
+    [panelists, interviews, currentDate]
   );
 
   // Smart slot suggestions (only when modal is open + panelists selected)
@@ -69,4 +68,3 @@ export const useAvailability = () => {
     getPanelistDaySlots,
   };
 };
-

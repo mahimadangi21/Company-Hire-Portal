@@ -9,7 +9,6 @@
 import { useEffect, useCallback } from 'react';
 import { useSchedulerContext, ACTIONS } from '../store/schedulerReducer.js';
 import { detectConflicts, hasHardConflicts } from '../utils/conflictUtils.js';
-import { PANELISTS } from './useScheduler.js';
 
 export const useConflictDetection = () => {
   const { state, dispatch } = useSchedulerContext();
@@ -47,7 +46,7 @@ export const useConflictDetection = () => {
 
     // Exclude the event being edited (if editing)
     const existing = state.interviews.filter(iv => iv.id !== formData.editingId);
-    const conflicts = detectConflicts(event, existing, PANELISTS);
+    const conflicts = detectConflicts(event, existing, state.panelists);
 
     dispatch({ type: ACTIONS.SET_CONFLICTS, payload: conflicts });
   }, [
@@ -74,4 +73,3 @@ export const useConflictDetection = () => {
     clearConflicts,
   };
 };
-

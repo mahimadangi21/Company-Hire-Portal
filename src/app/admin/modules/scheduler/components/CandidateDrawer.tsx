@@ -9,7 +9,7 @@
 import React, { useMemo } from 'react';
 import { X, ExternalLink, Mail, Phone, Briefcase, Calendar, Clock, CheckCircle, Circle, AlertCircle, Star } from 'lucide-react';
 import { useSchedulerContext, ACTIONS, selectInterviewById } from '../store/schedulerReducer.js';
-import { useScheduler, PANELISTS } from '../hooks/useScheduler.js';
+import { useScheduler } from '../hooks/useScheduler.js';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import { formatTime, formatDuration, formatDateLong } from '../utils/calendarUtils.js';
 import { PLATFORM_OPTIONS } from '../services/calendarProviders/index.js';
@@ -114,7 +114,7 @@ export default function CandidateDrawer() {
   const { state, dispatch } = useSchedulerContext();
   const { cancelScheduledInterview } = useScheduler();
   const { candidates } = useAppContext();
-  const { drawer } = state;
+  const { drawer, panelists: allPanelists } = state;
 
   const interview = useMemo(
     () => selectInterviewById(state, drawer.interviewId),
@@ -127,8 +127,8 @@ export default function CandidateDrawer() {
   );
 
   const panelists = useMemo(
-    () => (interview?.panelists || []).map(id => PANELISTS.find(p => p.id === id)).filter(Boolean),
-    [interview]
+    () => (interview?.panelists || []).map(id => allPanelists.find(p => p.id === id)).filter(Boolean),
+    [interview, allPanelists]
   );
 
   const platform = PLATFORM_OPTIONS.find(p => p.id === interview?.platform);
@@ -208,7 +208,7 @@ export default function CandidateDrawer() {
               </div>
               <div className="drawer-info-item">
                 <Clock size={13} />
-                <span>{formatDuration(interview.duration)} · Round {interview.round}</span>
+                <span>{formatDuration(interview.duration)}</span>
               </div>
               <div className="drawer-info-item">
                 <Briefcase size={13} />
@@ -313,4 +313,3 @@ export default function CandidateDrawer() {
     </>
   );
 }
-

@@ -78,7 +78,11 @@ const Sidebar = () => {
         <button 
           onMouseEnter={() => setIsLogoutHovered(true)}
           onMouseLeave={() => setIsLogoutHovered(false)}
-          onClick={() => { localStorage.removeItem('kl_admin_session'); window.location.href = '/admin/login'; }}
+          onClick={() => {
+            document.cookie = 'kl_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            localStorage.removeItem('kl_admin_session');
+            window.location.href = '/admin/login';
+          }}
           style={{ 
             width: '100%', 
             display: 'flex',

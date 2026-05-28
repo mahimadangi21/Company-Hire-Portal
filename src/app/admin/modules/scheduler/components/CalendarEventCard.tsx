@@ -10,7 +10,7 @@
 import React, { memo } from 'react';
 import { Video, Users, ExternalLink, GripVertical, MapPin, Laptop } from 'lucide-react';
 import { formatTime, formatDuration, getEventTop, getEventHeight } from '../utils/calendarUtils.js';
-import { PANELISTS } from '../hooks/useScheduler.js';
+import { useSchedulerContext } from '../store/schedulerReducer.js';
 
 const PLATFORM_ICONS = {
   teams:    Laptop,
@@ -31,8 +31,6 @@ const STATUS_CLASSES = {
   completed:  'cal-event--completed',
   cancelled:  'cal-event--cancelled',
 };
-
-const ROUND_LABELS = { 1: '1st', 2: '2nd', 3: '3rd', 4: 'Final' };
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -59,8 +57,10 @@ const isEventNow = (date, time, duration = 60) => {
 // ─── Avatar Chip ──────────────────────────────────────────────────────────────
 
 const PanelistAvatars = memo(({ panelistIds }) => {
+  const { state } = useSchedulerContext();
+  const { panelists: allPanelists } = state;
   const panelists = (panelistIds || [])
-    .map(id => PANELISTS.find(p => p.id === id))
+    .map(id => allPanelists.find(p => p.id === id))
     .filter(Boolean)
     .slice(0, 3);
 
@@ -171,11 +171,9 @@ const CalendarEventCard = memo(({
             {/* Round + template */}
             {!isCompact && (
               <div className="cal-event__tags">
-                {interview.round && (
-                  <span className="cal-event__tag">
-                    {ROUND_LABELS[interview.round] || `R${interview.round}`} Round
-                  </span>
-                )}
+                <span className="cal-event__tag">
+                  Technical Interview
+                </span>
               </div>
             )}
           </>
@@ -224,4 +222,3 @@ const CalendarEventCard = memo(({
 CalendarEventCard.displayName = 'CalendarEventCard';
 
 export default CalendarEventCard;
-

@@ -9,7 +9,7 @@
 import React, { useCallback, useMemo, useEffect, useRef } from 'react';
 import { X, ChevronRight, ChevronLeft, Check, Search, Clock, Calendar, Video, MapPin, Loader2 } from 'lucide-react';
 import { useSchedulerContext, ACTIONS } from '../store/schedulerReducer.js';
-import { useScheduler, PANELISTS, INTERVIEW_TEMPLATES } from '../hooks/useScheduler.js';
+import { useScheduler, INTERVIEW_TEMPLATES } from '../hooks/useScheduler.js';
 import { useConflictDetection } from '../hooks/useConflictDetection.js';
 import { useAvailability } from '../hooks/useAvailability.js';
 import { useAppContext } from '@/components/admin/context/AppContext';
@@ -58,7 +58,7 @@ function Stepper({ currentStep }) {
 
 function StepCandidate({ formData, update }) {
   const { candidates } = useAppContext();
-  const searchRef = useRef('');
+  const [isFocused, setIsFocused] = React.useState(false);
 
   const filtered = useMemo(() => {
     const q = (formData._search || '').toLowerCase();
@@ -75,6 +75,7 @@ function StepCandidate({ formData, update }) {
       jobRole:        c.jobApplied || c.job_applied || '',
       _search:        c.name,
     });
+    setIsFocused(false);
   };
 
   return (
@@ -89,11 +90,13 @@ function StepCandidate({ formData, update }) {
             placeholder="Name or email..."
             value={formData._search || ''}
             onChange={(e) => update({ _search: e.target.value, candidateId: '', candidateName: '' })}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             autoFocus
           />
         </div>
-        {formData._search && !formData.candidateId && (
-          <div className="modal-search-dropdown">
+        {isFocused && formData._search && !formData.candidateId && (
+          <div className="modal-search-dropdown" onMouseDown={(e) => e.preventDefault()}>
             {filtered.length === 0 ? (
               <div className="modal-search-empty">No candidates found</div>
             ) : (
@@ -127,35 +130,13 @@ function StepCandidate({ formData, update }) {
           <span className="badge badge-success">Selected</span>
         </div>
       )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <div className="form-group">
-          <label className="form-label">Round</label>
-          <select className="form-select" value={formData.round} onChange={e => update({ round: Number(e.target.value) })}>
-            {[1, 2, 3, 4].map(r => (
-              <option key={r} value={r}>{r === 4 ? 'Final Round' : `Round ${r}`}</option>
-            ))}
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Interview Template</label>
-          <select className="form-select" value={formData.template} onChange={e => {
-            const tpl = INTERVIEW_TEMPLATES.find(t => t.id === e.target.value);
-            update({ template: e.target.value, duration: tpl?.defaultDuration || 60 });
-          }}>
-            {INTERVIEW_TEMPLATES.map(t => (
-              <option key={t.id} value={t.id}>{t.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
     </div>
   );
 }
 
 // ─── Step 2: Panel Setup ──────────────────────────────────────────────────────
 
-function StepPanel({ formData, update, getPanelistStatus, currentDate }) {
+function StepPanel({ formData, update, getPanelistStatus, currentDate, panelists }) {
   const toggle = (id) => {
     const ids = formData.panelistIds || [];
     update({ panelistIds: ids.includes(id) ? ids.filter(p => p !== id) : [...ids, id] });
@@ -167,7 +148,7 @@ function StepPanel({ formData, update, getPanelistStatus, currentDate }) {
     <div className="modal-step">
       <p className="modal-step__hint">Select one or more panelists. Availability shown for today.</p>
       <div className="modal-panelist-grid">
-        {PANELISTS.map(p => {
+        {panelists.map(p => {
           const selected  = (formData.panelistIds || []).includes(p.id);
           const avStatus  = getPanelistStatus(p.id, currentDate);
           const dotColor  = statusColors[avStatus] || statusColors.free;
@@ -247,23 +228,6 @@ function StepTime({ formData, update, suggestions }) {
       </div>
 
       <div className="form-group">
-        <label className="form-label">Platform</label>
-        <div className="modal-platform-grid">
-          {PLATFORM_OPTIONS.map(p => (
-            <button
-              key={p.id}
-              className={`modal-platform-btn ${formData.platform === p.id ? 'modal-platform-btn--active' : ''}`}
-              style={{ '--platform-color': p.color }}
-              onClick={() => update({ platform: p.id })}
-            >
-              <div className="modal-platform-btn__dot" style={{ backgroundColor: p.color }} />
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="form-group">
         <label className="form-label">Notes / Agenda</label>
         <textarea
           className="form-textarea"
@@ -279,9 +243,9 @@ function StepTime({ formData, update, suggestions }) {
 
 // ─── Step 4: Review ───────────────────────────────────────────────────────────
 
-function StepReview({ formData }) {
-  const panelists = (formData.panelistIds || []).map(id => PANELISTS.find(p => p.id === id)).filter(Boolean);
-  const platform  = PLATFORM_OPTIONS.find(p => p.id === formData.platform);
+function StepReview({ formData, panelists }) {
+  const selectedPanelists = (formData.panelistIds || []).map(id => panelists.find(p => p.id === id)).filter(Boolean);
+  const platform  = PLATFORM_OPTIONS.find(p => p.id === 'teams');
 
   return (
     <div className="modal-step">
@@ -296,16 +260,12 @@ function StepReview({ formData }) {
         </div>
         <div className="modal-review-row">
           <span className="modal-review-label">Round</span>
-          <span className="modal-review-value">Round {formData.round}</span>
-        </div>
-        <div className="modal-review-row">
-          <span className="modal-review-label">Type</span>
-          <span className="modal-review-value">{INTERVIEW_TEMPLATES.find(t => t.id === formData.template)?.label}</span>
+          <span className="modal-review-value">Technical Interview</span>
         </div>
         <div className="modal-review-row">
           <span className="modal-review-label">Panelists</span>
           <div className="modal-review-panelists">
-            {panelists.map(p => (
+            {selectedPanelists.map(p => (
               <span key={p.id} className="modal-review-panelist-chip" style={{ backgroundColor: p.color + '22', color: p.color }}>
                 {p.avatar} {p.name}
               </span>
@@ -330,18 +290,12 @@ function StepReview({ formData }) {
 
       <div className="form-group">
         <label className="form-label">Notifications</label>
-                  <div className="modal-notify-row" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            {[
-              { key: 'notifyEmail', label: 'Email invite' },
-              { key: 'notifyTeams', label: 'Teams message' },
-              { key: 'notifySlack', label: 'Slack DM' },
-            ].map(n => (
-              <label key={n.key} className="modal-notify-check" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <input type="checkbox" checked={formData[n.key]} onChange={e => update({ [n.key]: e.target.checked })} readOnly={false} />
-                {n.label}
-              </label>
-            ))}
-          </div>
+        <div className="modal-notify-row" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <label className="modal-notify-check" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <input type="checkbox" checked={true} readOnly={true} />
+            Teams message
+          </label>
+        </div>
       </div>
     </div>
   );
@@ -438,9 +392,9 @@ export default function ScheduleModal() {
         <div className="modal-body">
           <div className="animate-fade-in" key={step}>
             {step === 1 && <StepCandidate formData={formData} update={update} />}
-            {step === 2 && <StepPanel formData={formData} update={update} getPanelistStatus={getPanelistStatus} currentDate={state.currentDate} />}
+            {step === 2 && <StepPanel formData={formData} update={update} getPanelistStatus={getPanelistStatus} currentDate={state.currentDate} panelists={state.panelists} />}
             {step === 3 && <StepTime formData={formData} update={update} suggestions={suggestions} />}
-            {step === 4 && <StepReview formData={formData} />}
+            {step === 4 && <StepReview formData={formData} panelists={state.panelists} />}
           </div>
         </div>
 
