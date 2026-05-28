@@ -5,7 +5,7 @@ import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, 
 import { useAppContext } from '@/components/admin/context/AppContext';
 import QuestionBankModal from '@/components/admin/QuestionBankModal';
 
-const NEXT_JS_URL = 'http://localhost:3000';
+const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
 const VideoBot = () => {
   const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();

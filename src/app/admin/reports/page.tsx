@@ -10,7 +10,7 @@ import {
 import { useAppContext } from '@/components/admin/context/AppContext';
 
 /* ─────────────────────────── helpers ─────────────────────────── */
-const NEXT_JS_URL = 'http://localhost:3000';
+const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
 const scoreColor = (v) => {
   if (!v) return 'var(--gray-400)';
@@ -627,7 +627,7 @@ const Reports = () => {
   const handleCopyShareLink = async (candidate) => {
     const token = candidate.extractedData?._reportShareToken || candidate.extracted_data?._reportShareToken;
     if (token) {
-      const url = `http://localhost:3000/report/${token}`;
+      const url = `${NEXT_JS_URL}/report/${token}`;
       copyToClipboard(url, candidate.id);
       return;
     }
