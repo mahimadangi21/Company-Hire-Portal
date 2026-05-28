@@ -25,6 +25,7 @@ const VideoBot = () => {
   const [inviteBody, setInviteBody] = useState('');
   const [senders, setSenders] = useState([]);
   const [selectedSender, setSelectedSender] = useState('');
+  const [targetEmail, setTargetEmail] = useState('');
   
   // Dynamic Departments from jobs
   const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
@@ -86,10 +87,12 @@ const VideoBot = () => {
         const jobRole = candidate.jobApplied || 'Common';
         setInviteSubject(`Your Interview Invitation — ${jobRole} Position`);
         setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video interview for the ${jobRole} position. Our AI-powered platform will guide you through the process.\n\nWhat to expect:\n• The AI will ask you questions using voice\n• You control when to start and stop recording each answer\n• Your webcam will be on during the interview\n• Ensure you are in a quiet, well-lit space`);
+        setTargetEmail(candidate.email || '');
       }
     } else {
       setInviteSubject('');
       setInviteBody('');
+      setTargetEmail('');
     }
   }, [inviteCandidateId, candidates]);
 
@@ -297,6 +300,15 @@ const VideoBot = () => {
               <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
                 <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Edit Email Details</h4>
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Candidate Email</label>
+                  <input 
+                    type="email" 
+                    className="form-input" 
+                    value={targetEmail}
+                    onChange={(e) => setTargetEmail(e.target.value)}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
                   <label className="form-label" style={{ fontSize: '0.75rem' }}>Subject</label>
                   <input 
                     type="text" 
@@ -327,7 +339,7 @@ const VideoBot = () => {
                   const jobRole = candidate.jobApplied || 'Common';
                   handleSendInvite(
                     candidate, 
-                    candidate.email, 
+                    targetEmail, 
                     jobRole, 
                     inviteDepartment, 
                     inviteSubDepartment,
