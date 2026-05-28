@@ -287,8 +287,8 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             {/* Top Right Side Controls (Logo & Close Button) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
               {/* Logo in the Top Right Side Screen */}
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center' }}>
-                <img src="/kadellabs-logo.png" alt="Kadel Labs Logo" style={{ height: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center' }}>
+                <img src="/kadellabs-logo.png" alt="Kadel Labs Logo" style={{ height: '36px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
               </div>
 
               {/* Close Button (only cross icon, no text) just right side of Logo */}
