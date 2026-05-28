@@ -11,7 +11,6 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const fs = require('fs');
 
 const PYTHON_SCRIPT = path.join(process.cwd(), 'src', 'lib', 'parser', 'extractors', 'pdf_extractor.py');
 const PYTHON_TIMEOUT_MS = 8000;       // 8s max — PyMuPDF is fast; fail quickly to fallback
