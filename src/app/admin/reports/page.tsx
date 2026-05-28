@@ -341,7 +341,9 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                   {candidate.finalRecommendation || 'Under Review'}
                 </span>
               </div>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: 0 }}>{candidate.jobApplied} · {candidate.email}</p>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: 0 }}>
+                {candidate.jobApplied} · Experience: {candidate.extractedData?.totalExperienceAnalysis?.totalExperience || 'N/A'}
+              </p>
             </div>
             
             {/* Top Right Side Controls (Logo & Close Button) */}
@@ -408,18 +410,8 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
               </div>
             </div>
 
-            {/* Quick Info & Experience Summary */}
+            {/* Experience Summary */}
             <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div>
-                <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px 0' }}>Contact Details</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.78rem', color: 'var(--gray-700)' }}>
-                  <span>📧 {candidate.email}</span>
-                  <span>📞 {candidate.phone || 'N/A'}</span>
-                  <span>💼 {candidate.jobApplied}</span>
-                  <span>🏷️ Stage: {candidate.stage || 'N/A'}</span>
-                </div>
-              </div>
-              <hr style={{ border: '0', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
               <div>
                 <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px 0' }}>Experience Summary</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.78rem', color: 'var(--gray-700)' }}>
@@ -427,35 +419,6 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                   <span>🎯 Domain: {data.totalExperienceAnalysis?.domainExperience ? data.totalExperienceAnalysis.domainExperience + ' yrs' : 'N/A'}</span>
                   <span>👑 Leadership: {data.totalExperienceAnalysis?.leadershipExperience || 'N/A'}</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Pipeline Status */}
-            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
-              <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0' }}>Pipeline Status</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflowX: 'auto' }}>
-                {[
-                  { label: 'Resume', status: candidate.resumeStatus },
-                  { label: 'Video', status: candidate.videoStatus },
-                  { label: 'Technical', status: candidate.techStatus },
-                  { label: 'Report', status: candidate.reportStatus },
-                ].map((step, i, arr) => {
-                  const done = step.status && !['Pending', 'Not Shared', 'N/A'].includes(step.status);
-                  return (
-                    <React.Fragment key={i}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0, width: '48px' }}>
-                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {done ? <CheckCircle size={12} color="#fff" /> : <Clock size={10} color="var(--gray-400)" />}
-                        </div>
-                        <span style={{ fontSize: '0.58rem', fontWeight: '600', color: done ? 'var(--brand-navy)' : 'var(--text-muted)' }}>{step.label}</span>
-                        <span style={{ fontSize: '0.52rem', color: done ? 'var(--brand-green)' : 'var(--gray-400)', fontWeight: '600', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}>{step.status || 'N/A'}</span>
-                      </div>
-                      {i < arr.length - 1 && (
-                        <div style={{ flex: 1, height: '2px', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', minWidth: '10px', margin: '0 2px', marginBottom: '16px' }} />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
               </div>
             </div>
 
