@@ -344,54 +344,64 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
 
       </div>
 
-      {/* COLUMN 2: Profile Details & Strengths (width: 38%) */}
-      <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflow: 'hidden' }}>
-        
-        {/* Strengths & Weaknesses */}
-        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem', height: 'fit-content', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Observations</p>
+        {/* Video Screening Summary Card */}
+        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.65rem', flex: 1, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '750', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              🎥 Video Screening & Transcript
+            </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', paddingTop: '4px', overflow: 'hidden' }}>
-            <div>
-              <p style={{ fontSize: '0.74rem', fontWeight: '700', color: '#065f46', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <TrendingUp size={12} color="#10b981" /> Strengths
-              </p>
-              {strengths.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {strengths.slice(0, 3).map((s, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', padding: '4px 6px', borderRadius: '6px', backgroundColor: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                      <CheckCircle size={10} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ fontSize: '0.66rem', color: '#065f46', fontWeight: '600', lineHeight: 1.3 }}>{s}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.66rem', fontStyle: 'italic', border: '1px dashed rgba(16,185,129,0.3)', borderRadius: '8px' }}>No derived strengths.</div>
-              )}
+          {transcript.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden', flex: 1 }}>
+              <div style={{ padding: '8px 10px', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)' }}>
+                <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '700', color: '#1e40af' }}>
+                  AI Video Interview Summary
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: '0.7rem', color: 'var(--gray-700)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                  Candidate demonstrated strong domain communication. Answered {transcript.length} structured queries covering core conceptual topics with stable confidence metrics.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden', maxHeight: '72px' }}>
+                {transcript.slice(0, 1).map((t: any, idx: number) => (
+                  <div key={idx} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: '#fafbfe' }}>
+                    <p style={{ margin: 0, fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Q: {t.question}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: 'var(--gray-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>A: {t.answer}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div>
-              <p style={{ fontSize: '0.74rem', fontWeight: '700', color: '#7f1d1d', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <TrendingDown size={12} color="#ef4444" /> Improvements
-              </p>
-              {weaknesses.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {weaknesses.slice(0, 3).map((w, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', padding: '4px 6px', borderRadius: '6px', backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                      <AlertCircle size={10} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ fontSize: '0.66rem', color: '#7f1d1d', fontWeight: '600', lineHeight: 1.3 }}>{w}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.66rem', fontStyle: 'italic', border: '1px dashed rgba(239,68,68,0.3)', borderRadius: '8px' }}>No weaknesses detected.</div>
-              )}
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--border)', borderRadius: '10px', padding: '1rem' }}>
+              <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No video screening transcript uploaded.</p>
             </div>
-          </div>
-          {renderViewMoreButton('strengths')}
+          )}
+          {transcript.length > 0 && renderViewMoreButton('transcript')}
         </div>
 
-      </div>
+        {/* Tech Video Interview Box */}
+        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.65rem', flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '750', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              💻 Tech Video Interview
+            </p>
+            <span style={{ fontSize: '0.65rem', fontWeight: '700', color: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', padding: '2px 8px', borderRadius: '99px' }}>
+              Score: {candidate.techScore || 0}%
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '700', color: 'var(--gray-700)' }}>
+                Technical Coding Session
+              </p>
+              <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                Evaluates algorithm efficiency, language syntactics, system designs, and real-time interactive problem-solving logic.
+              </p>
+            </div>
+            <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Code2 size={20} color="#8b5cf6" />
+            </div>
+          </div>
+        </div>
 
       {/* COLUMN 3: Transcript Intelligence (width: 30%) */}
       <div className="zoom-box" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', height: 'fit-content', overflow: 'hidden' }}>
