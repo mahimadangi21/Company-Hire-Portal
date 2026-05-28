@@ -8,6 +8,7 @@ import {
   MessageSquare, Target, Activity, PieChart, LayoutGrid, List, Upload
 } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
+import StandardResume from '@/components/admin/StandardResume';
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
@@ -278,6 +279,9 @@ const deriveStrengthsWeaknesses = (candidate) => {
 const DetailModal = ({ candidate, jobs, onClose }) => {
   if (!candidate) return null;
 
+  const { refreshCandidates } = useAppContext();
+  const [viewResumeOpen, setViewResumeOpen] = useState(false);
+
   const data = candidate.extractedData || {};
   const skills = candidate.skills || [];
   const edu = data.educationDetails || [];
@@ -394,11 +398,41 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
           </div>
         </div>
 
+        {/* Custom Styles for Hover Zoom / Expansion */}
+        <style dangerouslySetInnerHTML={{__html: `
+          .resume-parsed-box {
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, max-height 0.25s ease;
+            transform: scale(0.97);
+            transform-origin: top center;
+            max-height: 380px;
+            overflow: hidden;
+            position: relative;
+          }
+          .resume-parsed-box:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-height: 1200px;
+            overflow-y: auto;
+            z-index: 100;
+          }
+          /* Custom Scrollbar for hovered box */
+          .resume-parsed-box::-webkit-scrollbar {
+            width: 4px;
+          }
+          .resume-parsed-box::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .resume-parsed-box::-webkit-scrollbar-thumb {
+            background: rgba(14, 45, 123, 0.2);
+            border-radius: 4px;
+          }
+        `}} />
+
         {/* Dashboard Main Grid Area */}
         <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
           
           {/* COLUMN 1: Scores & Skill Match (width: 32%) */}
-          <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'auto', paddingRight: '0.25rem' }}>
+          <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'hidden', paddingRight: '0.25rem' }}>
             
             {/* Overview / Score Radial Circles */}
             <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -410,15 +444,62 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
               </div>
             </div>
 
-            {/* Candidate Skill Set Cloud */}
-            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Code2 size={14} /> Full Skill Set
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {skills.length > 0 ? skills.map((s, i) => (
-                  <span key={i} style={{ padding: '3px 8px', borderRadius: '999px', fontSize: '0.68rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.12)' }}>{s}</span>
-                )) : <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
+            {/* Resume Parsed Box */}
+            <div className="resume-parsed-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: '750', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FileText size={16} /> Resume Parsed
+                </p>
+                <button
+                  className="btn btn-outline hover-scale"
+                  style={{ padding: '2px 8px', fontSize: '0.68rem', height: '22px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                  onClick={() => setViewResumeOpen(true)}
+                >
+                  View
+                </button>
+              </div>
+
+              {/* Education History */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <BookOpen size={14} /> Education History
+                </p>
+                {edu.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {edu.map((e, i) => (
+                      <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(125,186,0,0.03) 100%)' : 'var(--gray-50)', position: 'relative' }}>
+                        {i === 0 && <span style={{ position: 'absolute', top: '8px', right: '10px', fontSize: '0.58rem', fontWeight: '800', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(14,45,123,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Award size={16} color="var(--brand-navy)" />
+                          </div>
+                          <div>
+                            <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.8rem', margin: 0 }}>{e.degree || 'N/A'}</p>
+                            <p style={{ color: 'var(--gray-600)', fontSize: '0.74rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '2px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                              {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
+                              {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.74rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>No education records.</div>
+                )}
+              </div>
+
+              {/* Extracted Skills */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Code2 size={14} /> Extracted Skills
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {skills.length > 0 ? skills.map((s, i) => (
+                    <span key={i} style={{ padding: '3px 8px', borderRadius: '999px', fontSize: '0.68rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.12)' }}>{s}</span>
+                  )) : <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
+                </div>
               </div>
             </div>
 
@@ -467,69 +548,6 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
               </div>
             </div>
 
-
-            {/* Education History */}
-            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <BookOpen size={14} /> Education History
-              </p>
-              {edu.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {edu.map((e, i) => (
-                    <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(125,186,0,0.03) 100%)' : 'var(--gray-50)', position: 'relative' }}>
-                      {i === 0 && <span style={{ position: 'absolute', top: '8px', right: '10px', fontSize: '0.58rem', fontWeight: '800', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(14,45,123,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Award size={16} color="var(--brand-navy)" />
-                        </div>
-                        <div>
-                          <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.8rem', margin: 0 }}>{e.degree || 'N/A'}</p>
-                          <p style={{ color: 'var(--gray-600)', fontSize: '0.74rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
-                          <div style={{ display: 'flex', gap: '10px', marginTop: '2px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                            {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
-                            {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.74rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>No education records.</div>
-              )}
-            </div>
-
-            {/* Projects Portfolio */}
-            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Code2 size={14} /> Project Portfolio
-              </p>
-              {projs.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {projs.map((p, i) => (
-                    <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--gray-50)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.78rem' }}>{p.projectName || `Project ${i + 1}`}</span>
-                        <span style={{ fontSize: '0.58rem', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', padding: '1px 6px', borderRadius: '999px', fontWeight: '700', flexShrink: 0 }}>P{i + 1}</span>
-                      </div>
-                      {p.projectDescription && (
-                        <p style={{ fontSize: '0.72rem', color: 'var(--gray-700)', lineHeight: 1.4, margin: 0 }}>{p.projectDescription}</p>
-                      )}
-                      {p.technologiesUsed && p.technologiesUsed.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {p.technologiesUsed.map((t, j) => (
-                            <span key={j} style={{ fontSize: '0.62rem', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'rgba(125,186,0,0.08)', color: '#3d6600', border: '1px solid rgba(125,186,0,0.18)', fontWeight: '600' }}>{t}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.74rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>No projects extracted.</div>
-              )}
-            </div>
-
           </div>
 
           {/* COLUMN 3: Interview Q&A Transcript (width: 30%) */}
@@ -561,6 +579,31 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
         </div>
 
       </div>
+
+      {viewResumeOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '2rem'
+        }} onClick={() => setViewResumeOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <StandardResume 
+              candidate={candidate} 
+              onClose={() => setViewResumeOpen(false)} 
+              onUpdate={refreshCandidates} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
