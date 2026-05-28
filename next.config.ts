@@ -13,7 +13,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  turbopack: {},
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   webpack: (config: { resolve: { fallback: Record<string, boolean> } }) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,

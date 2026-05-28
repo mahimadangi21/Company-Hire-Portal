@@ -1,27 +1,36 @@
-'use server';
-
-import fs from "fs";
-import path from "path";
-
-const MOCK_DB_PATH = path.join(process.cwd(), "mock-db.json");
+// Server-only mock database client (used when Supabase is not configured)
 
 function readDb() {
   try {
-    if (fs.existsSync(MOCK_DB_PATH)) {
-      const content = fs.readFileSync(MOCK_DB_PATH, "utf8");
-      return JSON.parse(content);
+    if (typeof window === 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs') as typeof import('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path') as typeof import('path');
+      const MOCK_DB_PATH = path.join(process.cwd(), 'mock-db.json');
+      if (fs.existsSync(MOCK_DB_PATH)) {
+        const content = fs.readFileSync(MOCK_DB_PATH, 'utf8');
+        return JSON.parse(content);
+      }
     }
   } catch (e) {
-    console.error("[mock-db] Error reading database:", e);
+    console.error('[mock-db] Error reading database:', e);
   }
   return { jobs: [], candidates: [], interviews: [], questions_bank: [] };
 }
 
 function writeDb(data: any) {
   try {
-    fs.writeFileSync(MOCK_DB_PATH, JSON.stringify(data, null, 2), "utf8");
+    if (typeof window === 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs') as typeof import('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path') as typeof import('path');
+      const MOCK_DB_PATH = path.join(process.cwd(), 'mock-db.json');
+      fs.writeFileSync(MOCK_DB_PATH, JSON.stringify(data, null, 2), 'utf8');
+    }
   } catch (e) {
-    console.error("[mock-db] Error writing database:", e);
+    console.error('[mock-db] Error writing database:', e);
   }
 }
 
