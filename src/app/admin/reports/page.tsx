@@ -249,26 +249,66 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
               {getInitials(candidate.name)}
             </div>
-            <div style={{ flex: 1 }}>
-              <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.15rem', margin: 0 }}>{candidate.name}</h2>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: '2px 0 0' }}>{candidate.jobApplied} · {candidate.email}</p>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.25rem', margin: 0 }}>{candidate.name}</h2>
+                
+                {/* Overall Score Badge at just right side of Candidate Name */}
+                {avgScore !== null && (
+                  <span style={{
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    color: '#7DBA00',
+                    fontWeight: '800',
+                    fontSize: '0.78rem',
+                    border: '1px solid rgba(125,186,0,0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>{avgScore}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.55rem', fontWeight: '600', textTransform: 'uppercase' }}>Overall</span>
+                  </span>
+                )}
+
+                {/* Recommendation Badge */}
+                <span style={{
+                  padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: '700',
+                  backgroundColor: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
+                  color: '#fff'
+                }}>
+                  {candidate.finalRecommendation || 'Under Review'}
+                </span>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: 0 }}>{candidate.jobApplied} · {candidate.email}</p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {avgScore !== null && (
-                <div style={{ textAlign: 'center', padding: '6px 14px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '10px' }}>
-                  <div style={{ color: '#7DBA00', fontWeight: '800', fontSize: '1.2rem' }}>{avgScore}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '600' }}>Overall</div>
-                </div>
-              )}
-              <span style={{
-                padding: '4px 12px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
-                backgroundColor: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-                color: '#fff'
-              }}>
-                {candidate.finalRecommendation || 'Under Review'}
-              </span>
-              <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '8px 12px', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.8rem', transition: 'all 0.2s' }}>
-                <X size={16} /> Close
+            
+            {/* Top Right Side Controls (Logo & Close Button) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              {/* Logo in the Top Right Side Screen */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center' }}>
+                <img src="/kadellabs-logo.png" alt="Kadel Labs Logo" style={{ height: '24px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+              </div>
+
+              {/* Close Button (only cross icon, no text) just right side of Logo */}
+              <button 
+                onClick={onClose} 
+                style={{ 
+                  background: 'rgba(255,255,255,0.1)', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  cursor: 'pointer', 
+                  padding: '8px', 
+                  color: '#fff', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  transition: 'all 0.2s' 
+                }}
+                title="Close Report"
+              >
+                <X size={18} />
               </button>
             </div>
           </div>
