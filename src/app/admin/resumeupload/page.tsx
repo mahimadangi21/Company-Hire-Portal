@@ -129,11 +129,13 @@ const ResumeUpload = () => {
         method: 'POST',
         body: formData,
       });
-
-      clearInterval(interval);
-
-      const result = await response.json();
-
+      const rawText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(rawText);
+      } catch (e) {
+        throw new Error(`Server returned non-JSON response: ${rawText.substring(0, 100)}...`);
+      }
       if (response.ok && result.success) {
         const data = result.data;
         const reportToken = typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID
@@ -186,9 +188,10 @@ const ResumeUpload = () => {
       }
     } catch (err) {
       clearInterval(interval);
+      console.error('Upload catch block:', err);
       setStatus({ 
         type: 'error', 
-        message: 'Could not reach the parsing server. Please try again.' 
+        message: err.message || 'Could not reach the parsing server. Please try again.' 
       });
     } finally {
       setIsUploading(false);

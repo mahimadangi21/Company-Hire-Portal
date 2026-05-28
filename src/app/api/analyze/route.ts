@@ -10,6 +10,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+export const maxDuration = 60; // Vercel hobby max
+
 export async function POST(request: NextRequest) {
   const requestId = uuidv4();
   try {
