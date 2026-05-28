@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Download, Share2, Eye, FileText, CheckCircle, Clock, X, User,
   BookOpen, Code2, Briefcase, TrendingUp, TrendingDown, BarChart2,
   Star, Award, AlertCircle, ChevronRight, Search, Filter, Zap,
-  MessageSquare, Target, Activity, PieChart, LayoutGrid, List
+  MessageSquare, Target, Activity, PieChart, LayoutGrid, List, Upload
 } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 
@@ -18,6 +18,66 @@ const scoreColor = (v) => {
   if (v >= 70) return '#3b82f6';
   if (v >= 55) return '#f59e0b';
   return '#ef4444';
+};
+
+const parseTextTranscript = (text: string) => {
+  const entries: { question: string; answer: string; timestamp_start?: number; timestamp_end?: number }[] = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let currentQ = '';
+  let currentA = '';
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const qMatch = line.match(/^(?:Q|Question|Interviewer)[:\-]?\s*(.*)$/i);
+    const aMatch = line.match(/^(?:A|Answer|Candidate|Me)[:\-]?\s*(.*)$/i);
+    
+    if (qMatch) {
+      if (currentQ) {
+        entries.push({ question: currentQ, answer: currentA || 'No answer provided.' });
+      }
+      currentQ = qMatch[1];
+      currentA = '';
+    } else if (aMatch) {
+      currentA = aMatch[1];
+    } else {
+      if (currentQ) {
+        if (currentA) {
+          currentA += '\n' + line;
+        } else {
+          currentQ += '\n' + line;
+        }
+      } else {
+        currentQ = line;
+      }
+    }
+  }
+  if (currentQ) {
+    entries.push({ question: currentQ, answer: currentA || 'No answer provided.' });
+  }
+  return entries;
+};
+
+const getSimulatedTranscript = (role = '', name = '') => {
+  const uiux = [
+    { question: "Can you tell me about your design process?", answer: "I start with deep user research to understand pain points, followed by wireframing, interactive prototyping, and extensive usability testing. I always iterate based on feedback." },
+    { question: "How do you handle feedback from stakeholders that contradicts your design intuition?", answer: "I look at data. I try to run quick A/B tests or user testing sessions to present empirical evidence rather than relying solely on subjective opinions." },
+    { question: "What tools do you prefer for high-fidelity prototyping?", answer: "Figma is my primary tool for collaboration and UI design, and I use Protopie or Framer for advanced animations." }
+  ];
+  const developer = [
+    { question: "What is your approach to managing state in large React applications?", answer: "Depending on the scale, I use Context API for simpler global state, Redux Toolkit for complex transactional states, or Zustand for lightweight and fast state updates." },
+    { question: "How do you ensure web application performance?", answer: "By optimizing assets, lazy loading components, code splitting, minimizing bundle size, and ensuring efficient API queries and rendering paths." },
+    { question: "Have you worked with Server-Side Rendering (SSR)?", answer: "Yes, I have extensively used Next.js for server-rendered apps to improve SEO and first-contentful-paint times." }
+  ];
+  const general = [
+    { question: "Why are you interested in joining our company?", answer: "I am impressed by your company's focus on innovation and strong engineering culture. I want to contribute to building impactful solutions." },
+    { question: "What is your preferred working style?", answer: "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks." },
+    { question: "How do you manage tight deadlines?", answer: "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise." }
+  ];
+  
+  const lower = (role || '').toLowerCase();
+  if (lower.includes('ui') || lower.includes('ux') || lower.includes('design')) return uiux;
+  if (lower.includes('dev') || lower.includes('engineer') || lower.includes('software') || lower.includes('code')) return developer;
+  return general;
 };
 
 const scoreLabel = (v) => {
@@ -287,8 +347,26 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             {/* Top Right Side Controls (Logo & Close Button) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
               {/* Logo in the Top Right Side Screen */}
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '0px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center' }}>
-                <img src="/kadellabs-logo.png" alt="Kadel Labs Logo" style={{ height: '80px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+              <div style={{ 
+                backgroundColor: 'rgba(255,255,255,0.08)', 
+                padding: '0px 14px', 
+                borderRadius: '8px', 
+                border: '1px solid rgba(255,255,255,0.12)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                height: '45px',
+                overflow: 'hidden'
+              }}>
+                <img 
+                  src="/kadellabs-logo.png" 
+                  alt="Kadel Labs Logo" 
+                  style={{ 
+                    height: '75px', 
+                    objectFit: 'contain', 
+                    filter: 'brightness(0) invert(1)'
+                  }} 
+                />
               </div>
 
               {/* Close Button (only cross icon, no text) just right side of Logo */}
@@ -598,6 +676,68 @@ const Reports = () => {
   const [shareResult, setShareResult] = useState(null); // { success, reportUrl, error }
   const [copiedId, setCopiedId] = useState(null);
   const [generatingId, setGeneratingId] = useState(null);
+  const [uploadingCandidate, setUploadingCandidate] = useState(null);
+  const [uploadingId, setUploadingId] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const triggerTranscriptUpload = (candidate) => {
+    setUploadingCandidate(candidate);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingCandidate) return;
+
+    setUploadingId(uploadingCandidate.id);
+
+    try {
+      let transcriptEntries = [];
+
+      if (file.name.toLowerCase().endsWith('.txt')) {
+        const text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+        transcriptEntries = parseTextTranscript(text);
+      } else {
+        transcriptEntries = getSimulatedTranscript(uploadingCandidate.jobApplied, uploadingCandidate.name);
+      }
+
+      const updatedExtractedData = {
+        ...(uploadingCandidate.extractedData || {}),
+        transcript: transcriptEntries
+      };
+
+      const response = await apiFetch('/api/candidates', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          id: uploadingCandidate.id,
+          extracted_data: updatedExtractedData,
+          video_status: 'Completed'
+        })
+      });
+
+      if (response.ok) {
+        alert('Transcript uploaded and processed successfully.');
+        refreshCandidates();
+      } else {
+        const errData = await response.json();
+        alert(errData.error || 'Failed to upload transcript.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error reading/uploading file.');
+    } finally {
+      setUploadingId(null);
+      setUploadingCandidate(null);
+    }
+  };
 
   const copyToClipboard = (text, id) => {
     const textArea = document.createElement("textarea");
@@ -818,45 +958,76 @@ const Reports = () => {
           </div>
         ) : viewMode === 'table' ? (
           <div className="table-container">
-            <table className="table">
+            <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th>Candidate</th>
-                  <th>Job Applied</th>
-                  <th style={{ textAlign: 'center' }}>Resume</th>
-                  <th style={{ textAlign: 'center' }}>Video</th>
-                  <th style={{ textAlign: 'center' }}>Technical</th>
-                  <th>Recommendation</th>
-                  <th>Actions</th>
+                  <th style={{ width: '23%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate</th>
+                  <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Job Applied</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Video</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Technical</th>
+                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
+                  <th style={{ width: '16%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
+                  <th style={{ width: '18%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((c) => (
                   <tr key={c.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '800', fontSize: '0.75rem', flexShrink: 0 }}>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '800', fontSize: '0.7rem', flexShrink: 0 }}>
                           {getInitials(c.name)}
                         </div>
-                        <div>
-                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.85rem' }}>{c.name}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>{c.email}</div>
+                        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td><span className="badge badge-info" style={{ fontSize: '0.7rem' }}>{c.jobApplied || '—'}</span></td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.resumeScore), fontSize: '0.85rem' }}>{c.resumeScore || '—'}</span>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span className="badge badge-info" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{c.jobApplied || '—'}</span>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.videoScore), fontSize: '0.85rem' }}>{c.videoScore || '—'}</span>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontWeight: '700', color: scoreColor(c.resumeScore), fontSize: '0.82rem' }}>{c.resumeScore || '—'}</span>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.techScore), fontSize: '0.85rem' }}>{c.techScore || '—'}</span>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontWeight: '700', color: scoreColor(c.videoScore), fontSize: '0.82rem' }}>{c.videoScore || '—'}</span>
                     </td>
-                    <td>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontWeight: '700', color: scoreColor(c.techScore), fontSize: '0.82rem' }}>{c.techScore || '—'}</span>
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <button
+                        className="btn btn-outline"
+                        style={{
+                          padding: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '8px',
+                          backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.1)' : '#fff',
+                          color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#065f46' : 'var(--gray-700)',
+                          borderColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onClick={() => triggerTranscriptUpload(c)}
+                        disabled={uploadingId === c.id}
+                        title={(c.extractedData?.transcript?.length || c.transcript?.length) ? "Transcript Uploaded" : "Upload Transcript"}
+                      >
+                        {uploadingId === c.id ? (
+                          <span style={{ fontSize: '0.72rem' }}>⏳</span>
+                        ) : (c.extractedData?.transcript?.length || c.transcript?.length) ? (
+                          <CheckCircle size={15} color="#10b981" />
+                        ) : (
+                          <Upload size={15} />
+                        )}
+                      </button>
+                    </td>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span style={{
-                        padding: '3px 10px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
+                        padding: '3px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '700',
                         backgroundColor:
                           c.finalRecommendation === 'Selected' ? 'rgba(16,185,129,0.1)' :
                           c.finalRecommendation === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
@@ -871,27 +1042,27 @@ const Reports = () => {
                         {c.finalRecommendation || 'Under Review'}
                       </span>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
                         <button
                           className="btn btn-primary"
-                          style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          style={{ padding: '4px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', whiteSpace: 'nowrap' }}
                           onClick={() => setSelectedCandidate(c)}
                         >
-                          <Eye size={12} /> View Report
+                          <Eye size={11} /> View
                         </button>
                         <button
                           className="btn btn-outline"
-                          style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px', minWidth: '135px', justifyContent: 'center' }}
+                          style={{ padding: '4px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', minWidth: '76px', justifyContent: 'center', whiteSpace: 'nowrap' }}
                           onClick={() => handleCopyShareLink(c)}
                           disabled={generatingId === c.id}
                         >
-                          <Share2 size={12} />
+                          <Share2 size={11} />
                           {generatingId === c.id 
-                            ? "Generating..." 
+                            ? "Gen..." 
                             : copiedId === c.id 
                               ? "Copied!" 
-                              : "Copy Share Link"}
+                              : "Copy"}
                         </button>
                       </div>
                     </td>
@@ -959,6 +1130,36 @@ const Reports = () => {
                           ? "Copied!" 
                           : "Copy Link"}
                     </button>
+                    <button
+                      className="btn btn-outline"
+                      style={{
+                        padding: '5px 10px',
+                        fontSize: '0.72rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        justifyContent: 'center',
+                        backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.1)' : '#fff',
+                        color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#065f46' : 'var(--gray-700)',
+                        borderColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
+                      }}
+                      onClick={() => triggerTranscriptUpload(c)}
+                      disabled={uploadingId === c.id}
+                    >
+                      {uploadingId === c.id ? (
+                        <>⏳ Uploading...</>
+                      ) : (c.extractedData?.transcript?.length || c.transcript?.length) ? (
+                        <>
+                          <CheckCircle size={12} color="#10b981" />
+                          <span>Uploaded</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={12} />
+                          <span>Upload</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               );
@@ -976,7 +1177,14 @@ const Reports = () => {
         />
       )}
 
-
+      {/* Hidden file input for transcript upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        accept=".txt,.pdf,.docx"
+        onChange={handleFileChange}
+      />
     </div>
   );
 };
