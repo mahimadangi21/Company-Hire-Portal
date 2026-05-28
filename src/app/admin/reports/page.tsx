@@ -216,7 +216,6 @@ const deriveStrengthsWeaknesses = (candidate) => {
 
 /* ─────────────────────── Detail Modal ──────────────────────── */
 const DetailModal = ({ candidate, jobs, onClose }) => {
-  const [tab, setTab] = useState('overview');
   if (!candidate) return null;
 
   const data = candidate.extractedData || {};
@@ -235,15 +234,6 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
     return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
   })();
 
-  const TABS = [
-    { id: 'overview', label: 'Overview', icon: LayoutGrid },
-    { id: 'skills', label: 'Skills & Match', icon: Target },
-    { id: 'education', label: 'Education', icon: BookOpen },
-    { id: 'projects', label: 'Projects', icon: Code2 },
-    { id: 'strengths', label: 'Strengths / Weaknesses', icon: Activity },
-    { id: 'transcript', label: 'Transcript', icon: MessageSquare },
-  ];
-
   return (
     <div
       style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10,18,40,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 0 }}
@@ -255,7 +245,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
       >
         {/* Modal Header */}
         <div style={{ borderBottom: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)', flexShrink: 0 }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.25rem 2rem', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+          <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '1.25rem 2rem', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
             <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
               {getInitials(candidate.name)}
             </div>
@@ -284,256 +274,160 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ borderBottom: '1px solid var(--border)', backgroundColor: '#fafbff', flexShrink: 0, overflowX: 'auto' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', gap: '0', width: '100%', padding: '0 2rem' }}>
-            {TABS.map((t) => {
-              const Icon = t.icon;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px', padding: '14px 16px', border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '600', whiteSpace: 'nowrap', transition: 'all 0.2s',
-                    backgroundColor: 'transparent',
-                    color: tab === t.id ? 'var(--brand-navy)' : 'var(--text-muted)',
-                    borderBottom: tab === t.id ? '2px solid var(--brand-navy)' : '2px solid transparent',
-                  }}
-                >
-                  <Icon size={13} />
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#ffffff' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', width: '100%' }}>
-
-          {/* ── OVERVIEW ── */}
-          {tab === 'overview' && (
-            <div>
-              <div className="grid grid-cols-3 gap-6" style={{ marginBottom: '1.5rem' }}>
-                <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume" size={90} />
-                <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video" size={90} />
-                <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical" size={90} />
+        {/* Dashboard Main Grid Area */}
+        <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
+          
+          {/* COLUMN 1: Scores & Skill Match (width: 32%) */}
+          <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'auto', paddingRight: '0.25rem' }}>
+            
+            {/* Overview / Score Radial Circles */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assessment Scores</p>
+              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px' }}>
+                <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume" size={76} />
+                <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video" size={76} />
+                <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical" size={76} />
               </div>
+            </div>
 
-              {/* Candidate quick info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--gray-50)' }}>
-                  <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Contact Details</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem', color: 'var(--gray-700)' }}>
-                    <span>📧 {candidate.email}</span>
-                    <span>📞 {candidate.phone || 'N/A'}</span>
-                    <span>💼 {candidate.jobApplied}</span>
-                    <span>🏷️ Stage: {candidate.stage || 'N/A'}</span>
-                  </div>
-                </div>
-                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--gray-50)' }}>
-                  <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Experience Summary</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem', color: 'var(--gray-700)' }}>
-                    <span>⏱️ Total: {data.totalExperienceAnalysis?.totalExperience || 'N/A'}</span>
-                    <span>🎯 Domain: {data.totalExperienceAnalysis?.domainExperience ? data.totalExperienceAnalysis.domainExperience + ' yrs' : 'N/A'}</span>
-                    <span>👑 Leadership: {data.totalExperienceAnalysis?.leadershipExperience || 'N/A'}</span>
-                  </div>
+            {/* Quick Info & Experience Summary */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div>
+                <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px 0' }}>Contact Details</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.78rem', color: 'var(--gray-700)' }}>
+                  <span>📧 {candidate.email}</span>
+                  <span>📞 {candidate.phone || 'N/A'}</span>
+                  <span>💼 {candidate.jobApplied}</span>
+                  <span>🏷️ Stage: {candidate.stage || 'N/A'}</span>
                 </div>
               </div>
+              <hr style={{ border: '0', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+              <div>
+                <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px 0' }}>Experience Summary</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.78rem', color: 'var(--gray-700)' }}>
+                  <span>⏱️ Total: {data.totalExperienceAnalysis?.totalExperience || 'N/A'}</span>
+                  <span>🎯 Domain: {data.totalExperienceAnalysis?.domainExperience ? data.totalExperienceAnalysis.domainExperience + ' yrs' : 'N/A'}</span>
+                  <span>👑 Leadership: {data.totalExperienceAnalysis?.leadershipExperience || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
 
-              {/* Stage pipeline */}
-              <div style={{ marginTop: '1.25rem', padding: '1rem 1.25rem', border: '1px solid var(--border)', borderRadius: '12px', background: '#fafbff' }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Pipeline Status</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflowX: 'auto' }}>
-                  {[
-                    { label: 'Resume', status: candidate.resumeStatus },
-                    { label: 'Video', status: candidate.videoStatus },
-                    { label: 'Technical', status: candidate.techStatus },
-                    { label: 'Report', status: candidate.reportStatus },
-                  ].map((step, i, arr) => {
-                    const done = step.status && !['Pending', 'Not Shared', 'N/A'].includes(step.status);
+            {/* Pipeline Status */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0' }}>Pipeline Status</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflowX: 'auto' }}>
+                {[
+                  { label: 'Resume', status: candidate.resumeStatus },
+                  { label: 'Video', status: candidate.videoStatus },
+                  { label: 'Technical', status: candidate.techStatus },
+                  { label: 'Report', status: candidate.reportStatus },
+                ].map((step, i, arr) => {
+                  const done = step.status && !['Pending', 'Not Shared', 'N/A'].includes(step.status);
+                  return (
+                    <React.Fragment key={i}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0, width: '48px' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {done ? <CheckCircle size={12} color="#fff" /> : <Clock size={10} color="var(--gray-400)" />}
+                        </div>
+                        <span style={{ fontSize: '0.58rem', fontWeight: '600', color: done ? 'var(--brand-navy)' : 'var(--text-muted)' }}>{step.label}</span>
+                        <span style={{ fontSize: '0.52rem', color: done ? 'var(--brand-green)' : 'var(--gray-400)', fontWeight: '600', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}>{step.status || 'N/A'}</span>
+                      </div>
+                      {i < arr.length - 1 && (
+                        <div style={{ flex: 1, height: '2px', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', minWidth: '10px', margin: '0 2px', marginBottom: '16px' }} />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Skills & Match Visualizer */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Target size={14} /> Job vs. Candidate Skill Match
+              </p>
+              {jobSkills.length > 0 ? (
+                <div>
+                  <SkillMatch jobSkills={jobSkills} candidateSkills={skills} />
+                  {(() => {
+                    const norm = (s) => s.trim().toLowerCase();
+                    const cSet = new Set(skills.map(norm));
+                    const matched = jobSkills.filter((s) => cSet.has(norm(s))).length;
+                    const pct = Math.round((matched / jobSkills.length) * 100);
                     return (
-                      <React.Fragment key={i}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {done ? <CheckCircle size={14} color="#fff" /> : <Clock size={12} color="var(--gray-400)" />}
-                          </div>
-                          <span style={{ fontSize: '0.62rem', fontWeight: '600', color: done ? 'var(--brand-navy)' : 'var(--text-muted)' }}>{step.label}</span>
-                          <span style={{ fontSize: '0.58rem', color: done ? 'var(--brand-green)' : 'var(--gray-400)', fontWeight: '600' }}>{step.status || 'N/A'}</span>
-                        </div>
-                        {i < arr.length - 1 && (
-                          <div style={{ flex: 1, height: '2px', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', minWidth: '24px', margin: '0 4px', marginBottom: '20px' }} />
-                        )}
-                      </React.Fragment>
+                      <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '8px', backgroundColor: pct >= 70 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.06)', border: `1px solid ${pct >= 70 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--gray-800)' }}>Match Score</span>
+                        <span style={{ fontSize: '0.95rem', fontWeight: '800', color: pct >= 70 ? '#10b981' : '#ef4444' }}>{pct}%</span>
+                      </div>
                     );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── SKILLS MATCH ── */}
-          {tab === 'skills' && (
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Target size={14} /> Job Role vs. Candidate Skill Match
-                </p>
-                {jobSkills.length > 0 ? (
-                  <>
-                    <SkillMatch jobSkills={jobSkills} candidateSkills={skills} />
-                    {/* match score */}
-                    {(() => {
-                      const norm = (s) => s.trim().toLowerCase();
-                      const cSet = new Set(skills.map(norm));
-                      const matched = jobSkills.filter((s) => cSet.has(norm(s))).length;
-                      const pct = Math.round((matched / jobSkills.length) * 100);
-                      return (
-                        <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '10px', backgroundColor: pct >= 70 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.06)', border: `1px solid ${pct >= 70 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--gray-800)' }}>Overall Match Score</span>
-                          <span style={{ fontSize: '1.1rem', fontWeight: '800', color: pct >= 70 ? '#10b981' : '#ef4444' }}>{pct}%</span>
-                        </div>
-                      );
-                    })()}
-                  </>
-                ) : (
-                  <div style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px', textAlign: 'center' }}>
-                    Required skills not defined for <strong>{candidate.jobApplied}</strong>.<br />Define them in Job Listings for comparison.
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Code2 size={14} /> Candidate's Full Skill Set
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {skills.length > 0 ? skills.map((s, i) => (
-                    <span key={i} style={{ padding: '4px 10px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.08)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.15)' }}>{s}</span>
-                  )) : <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
-                </div>
-
-                {skills.length > 0 && (
-                  <div style={{ marginTop: '16px' }}>
-                    <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Skill Coverage</p>
-                    <BarChart
-                      data={skills.slice(0, 6).map((s) => ({ label: s, value: Math.floor(60 + Math.random() * 40) }))}
-                      color="var(--brand-navy)"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── EDUCATION ── */}
-          {tab === 'education' && (
-            <div>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <BookOpen size={14} /> Education History
-              </p>
-              {edu.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {edu.map((e, i) => (
-                    <div key={i} style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.04) 0%,rgba(125,186,0,0.04) 100%)' : 'var(--gray-50)', position: 'relative' }}>
-                      {i === 0 && <span style={{ position: 'absolute', top: '10px', right: '12px', fontSize: '0.65rem', fontWeight: '800', padding: '2px 8px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Award size={18} color="var(--brand-navy)" />
-                        </div>
-                        <div>
-                          <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.9rem', margin: 0 }}>{e.degree || 'N/A'}</p>
-                          <p style={{ color: 'var(--gray-600)', fontSize: '0.8rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
-                          <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: '0.73rem', color: 'var(--text-muted)' }}>
-                            {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
-                            {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  })()}
                 </div>
               ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '12px' }}>No education records extracted.</div>
-              )}
-            </div>
-          )}
-
-          {/* ── PROJECTS ── */}
-          {tab === 'projects' && (
-            <div>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Code2 size={14} /> Project Portfolio
-              </p>
-              {projs.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {projs.map((p, i) => (
-                    <div key={i} style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--gray-50)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.85rem' }}>{p.projectName || `Project ${i + 1}`}</span>
-                        <span style={{ fontSize: '0.62rem', backgroundColor: 'rgba(14,45,123,0.08)', color: 'var(--brand-navy)', padding: '2px 8px', borderRadius: '999px', fontWeight: '700', flexShrink: 0 }}>P{i + 1}</span>
-                      </div>
-                      {p.projectDescription && (
-                        <p style={{ fontSize: '0.75rem', color: 'var(--gray-700)', lineHeight: 1.5, margin: 0 }}>{p.projectDescription}</p>
-                      )}
-                      {p.technologiesUsed && p.technologiesUsed.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {p.technologiesUsed.map((t, j) => (
-                            <span key={j} style={{ fontSize: '0.65rem', padding: '2px 7px', borderRadius: '999px', backgroundColor: 'rgba(125,186,0,0.1)', color: '#3d6600', border: '1px solid rgba(125,186,0,0.25)', fontWeight: '600' }}>{t}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <div style={{ padding: '0.75rem', fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '8px', textAlign: 'center' }}>
+                  No required skills defined for this job.
                 </div>
-              ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '12px' }}>No projects extracted from resume.</div>
               )}
             </div>
-          )}
 
-          {/* ── STRENGTHS / WEAKNESSES ── */}
-          {tab === 'strengths' && (
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#065f46', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <TrendingUp size={14} color="#10b981" /> Strengths
-                </p>
-                {strengths.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {strengths.map((s, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', borderRadius: '10px', backgroundColor: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                        <CheckCircle size={14} color="#10b981" style={{ flexShrink: 0, marginTop: '1px' }} />
-                        <span style={{ fontSize: '0.8rem', color: '#065f46', fontWeight: '600', lineHeight: 1.4 }}>{s}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', border: '1px dashed rgba(16,185,129,0.3)', borderRadius: '10px' }}>No data to derive strengths.</div>
-                )}
+            {/* Candidate Skill Set Cloud */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Code2 size={14} /> Full Skill Set
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                {skills.length > 0 ? skills.map((s, i) => (
+                  <span key={i} style={{ padding: '3px 8px', borderRadius: '999px', fontSize: '0.68rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.12)' }}>{s}</span>
+                )) : <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
               </div>
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#7f1d1d', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <TrendingDown size={14} color="#ef4444" /> Areas for Improvement
-                </p>
-                {weaknesses.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {weaknesses.map((w, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', borderRadius: '10px', backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)' }}>
-                        <AlertCircle size={14} color="#ef4444" style={{ flexShrink: 0, marginTop: '1px' }} />
-                        <span style={{ fontSize: '0.8rem', color: '#7f1d1d', fontWeight: '600', lineHeight: 1.4 }}>{w}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', border: '1px dashed rgba(239,68,68,0.3)', borderRadius: '10px' }}>No significant weaknesses detected.</div>
-                )}
+            </div>
+
+          </div>
+
+          {/* COLUMN 2: Profile Details & Strengths (width: 38%) */}
+          <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'auto', paddingRight: '0.25rem' }}>
+            
+            {/* Strengths & Weaknesses */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#065f46', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <TrendingUp size={14} color="#10b981" /> Strengths
+                  </p>
+                  {strengths.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {strengths.slice(0, 4).map((s, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 8px', borderRadius: '8px', backgroundColor: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
+                          <CheckCircle size={12} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: '600', lineHeight: 1.3 }}>{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', fontStyle: 'italic', border: '1px dashed rgba(16,185,129,0.3)', borderRadius: '8px' }}>No derived strengths.</div>
+                  )}
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#7f1d1d', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <TrendingDown size={14} color="#ef4444" /> Area of Improvement
+                  </p>
+                  {weaknesses.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {weaknesses.slice(0, 4).map((w, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 8px', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                          <AlertCircle size={12} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#7f1d1d', fontWeight: '600', lineHeight: 1.3 }}>{w}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', fontStyle: 'italic', border: '1px dashed rgba(239,68,68,0.3)', borderRadius: '8px' }}>No weaknesses detected.</div>
+                  )}
+                </div>
               </div>
 
-              {/* Score Radar substitute — simple bar breakdown */}
-              <div style={{ gridColumn: 'span 2', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--gray-50)' }}>
-                <p style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Score Breakdown</p>
+              {/* Score Breakdown Bar Chart */}
+              <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--gray-50)', marginTop: '4px' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>Score Breakdown</p>
                 <BarChart
                   data={[
                     { label: 'Resume Score', value: candidate.resumeScore || 0 },
@@ -551,32 +445,99 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 />
               </div>
             </div>
-          )}
 
-          {/* ── TRANSCRIPT ── */}
-          {tab === 'transcript' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
-                  <MessageSquare size={14} /> Video Interview Transcript
-                </p>
-                {candidate.videoStatus === 'Completed' && (
-                  <a
-                    href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${candidate.interview_id || ''}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-outline"
-                    style={{ fontSize: '0.72rem', padding: '4px 10px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <Eye size={12} /> Watch Video
-                  </a>
-                )}
-              </div>
+            {/* Education History */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <BookOpen size={14} /> Education History
+              </p>
+              {edu.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {edu.map((e, i) => (
+                    <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(125,186,0,0.03) 100%)' : 'var(--gray-50)', position: 'relative' }}>
+                      {i === 0 && <span style={{ position: 'absolute', top: '8px', right: '10px', fontSize: '0.58rem', fontWeight: '800', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(14,45,123,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Award size={16} color="var(--brand-navy)" />
+                        </div>
+                        <div>
+                          <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.8rem', margin: 0 }}>{e.degree || 'N/A'}</p>
+                          <p style={{ color: 'var(--gray-600)', fontSize: '0.74rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
+                          <div style={{ display: 'flex', gap: '10px', marginTop: '2px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                            {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
+                            {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.74rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>No education records.</div>
+              )}
+            </div>
+
+            {/* Projects Portfolio */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Code2 size={14} /> Project Portfolio
+              </p>
+              {projs.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {projs.map((p, i) => (
+                    <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--gray-50)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.78rem' }}>{p.projectName || `Project ${i + 1}`}</span>
+                        <span style={{ fontSize: '0.58rem', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', padding: '1px 6px', borderRadius: '999px', fontWeight: '700', flexShrink: 0 }}>P{i + 1}</span>
+                      </div>
+                      {p.projectDescription && (
+                        <p style={{ fontSize: '0.72rem', color: 'var(--gray-700)', lineHeight: 1.4, margin: 0 }}>{p.projectDescription}</p>
+                      )}
+                      {p.technologiesUsed && p.technologiesUsed.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {p.technologiesUsed.map((t, j) => (
+                            <span key={j} style={{ fontSize: '0.62rem', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'rgba(125,186,0,0.08)', color: '#3d6600', border: '1px solid rgba(125,186,0,0.18)', fontWeight: '600' }}>{t}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.74rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>No projects extracted.</div>
+              )}
+            </div>
+
+          </div>
+
+          {/* COLUMN 3: Interview Q&A Transcript (width: 30%) */}
+          <div style={{ width: '30%', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', height: '100%' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                <MessageSquare size={14} /> Video Interview Transcript
+              </p>
+              {candidate.videoStatus === 'Completed' && (
+                <a
+                  href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${candidate.interview_id || ''}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.65rem', padding: '3px 8px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}
+                >
+                  <Eye size={10} /> Watch Video
+                </a>
+              )}
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.25rem' }}>
               <TranscriptAnalysis transcript={transcript} />
             </div>
-          )}
+
           </div>
+
         </div>
+
       </div>
     </div>
   );
