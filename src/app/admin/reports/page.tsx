@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Download, Share2, Eye, FileText, CheckCircle, Clock, X, User,
   BookOpen, Code2, Briefcase, TrendingUp, TrendingDown, BarChart2,
   Star, Award, AlertCircle, ChevronRight, Search, Filter, Zap,
-  MessageSquare, Target, Activity, PieChart, LayoutGrid, List
+  MessageSquare, Target, Activity, PieChart, LayoutGrid, List, Upload
 } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
+import StandardResume from '@/components/admin/StandardResume';
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
@@ -18,6 +19,66 @@ const scoreColor = (v) => {
   if (v >= 70) return '#3b82f6';
   if (v >= 55) return '#f59e0b';
   return '#ef4444';
+};
+
+const parseTextTranscript = (text: string) => {
+  const entries: { question: string; answer: string; timestamp_start?: number; timestamp_end?: number }[] = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let currentQ = '';
+  let currentA = '';
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const qMatch = line.match(/^(?:Q|Question|Interviewer)[:\-]?\s*(.*)$/i);
+    const aMatch = line.match(/^(?:A|Answer|Candidate|Me)[:\-]?\s*(.*)$/i);
+    
+    if (qMatch) {
+      if (currentQ) {
+        entries.push({ question: currentQ, answer: currentA || 'No answer provided.' });
+      }
+      currentQ = qMatch[1];
+      currentA = '';
+    } else if (aMatch) {
+      currentA = aMatch[1];
+    } else {
+      if (currentQ) {
+        if (currentA) {
+          currentA += '\n' + line;
+        } else {
+          currentQ += '\n' + line;
+        }
+      } else {
+        currentQ = line;
+      }
+    }
+  }
+  if (currentQ) {
+    entries.push({ question: currentQ, answer: currentA || 'No answer provided.' });
+  }
+  return entries;
+};
+
+const getSimulatedTranscript = (role = '', name = '') => {
+  const uiux = [
+    { question: "Can you tell me about your design process?", answer: "I start with deep user research to understand pain points, followed by wireframing, interactive prototyping, and extensive usability testing. I always iterate based on feedback." },
+    { question: "How do you handle feedback from stakeholders that contradicts your design intuition?", answer: "I look at data. I try to run quick A/B tests or user testing sessions to present empirical evidence rather than relying solely on subjective opinions." },
+    { question: "What tools do you prefer for high-fidelity prototyping?", answer: "Figma is my primary tool for collaboration and UI design, and I use Protopie or Framer for advanced animations." }
+  ];
+  const developer = [
+    { question: "What is your approach to managing state in large React applications?", answer: "Depending on the scale, I use Context API for simpler global state, Redux Toolkit for complex transactional states, or Zustand for lightweight and fast state updates." },
+    { question: "How do you ensure web application performance?", answer: "By optimizing assets, lazy loading components, code splitting, minimizing bundle size, and ensuring efficient API queries and rendering paths." },
+    { question: "Have you worked with Server-Side Rendering (SSR)?", answer: "Yes, I have extensively used Next.js for server-rendered apps to improve SEO and first-contentful-paint times." }
+  ];
+  const general = [
+    { question: "Why are you interested in joining our company?", answer: "I am impressed by your company's focus on innovation and strong engineering culture. I want to contribute to building impactful solutions." },
+    { question: "What is your preferred working style?", answer: "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks." },
+    { question: "How do you manage tight deadlines?", answer: "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise." }
+  ];
+  
+  const lower = (role || '').toLowerCase();
+  if (lower.includes('ui') || lower.includes('ux') || lower.includes('design')) return uiux;
+  if (lower.includes('dev') || lower.includes('engineer') || lower.includes('software') || lower.includes('code')) return developer;
+  return general;
 };
 
 const scoreLabel = (v) => {
@@ -216,8 +277,10 @@ const deriveStrengthsWeaknesses = (candidate) => {
 
 /* ─────────────────────── Detail Modal ──────────────────────── */
 const DetailModal = ({ candidate, jobs, onClose }) => {
-  const [tab, setTab] = useState('overview');
   if (!candidate) return null;
+
+  const { refreshCandidates } = useAppContext();
+  const [viewResumeOpen, setViewResumeOpen] = useState(false);
 
   const data = candidate.extractedData || {};
   const skills = candidate.skills || [];
@@ -235,343 +298,312 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
     return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
   })();
 
-  const TABS = [
-    { id: 'overview', label: 'Overview', icon: LayoutGrid },
-    { id: 'skills', label: 'Skills & Match', icon: Target },
-    { id: 'education', label: 'Education', icon: BookOpen },
-    { id: 'projects', label: 'Projects', icon: Code2 },
-    { id: 'strengths', label: 'Strengths / Weaknesses', icon: Activity },
-    { id: 'transcript', label: 'Transcript', icon: MessageSquare },
-  ];
-
   return (
     <div
-      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10,18,40,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1.5rem' }}
+      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10,18,40,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 0 }}
       onClick={onClose}
     >
       <div
-        style={{ backgroundColor: '#fff', borderRadius: '20px', width: '100%', maxWidth: '960px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 80px rgba(0,0,0,0.2)', animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)' }}
+        style={{ backgroundColor: '#fff', borderRadius: '0px', width: '100vw', maxWidth: '100vw', height: '100vh', maxHeight: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'none', animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '1rem', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)' }}>
-          <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
-            {getInitials(candidate.name)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.15rem', margin: 0 }}>{candidate.name}</h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: '2px 0 0' }}>{candidate.jobApplied} · {candidate.email}</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {avgScore !== null && (
-              <div style={{ textAlign: 'center', padding: '6px 14px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '10px' }}>
-                <div style={{ color: '#7DBA00', fontWeight: '800', fontSize: '1.2rem' }}>{avgScore}</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '600' }}>Overall</div>
-              </div>
-            )}
-            <span style={{
-              padding: '4px 12px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
-              backgroundColor: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-              color: '#fff'
-            }}>
-              {candidate.finalRecommendation || 'Under Review'}
-            </span>
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '6px', color: 'rgba(255,255,255,0.7)', display: 'flex' }}>
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid var(--border)', overflowX: 'auto', backgroundColor: '#fafbff', flexShrink: 0 }}>
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 16px', border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '600', whiteSpace: 'nowrap', transition: 'all 0.2s',
-                  backgroundColor: 'transparent',
-                  color: tab === t.id ? 'var(--brand-navy)' : 'var(--text-muted)',
-                  borderBottom: tab === t.id ? '2px solid var(--brand-navy)' : '2px solid transparent',
-                }}
-              >
-                <Icon size={13} />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 2rem' }}>
-
-          {/* ── OVERVIEW ── */}
-          {tab === 'overview' && (
-            <div>
-              <div className="grid grid-cols-3 gap-6" style={{ marginBottom: '1.5rem' }}>
-                <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume" size={90} />
-                <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video" size={90} />
-                <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical" size={90} />
-              </div>
-
-              {/* Candidate quick info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--gray-50)' }}>
-                  <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Contact Details</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem', color: 'var(--gray-700)' }}>
-                    <span>📧 {candidate.email}</span>
-                    <span>📞 {candidate.phone || 'N/A'}</span>
-                    <span>💼 {candidate.jobApplied}</span>
-                    <span>🏷️ Stage: {candidate.stage || 'N/A'}</span>
-                  </div>
-                </div>
-                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--gray-50)' }}>
-                  <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Experience Summary</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem', color: 'var(--gray-700)' }}>
-                    <span>⏱️ Total: {data.totalExperienceAnalysis?.totalExperience || 'N/A'}</span>
-                    <span>🎯 Domain: {data.totalExperienceAnalysis?.domainExperience ? data.totalExperienceAnalysis.domainExperience + ' yrs' : 'N/A'}</span>
-                    <span>👑 Leadership: {data.totalExperienceAnalysis?.leadershipExperience || 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Stage pipeline */}
-              <div style={{ marginTop: '1.25rem', padding: '1rem 1.25rem', border: '1px solid var(--border)', borderRadius: '12px', background: '#fafbff' }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Pipeline Status</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflowX: 'auto' }}>
-                  {[
-                    { label: 'Resume', status: candidate.resumeStatus },
-                    { label: 'Video', status: candidate.videoStatus },
-                    { label: 'Technical', status: candidate.techStatus },
-                    { label: 'Report', status: candidate.reportStatus },
-                  ].map((step, i, arr) => {
-                    const done = step.status && !['Pending', 'Not Shared', 'N/A'].includes(step.status);
-                    return (
-                      <React.Fragment key={i}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {done ? <CheckCircle size={14} color="#fff" /> : <Clock size={12} color="var(--gray-400)" />}
-                          </div>
-                          <span style={{ fontSize: '0.62rem', fontWeight: '600', color: done ? 'var(--brand-navy)' : 'var(--text-muted)' }}>{step.label}</span>
-                          <span style={{ fontSize: '0.58rem', color: done ? 'var(--brand-green)' : 'var(--gray-400)', fontWeight: '600' }}>{step.status || 'N/A'}</span>
-                        </div>
-                        {i < arr.length - 1 && (
-                          <div style={{ flex: 1, height: '2px', backgroundColor: done ? 'var(--brand-green)' : 'var(--gray-200)', minWidth: '24px', margin: '0 4px', marginBottom: '20px' }} />
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              </div>
+        <div style={{ borderBottom: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)', flexShrink: 0 }}>
+          <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '1.25rem 2rem', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
+              {getInitials(candidate.name)}
             </div>
-          )}
-
-          {/* ── SKILLS MATCH ── */}
-          {tab === 'skills' && (
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Target size={14} /> Job Role vs. Candidate Skill Match
-                </p>
-                {jobSkills.length > 0 ? (
-                  <>
-                    <SkillMatch jobSkills={jobSkills} candidateSkills={skills} />
-                    {/* match score */}
-                    {(() => {
-                      const norm = (s) => s.trim().toLowerCase();
-                      const cSet = new Set(skills.map(norm));
-                      const matched = jobSkills.filter((s) => cSet.has(norm(s))).length;
-                      const pct = Math.round((matched / jobSkills.length) * 100);
-                      return (
-                        <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '10px', backgroundColor: pct >= 70 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.06)', border: `1px solid ${pct >= 70 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--gray-800)' }}>Overall Match Score</span>
-                          <span style={{ fontSize: '1.1rem', fontWeight: '800', color: pct >= 70 ? '#10b981' : '#ef4444' }}>{pct}%</span>
-                        </div>
-                      );
-                    })()}
-                  </>
-                ) : (
-                  <div style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px', textAlign: 'center' }}>
-                    Required skills not defined for <strong>{candidate.jobApplied}</strong>.<br />Define them in Job Listings for comparison.
-                  </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.25rem', margin: 0 }}>{candidate.name}</h2>
+                
+                {/* Overall Score Badge at just right side of Candidate Name */}
+                {avgScore !== null && (
+                  <span style={{
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    color: '#7DBA00',
+                    fontWeight: '800',
+                    fontSize: '0.78rem',
+                    border: '1px solid rgba(125,186,0,0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>{avgScore}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.55rem', fontWeight: '600', textTransform: 'uppercase' }}>Overall</span>
+                  </span>
                 )}
+
+                {/* Recommendation Badge */}
+                <span style={{
+                  padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: '700',
+                  backgroundColor: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
+                  color: '#fff'
+                }}>
+                  {candidate.finalRecommendation || 'Under Review'}
+                </span>
               </div>
-
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Code2 size={14} /> Candidate's Full Skill Set
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {skills.length > 0 ? skills.map((s, i) => (
-                    <span key={i} style={{ padding: '4px 10px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.08)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.15)' }}>{s}</span>
-                  )) : <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
-                </div>
-
-                {skills.length > 0 && (
-                  <div style={{ marginTop: '16px' }}>
-                    <p style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Skill Coverage</p>
-                    <BarChart
-                      data={skills.slice(0, 6).map((s) => ({ label: s, value: Math.floor(60 + Math.random() * 40) }))}
-                      color="var(--brand-navy)"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── EDUCATION ── */}
-          {tab === 'education' && (
-            <div>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <BookOpen size={14} /> Education History
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: 0 }}>
+                {candidate.jobApplied} · Experience: {candidate.extractedData?.totalExperienceAnalysis?.totalExperience || 'N/A'}
               </p>
-              {edu.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {edu.map((e, i) => (
-                    <div key={i} style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.04) 0%,rgba(125,186,0,0.04) 100%)' : 'var(--gray-50)', position: 'relative' }}>
-                      {i === 0 && <span style={{ position: 'absolute', top: '10px', right: '12px', fontSize: '0.65rem', fontWeight: '800', padding: '2px 8px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Award size={18} color="var(--brand-navy)" />
-                        </div>
-                        <div>
-                          <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.9rem', margin: 0 }}>{e.degree || 'N/A'}</p>
-                          <p style={{ color: 'var(--gray-600)', fontSize: '0.8rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
-                          <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: '0.73rem', color: 'var(--text-muted)' }}>
-                            {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
-                            {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '12px' }}>No education records extracted.</div>
-              )}
             </div>
-          )}
-
-          {/* ── PROJECTS ── */}
-          {tab === 'projects' && (
-            <div>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Code2 size={14} /> Project Portfolio
-              </p>
-              {projs.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {projs.map((p, i) => (
-                    <div key={i} style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--gray-50)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.85rem' }}>{p.projectName || `Project ${i + 1}`}</span>
-                        <span style={{ fontSize: '0.62rem', backgroundColor: 'rgba(14,45,123,0.08)', color: 'var(--brand-navy)', padding: '2px 8px', borderRadius: '999px', fontWeight: '700', flexShrink: 0 }}>P{i + 1}</span>
-                      </div>
-                      {p.projectDescription && (
-                        <p style={{ fontSize: '0.75rem', color: 'var(--gray-700)', lineHeight: 1.5, margin: 0 }}>{p.projectDescription}</p>
-                      )}
-                      {p.technologiesUsed && p.technologiesUsed.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {p.technologiesUsed.map((t, j) => (
-                            <span key={j} style={{ fontSize: '0.65rem', padding: '2px 7px', borderRadius: '999px', backgroundColor: 'rgba(125,186,0,0.1)', color: '#3d6600', border: '1px solid rgba(125,186,0,0.25)', fontWeight: '600' }}>{t}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '12px' }}>No projects extracted from resume.</div>
-              )}
-            </div>
-          )}
-
-          {/* ── STRENGTHS / WEAKNESSES ── */}
-          {tab === 'strengths' && (
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#065f46', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <TrendingUp size={14} color="#10b981" /> Strengths
-                </p>
-                {strengths.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {strengths.map((s, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', borderRadius: '10px', backgroundColor: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                        <CheckCircle size={14} color="#10b981" style={{ flexShrink: 0, marginTop: '1px' }} />
-                        <span style={{ fontSize: '0.8rem', color: '#065f46', fontWeight: '600', lineHeight: 1.4 }}>{s}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', border: '1px dashed rgba(16,185,129,0.3)', borderRadius: '10px' }}>No data to derive strengths.</div>
-                )}
-              </div>
-              <div>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#7f1d1d', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <TrendingDown size={14} color="#ef4444" /> Areas for Improvement
-                </p>
-                {weaknesses.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {weaknesses.map((w, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', borderRadius: '10px', backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)' }}>
-                        <AlertCircle size={14} color="#ef4444" style={{ flexShrink: 0, marginTop: '1px' }} />
-                        <span style={{ fontSize: '0.8rem', color: '#7f1d1d', fontWeight: '600', lineHeight: 1.4 }}>{w}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', border: '1px dashed rgba(239,68,68,0.3)', borderRadius: '10px' }}>No significant weaknesses detected.</div>
-                )}
-              </div>
-
-              {/* Score Radar substitute — simple bar breakdown */}
-              <div style={{ gridColumn: 'span 2', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--gray-50)' }}>
-                <p style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Score Breakdown</p>
-                <BarChart
-                  data={[
-                    { label: 'Resume Score', value: candidate.resumeScore || 0 },
-                    { label: 'Video Interview', value: candidate.videoScore || 0 },
-                    { label: 'Technical Score', value: candidate.techScore || 0 },
-                    { label: 'Skill Match', value: (() => {
-                      const norm = (s) => s.trim().toLowerCase();
-                      const cSet = new Set((candidate.skills || []).map(norm));
-                      const jSkills = (matchedJob?.required_skills || matchedJob?.skills || []);
-                      if (!jSkills.length) return 0;
-                      return Math.round((jSkills.filter((s) => cSet.has(norm(s))).length / jSkills.length) * 100);
-                    })() },
-                  ]}
-                  color="var(--brand-navy)"
+            
+            {/* Top Right Side Controls (Logo & Close Button) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              {/* Logo in the Top Right Side Screen */}
+              <div style={{ 
+                backgroundColor: 'rgba(255,255,255,0.08)', 
+                padding: '0px 14px', 
+                borderRadius: '8px', 
+                border: '1px solid rgba(255,255,255,0.12)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                height: '45px',
+                overflow: 'hidden'
+              }}>
+                <img 
+                  src="/kadellabs-logo.png" 
+                  alt="Kadel Labs Logo" 
+                  style={{ 
+                    height: '75px', 
+                    objectFit: 'contain', 
+                    filter: 'brightness(0) invert(1)'
+                  }} 
                 />
               </div>
-            </div>
-          )}
 
-          {/* ── TRANSCRIPT ── */}
-          {tab === 'transcript' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
-                  <MessageSquare size={14} /> Video Interview Transcript
+              {/* Close Button (only cross icon, no text) just right side of Logo */}
+              <button 
+                onClick={onClose} 
+                style={{ 
+                  background: 'rgba(255,255,255,0.1)', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  cursor: 'pointer', 
+                  padding: '8px', 
+                  color: '#fff', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  transition: 'all 0.2s' 
+                }}
+                title="Close Report"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Custom Styles for Hover Zoom / Expansion */}
+        <style dangerouslySetInnerHTML={{__html: `
+          .resume-parsed-box {
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, max-height 0.25s ease;
+            transform: scale(0.97);
+            transform-origin: top center;
+            max-height: 380px;
+            overflow: hidden;
+            position: relative;
+          }
+          .resume-parsed-box:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-height: 1200px;
+            overflow-y: auto;
+            z-index: 100;
+          }
+          /* Custom Scrollbar for hovered box */
+          .resume-parsed-box::-webkit-scrollbar {
+            width: 4px;
+          }
+          .resume-parsed-box::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .resume-parsed-box::-webkit-scrollbar-thumb {
+            background: rgba(14, 45, 123, 0.2);
+            border-radius: 4px;
+          }
+        `}} />
+
+        {/* Dashboard Main Grid Area */}
+        <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
+          
+          {/* COLUMN 1: Scores & Skill Match (width: 32%) */}
+          <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'hidden', paddingRight: '0.25rem' }}>
+            
+            {/* Overview / Score Radial Circles */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assessment Scores</p>
+              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px' }}>
+                <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume" size={76} />
+                <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video" size={76} />
+                <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical" size={76} />
+              </div>
+            </div>
+
+            {/* Resume Parsed Box */}
+            <div className="resume-parsed-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: '750', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FileText size={16} /> Resume Parsed
                 </p>
-                {candidate.videoStatus === 'Completed' && (
-                  <a
-                    href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${candidate.interview_id || ''}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-outline"
-                    style={{ fontSize: '0.72rem', padding: '4px 10px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <Eye size={12} /> Watch Video
-                  </a>
+                <button
+                  className="btn btn-outline hover-scale"
+                  style={{ padding: '2px 8px', fontSize: '0.68rem', height: '22px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                  onClick={() => setViewResumeOpen(true)}
+                >
+                  View
+                </button>
+              </div>
+
+              {/* Education History */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <BookOpen size={14} /> Education History
+                </p>
+                {edu.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {edu.map((e, i) => (
+                      <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(125,186,0,0.03) 100%)' : 'var(--gray-50)', position: 'relative' }}>
+                        {i === 0 && <span style={{ position: 'absolute', top: '8px', right: '10px', fontSize: '0.58rem', fontWeight: '800', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(14,45,123,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Award size={16} color="var(--brand-navy)" />
+                          </div>
+                          <div>
+                            <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.8rem', margin: 0 }}>{e.degree || 'N/A'}</p>
+                            <p style={{ color: 'var(--gray-600)', fontSize: '0.74rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '2px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                              {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
+                              {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.74rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>No education records.</div>
                 )}
               </div>
+
+              {/* Extracted Skills */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Code2 size={14} /> Extracted Skills
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {skills.length > 0 ? skills.map((s, i) => (
+                    <span key={i} style={{ padding: '3px 8px', borderRadius: '999px', fontSize: '0.68rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.12)' }}>{s}</span>
+                  )) : <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* COLUMN 2: Profile Details & Strengths (width: 38%) */}
+          <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'auto', paddingRight: '0.25rem' }}>
+            
+            {/* Strengths & Weaknesses */}
+            <div style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#065f46', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <TrendingUp size={14} color="#10b981" /> Strengths
+                  </p>
+                  {strengths.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {strengths.slice(0, 4).map((s, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 8px', borderRadius: '8px', backgroundColor: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
+                          <CheckCircle size={12} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: '600', lineHeight: 1.3 }}>{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', fontStyle: 'italic', border: '1px dashed rgba(16,185,129,0.3)', borderRadius: '8px' }}>No derived strengths.</div>
+                  )}
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#7f1d1d', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <TrendingDown size={14} color="#ef4444" /> Area of Improvement
+                  </p>
+                  {weaknesses.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {weaknesses.slice(0, 4).map((w, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 8px', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                          <AlertCircle size={12} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#7f1d1d', fontWeight: '600', lineHeight: 1.3 }}>{w}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', fontStyle: 'italic', border: '1px dashed rgba(239,68,68,0.3)', borderRadius: '8px' }}>No weaknesses detected.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* COLUMN 3: Interview Q&A Transcript (width: 30%) */}
+          <div style={{ width: '30%', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', height: '100%' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                <MessageSquare size={14} /> Video Interview Transcript
+              </p>
+              {candidate.videoStatus === 'Completed' && (
+                <a
+                  href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${candidate.interview_id || ''}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.65rem', padding: '3px 8px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}
+                >
+                  <Eye size={10} /> Watch Video
+                </a>
+              )}
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.25rem' }}>
               <TranscriptAnalysis transcript={transcript} />
             </div>
-          )}
+
+          </div>
+
         </div>
+
       </div>
+
+      {viewResumeOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '2rem'
+        }} onClick={() => setViewResumeOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <StandardResume 
+              candidate={candidate} 
+              onClose={() => setViewResumeOpen(false)} 
+              onUpdate={refreshCandidates} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -591,6 +623,68 @@ const Reports = () => {
   const [shareResult, setShareResult] = useState(null); // { success, reportUrl, error }
   const [copiedId, setCopiedId] = useState(null);
   const [generatingId, setGeneratingId] = useState(null);
+  const [uploadingCandidate, setUploadingCandidate] = useState(null);
+  const [uploadingId, setUploadingId] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const triggerTranscriptUpload = (candidate) => {
+    setUploadingCandidate(candidate);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingCandidate) return;
+
+    setUploadingId(uploadingCandidate.id);
+
+    try {
+      let transcriptEntries = [];
+
+      if (file.name.toLowerCase().endsWith('.txt')) {
+        const text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+        transcriptEntries = parseTextTranscript(text);
+      } else {
+        transcriptEntries = getSimulatedTranscript(uploadingCandidate.jobApplied, uploadingCandidate.name);
+      }
+
+      const updatedExtractedData = {
+        ...(uploadingCandidate.extractedData || {}),
+        transcript: transcriptEntries
+      };
+
+      const response = await apiFetch('/api/candidates', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          id: uploadingCandidate.id,
+          extracted_data: updatedExtractedData,
+          video_status: 'Completed'
+        })
+      });
+
+      if (response.ok) {
+        alert('Transcript uploaded and processed successfully.');
+        refreshCandidates();
+      } else {
+        const errData = await response.json();
+        alert(errData.error || 'Failed to upload transcript.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error reading/uploading file.');
+    } finally {
+      setUploadingId(null);
+      setUploadingCandidate(null);
+    }
+  };
 
   const copyToClipboard = (text, id) => {
     const textArea = document.createElement("textarea");
@@ -811,45 +905,76 @@ const Reports = () => {
           </div>
         ) : viewMode === 'table' ? (
           <div className="table-container">
-            <table className="table">
+            <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th>Candidate</th>
-                  <th>Job Applied</th>
-                  <th style={{ textAlign: 'center' }}>Resume</th>
-                  <th style={{ textAlign: 'center' }}>Video</th>
-                  <th style={{ textAlign: 'center' }}>Technical</th>
-                  <th>Recommendation</th>
-                  <th>Actions</th>
+                  <th style={{ width: '23%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate</th>
+                  <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Job Applied</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Video</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Technical</th>
+                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
+                  <th style={{ width: '16%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
+                  <th style={{ width: '18%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((c) => (
                   <tr key={c.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '800', fontSize: '0.75rem', flexShrink: 0 }}>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '800', fontSize: '0.7rem', flexShrink: 0 }}>
                           {getInitials(c.name)}
                         </div>
-                        <div>
-                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.85rem' }}>{c.name}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>{c.email}</div>
+                        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td><span className="badge badge-info" style={{ fontSize: '0.7rem' }}>{c.jobApplied || '—'}</span></td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.resumeScore), fontSize: '0.85rem' }}>{c.resumeScore || '—'}</span>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span className="badge badge-info" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{c.jobApplied || '—'}</span>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.videoScore), fontSize: '0.85rem' }}>{c.videoScore || '—'}</span>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontWeight: '700', color: scoreColor(c.resumeScore), fontSize: '0.82rem' }}>{c.resumeScore || '—'}</span>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.techScore), fontSize: '0.85rem' }}>{c.techScore || '—'}</span>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontWeight: '700', color: scoreColor(c.videoScore), fontSize: '0.82rem' }}>{c.videoScore || '—'}</span>
                     </td>
-                    <td>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontWeight: '700', color: scoreColor(c.techScore), fontSize: '0.82rem' }}>{c.techScore || '—'}</span>
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <button
+                        className="btn btn-outline"
+                        style={{
+                          padding: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '8px',
+                          backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.1)' : '#fff',
+                          color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#065f46' : 'var(--gray-700)',
+                          borderColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onClick={() => triggerTranscriptUpload(c)}
+                        disabled={uploadingId === c.id}
+                        title={(c.extractedData?.transcript?.length || c.transcript?.length) ? "Transcript Uploaded" : "Upload Transcript"}
+                      >
+                        {uploadingId === c.id ? (
+                          <span style={{ fontSize: '0.72rem' }}>⏳</span>
+                        ) : (c.extractedData?.transcript?.length || c.transcript?.length) ? (
+                          <CheckCircle size={15} color="#10b981" />
+                        ) : (
+                          <Upload size={15} />
+                        )}
+                      </button>
+                    </td>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span style={{
-                        padding: '3px 10px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
+                        padding: '3px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '700',
                         backgroundColor:
                           c.finalRecommendation === 'Selected' ? 'rgba(16,185,129,0.1)' :
                           c.finalRecommendation === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
@@ -864,27 +989,27 @@ const Reports = () => {
                         {c.finalRecommendation || 'Under Review'}
                       </span>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
                         <button
                           className="btn btn-primary"
-                          style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          style={{ padding: '4px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', whiteSpace: 'nowrap' }}
                           onClick={() => setSelectedCandidate(c)}
                         >
-                          <Eye size={12} /> View Report
+                          <Eye size={11} /> View
                         </button>
                         <button
                           className="btn btn-outline"
-                          style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px', minWidth: '135px', justifyContent: 'center' }}
+                          style={{ padding: '4px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', minWidth: '76px', justifyContent: 'center', whiteSpace: 'nowrap' }}
                           onClick={() => handleCopyShareLink(c)}
                           disabled={generatingId === c.id}
                         >
-                          <Share2 size={12} />
+                          <Share2 size={11} />
                           {generatingId === c.id 
-                            ? "Generating..." 
+                            ? "Gen..." 
                             : copiedId === c.id 
                               ? "Copied!" 
-                              : "Copy Share Link"}
+                              : "Copy"}
                         </button>
                       </div>
                     </td>
@@ -952,6 +1077,36 @@ const Reports = () => {
                           ? "Copied!" 
                           : "Copy Link"}
                     </button>
+                    <button
+                      className="btn btn-outline"
+                      style={{
+                        padding: '5px 10px',
+                        fontSize: '0.72rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        justifyContent: 'center',
+                        backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.1)' : '#fff',
+                        color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#065f46' : 'var(--gray-700)',
+                        borderColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
+                      }}
+                      onClick={() => triggerTranscriptUpload(c)}
+                      disabled={uploadingId === c.id}
+                    >
+                      {uploadingId === c.id ? (
+                        <>⏳ Uploading...</>
+                      ) : (c.extractedData?.transcript?.length || c.transcript?.length) ? (
+                        <>
+                          <CheckCircle size={12} color="#10b981" />
+                          <span>Uploaded</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={12} />
+                          <span>Upload</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               );
@@ -969,7 +1124,14 @@ const Reports = () => {
         />
       )}
 
-
+      {/* Hidden file input for transcript upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        accept=".txt,.pdf,.docx"
+        onChange={handleFileChange}
+      />
     </div>
   );
 };

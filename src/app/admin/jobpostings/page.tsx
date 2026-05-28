@@ -20,7 +20,12 @@ const JobPostings = () => {
   const uniqueDepartments = Array.from(new Set(jobs.map((job: any) => job.department).filter(Boolean)));
 
   const handlePublishJob = async () => {
-    if (!title.trim() || !department.trim()) return;
+    // Validate input: require at least a parent department
+    if (!department.trim()) {
+      alert("Please provide a parent department.");
+      return;
+    }
+    // Title (sub-department) is optional when creating a parent department
 
     setIsSubmitting(true);
     try {
@@ -143,10 +148,11 @@ const JobPostings = () => {
               </div>
             </div>
              <div className="flex gap-4">
-              <button 
-                className="btn btn-primary" 
-                onClick={handlePublishJob}
-                disabled={isSubmitting || !title.trim() || !department.trim()}
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={handlePublishJob}
+                  disabled={isSubmitting || !department.trim()}
               >
                 {isSubmitting ? 'Saving...' : (editingJob ? 'Save Changes' : 'Publish Department')}
               </button>

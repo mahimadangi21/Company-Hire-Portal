@@ -29,17 +29,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, department } = body;
 
-    if (!title || !department) {
+    // Allow creation of a department without a sub-department title
+    if (!title && !department) {
       return NextResponse.json(
-        { error: "title and department are required" },
+        { error: "title or department is required" },
         { status: 400 }
       );
     }
-
+    // Determine insertion data
+    const insertData = title ? { title, department } : { title: department, department: null };
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
       .from("jobs")
-      .insert({ title, department, status: "Active" })
+      .insert({ ...insertData, status: "Active" })
       .select()
       .single();
 
