@@ -1,88 +1,99 @@
-# KL HIRE Dashboard - Integrated Recruitment Portal & Video Screening Engine
+# 🎥 Video Screening Bot
 
-An admin-controlled recruitment workflow platform designed to manage the end-to-end interview process — from resume upload through AI parsing, candidate forms, video bot screening, technical scheduling, and report generation.
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-15.0.0-black?logo=next.js)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-38B2AC?logo=tailwind-css)
+![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase)
+![Groq](https://img.shields.io/badge/Groq-AI%20Summary-f55036)
 
-This project is a monorepo containing the main admin portal, a video screening engine, and an AI resume parser, all connected to a persistent Supabase database.
-
----
-
-## 🚀 System Architecture
-
-The portal is composed of three interconnected services:
-1.  **Vite React Portal (`/app`)**: The administrative control center running on port `5173`.
-2.  **Next.js Video Engine & API Backend (`/video-bot`)**: The core microservice running on port `3000` that interacts with Supabase, handles video recording, triggers transcription/AI summaries, and sends emails.
-3.  **ATS Resume Intelligence Engine (`/ATS - Data extract Open AI`)**: An Express-based parsing service running on port `3001` that extracts structured candidate profiles from PDF resumes using Groq LLM.
+A modern, lightning-fast platform for conducting **One-Way Video Interviews**. Built to streamline the hiring process with an elegant applicant tracking dashboard, fully automated video transcription, and AI-generated candidate summaries.
 
 ---
 
-## ⚙️ Step-by-Step Installation & Setup
+## ✨ Features
 
-Follow these steps to set up and run the entire portal on your local machine:
+- **🗣️ One-Way Video Interviews**: Candidates receive a secure magic link, read the customized questions, and record their answers directly in the browser.
+- **⚡ Insanely Fast Transcription**: As soon as an interview finishes, the video is instantly transcribed using **Groq Whisper** (`whisper-large-v3`), mapping candidate answers to the exact questions asked.
+- **✨ AI Interview Summaries**: Leveraging **Groq LLaMA 3.1 (8B)**, the platform automatically generates a 3-4 bullet point summary of the candidate's soft skills, qualifications, and communication style, displayed prominently on the dashboard.
+- **⏱️ Live Transcript Playback**: A beautiful, auto-scrolling side-panel accompanies the video player during review. Click any sentence in the transcript to instantly jump the video to that exact timestamp!
+- **🎨 Premium UI/UX**: Designed with dark mode, glassmorphism, smooth animations, and tailored layout grids for the best viewing experience across all devices.
+- **🔗 Secure Sharing**: Generate read-only, time-expiring shareable links to effortlessly share specific candidate interviews with hiring managers.
 
-### 1. Database Setup (Supabase)
-You need a Supabase project. In your Supabase Dashboard SQL Editor, run the following files:
-*   First, copy and run the contents of [supabase-schema.sql](file:///c:/Users/achyu/Desktop/VideoScreenBot/KL_HIRE_Dashboard/video-bot/supabase-schema.sql) to set up the core `interviews` table, `questions_bank` table, storage buckets, and RLS policies.
-*   Second, copy and run the contents of [jobs-candidates-schema.sql](file:///c:/Users/achyu/Desktop/VideoScreenBot/KL_HIRE_Dashboard/video-bot/jobs-candidates-schema.sql) to set up the persistent `jobs` and `candidates` tables.
+---
 
-### 2. Environment Variables Configuration
+## 🛠️ Tech Stack
 
-#### A. Video Engine & API Backend (`/video-bot`)
-Create a `.env.local` file inside the `video-bot` folder and define these keys:
-```env
-NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), React, Tailwind CSS, Lucide Icons
+- **Backend & Storage**: [Supabase](https://supabase.com/) (PostgreSQL & Storage Buckets)
+- **AI & Transcription**: [Groq API](https://groq.com/) (Whisper & LLaMA 3.1)
+- **Emails**: Nodemailer for sending magic links securely.
 
-# Gmail SMTP for sending magic links
-GMAIL_USER=YOUR_EMAIL@gmail.com
-GMAIL_APP_PASSWORD=YOUR_GMAIL_APP_PASSWORD
+---
 
-# App URLs
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_ADMIN_EMAIL=YOUR_EMAIL@gmail.com
+## 🚀 Getting Started
 
-# Groq API Key for Whisper (Transcription) and LLaMA (AI Interview Summary)
-GROQ_API_KEY=YOUR_GROQ_API_KEY
-```
+### 1. Prerequisites
+- Node.js (v18+)
+- A [Supabase](https://supabase.com/) account
+- A [Groq](https://console.groq.com/) API Key
+- A Gmail account with an App Password (for Nodemailer)
 
-#### B. ATS Resume Intelligence Engine (`/ATS - Data extract Open AI`)
-Create a `.env` file inside the `ATS - Data extract Open AI` folder and define these keys:
-```env
-PORT=3001
-GROQ_API_KEY=YOUR_GROQ_API_KEY
-GROQ_MODEL=llama-3.3-70b-versatile
-```
+### 2. Installation
 
-### 3. Dependencies Installation
-From the root directory of `KL_HIRE_Dashboard`, run the following command to automatically install dependencies for all services:
+Clone the repository and install dependencies:
+
 ```bash
-npm run install:all
+git clone https://github.com/Achyut-Pancholi/Interview-Screening-Video-Bot.git
+cd Interview-Screening-Video-Bot/happy-app
+npm install
 ```
-*(Alternatively, you can manually run `npm install` in `app`, `npm install --legacy-peer-deps` in `video-bot`, and `npm install` in the ATS parser folder).*
 
-### 4. Running the Development Servers
-Once dependencies are installed and environment variables are set up, run the following command in the root directory to spin up all three services concurrently:
+### 3. Environment Variables
+
+Create a `.env.local` file in the root directory and add the following keys:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+GMAIL_USER=your_gmail_address
+GMAIL_APP_PASSWORD=your_gmail_app_password
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_ADMIN_EMAIL=your_admin_email
+
+GROQ_API_KEY=your_groq_api_key
+```
+
+### 4. Gmail App Password Setup
+
+To allow the application to send magic links via email, you must generate a Gmail App Password:
+1. Go to your Google Account settings.
+2. Navigate to **Security** > **2-Step Verification** (make sure this is turned on).
+3. Scroll down to the bottom and click on **App passwords**.
+4. Create a new app password (e.g., name it "Video Screening Bot").
+5. Copy the generated 16-character password and paste it as the `GMAIL_APP_PASSWORD` in your `.env.local` file.
+
+### 5. Database Setup
+
+Run the SQL snippet found in `supabase-schema.sql` inside your Supabase SQL Editor. This will automatically create the required `interviews` table and configure the correct columns (including the AI `summary` column).
+
+### 5. Run the Application
+
 ```bash
 npm run dev
 ```
 
-This single command will boot:
-*   **React Frontend** at `http://localhost:5173`
-*   **Video Engine Backend** at `http://localhost:3000`
-*   **Resume Parsing Backend** at `http://localhost:3001`
+Navigate to `http://localhost:3000` to start exploring the application!
 
 ---
 
-## 🛠️ Unified Recruitment Workflow
+## 📸 Screenshots
 
-1.  **Job Posting**: Create a new job role in the **Job Postings** tab. This will persist the job in Supabase.
-2.  **Resume Upload & AI Parsing**: Upload PDF resumes inside the **Resume Upload** tab. The ATS engine parses the resume via Groq, extracts skills, experience, projects, and education details, and saves the candidate permanently into the database.
-3.  **Candidate Forms & Video Invites**:
-    *   Set up questions for the job role in the **Video Bot Interview** tab's **Manage Question Bank** modal.
-    *   From the **Video Bot Interview** tab, invite the candidate to screen. The backend will randomly select questions (always prioritizing mandatory ones) and email a secure, unique magic link to the candidate.
-4.  **AI Video Screening**: The candidate uses the magic link to record their interview responses. Upon completion, the system:
-    *   Transcribes the audio using **Groq Whisper**.
-    *   Generates a structured bullet-point **AI Summary** using **Groq LLaMA**.
-    *   Saves the video, transcript, and summary to Supabase.
-5.  **Admin Evaluation**: Admins click **View Interview** on the dashboard to review candidate video replays, read transcripts, and view the AI generated performance summary.
-6.  **Technical Scheduling**: For passing candidates, schedule technical interview panels in the **Technical Scheduler** tab.
+*(To be added)*
+
+---
+
+## 📄 License
+This project is licensed under the MIT License.
