@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
+import { ResumeParsedBox } from "@/components/ResumeParsedBox";
+import { ReportDashboardGrid } from "@/components/ReportDashboardGrid";
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
@@ -383,7 +385,8 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                   border: 'none', 
                   borderRadius: '8px', 
                   cursor: 'pointer', 
-                  padding: '8px', 
+                  width: '45px',
+                  height: '45px',
                   color: '#fff', 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -392,7 +395,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 }}
                 title="Close Report"
               >
-                <X size={18} />
+                <X size={22} />
               </button>
             </div>
           </div>
@@ -400,183 +403,29 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
 
         {/* Custom Styles for Hover Zoom / Expansion */}
         <style dangerouslySetInnerHTML={{__html: `
-          /* Strictly remove any Vertical and Horizontal scrollbars */
-          *::-webkit-scrollbar {
-            display: none !important;
-          }
-          * {
-            -ms-overflow-style: none !important;  /* IE and Edge */
-            scrollbar-width: none !important;  /* Firefox */
+          .zoom-box {
+            position: relative;
+            overflow: hidden !important;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background-color: #fff;
           }
           
-          .report-box {
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, max-height 0.25s ease;
-            transform: scale(0.97);
-            transform-origin: center center; /* zoom at middle */
-            position: relative;
+          /* Strictly hide any vertical and horizontal scroll bars */
+          .zoom-box, .zoom-box *, .zoom-box::-webkit-scrollbar, .zoom-box *::-webkit-scrollbar {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
           }
-          .report-box:hover {
-            transform: scale(1.03); /* zoom at middle */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
-            z-index: 100;
-          }
-          .resume-parsed-box {
-            max-height: 380px;
-            overflow: hidden;
-          }
-          .resume-parsed-box:hover {
-            max-height: 1200px;
+          .zoom-box::-webkit-scrollbar, .zoom-box *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
           }
         `}} />
 
-        {/* Dashboard Main Grid Area */}
-        <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
-          
-          {/* COLUMN 1: Scores & Skill Match (width: 32%) */}
-          <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'hidden', paddingRight: '0.25rem' }}>
-            
-            {/* Overview / Score Radial Circles */}
-            <div className="report-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assessment Scores</p>
-              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px' }}>
-                <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume" size={76} />
-                <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video" size={76} />
-                <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical" size={76} />
-              </div>
-            </div>
-
-            {/* Resume Parsed Box */}
-            <div className="report-box resume-parsed-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-                <p style={{ fontSize: '0.85rem', fontWeight: '750', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <FileText size={16} /> Resume Parsed
-                </p>
-                <button
-                  className="btn btn-outline hover-scale"
-                  style={{ padding: '2px 8px', fontSize: '0.68rem', height: '22px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                  onClick={() => setViewResumeOpen(true)}
-                >
-                  View
-                </button>
-              </div>
-
-              {/* Education History */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <BookOpen size={14} /> Education History
-                </p>
-                {edu.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {edu.map((e, i) => (
-                      <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(125,186,0,0.03) 100%)' : 'var(--gray-50)', position: 'relative' }}>
-                        {i === 0 && <span style={{ position: 'absolute', top: '8px', right: '10px', fontSize: '0.58rem', fontWeight: '800', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(14,45,123,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <Award size={16} color="var(--brand-navy)" />
-                          </div>
-                          <div>
-                            <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.8rem', margin: 0 }}>{e.degree || 'N/A'}</p>
-                            <p style={{ color: 'var(--gray-600)', fontSize: '0.74rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '2px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                              {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
-                              {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.74rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>No education records.</div>
-                )}
-              </div>
-
-              {/* Extracted Skills */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Code2 size={14} /> Extracted Skills
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {skills.length > 0 ? skills.map((s, i) => (
-                    <span key={i} style={{ padding: '3px 8px', borderRadius: '999px', fontSize: '0.68rem', fontWeight: '600', backgroundColor: 'rgba(14,45,123,0.06)', color: 'var(--brand-navy)', border: '1px solid rgba(14,45,123,0.12)' }}>{s}</span>
-                  )) : <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No skills extracted.</span>}
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* COLUMN 2: Profile Details & Strengths (width: 38%) */}
-          <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflowY: 'hidden', paddingRight: '0.25rem' }}>
-            
-            {/* Strengths & Weaknesses */}
-            <div className="report-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#065f46', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <TrendingUp size={14} color="#10b981" /> Strengths
-                  </p>
-                  {strengths.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {strengths.slice(0, 4).map((s, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 8px', borderRadius: '8px', backgroundColor: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                          <CheckCircle size={12} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
-                          <span style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: '600', lineHeight: 1.3 }}>{s}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', fontStyle: 'italic', border: '1px dashed rgba(16,185,129,0.3)', borderRadius: '8px' }}>No derived strengths.</div>
-                  )}
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#7f1d1d', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <TrendingDown size={14} color="#ef4444" /> Area of Improvement
-                  </p>
-                  {weaknesses.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {weaknesses.slice(0, 4).map((w, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 8px', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                          <AlertCircle size={12} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-                          <span style={{ fontSize: '0.72rem', color: '#7f1d1d', fontWeight: '600', lineHeight: 1.3 }}>{w}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', fontStyle: 'italic', border: '1px dashed rgba(239,68,68,0.3)', borderRadius: '8px' }}>No weaknesses detected.</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* COLUMN 3: Interview Q&A Transcript (width: 30%) */}
-          <div className="report-box" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', height: '100%' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
-                <MessageSquare size={14} /> Video Interview Transcript
-              </p>
-              {candidate.videoStatus === 'Completed' && (
-                <a
-                  href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${candidate.interview_id || ''}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-outline"
-                  style={{ fontSize: '0.65rem', padding: '3px 8px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}
-                >
-                  <Eye size={10} /> Watch Video
-                </a>
-              )}
-            </div>
-            
-            <div style={{ flex: 1, overflowY: 'hidden', paddingRight: '0.25rem' }}>
-              <TranscriptAnalysis transcript={transcript} />
-            </div>
-
-          </div>
-
+        {/* Dashboard Main Grid Area — no scroll */}
+        <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem 1.5rem', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
+          <ReportDashboardGrid candidate={candidate} NEXT_JS_URL={NEXT_JS_URL} />
         </div>
 
       </div>

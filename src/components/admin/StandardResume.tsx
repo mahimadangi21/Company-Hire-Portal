@@ -6,7 +6,8 @@ import { useAppContext } from '@/components/admin/context/AppContext';
 
 // html2pdf is dynamically imported in handlePrint to prevent SSR issues
 const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
-  const { apiFetch } = useAppContext();
+  const context = useAppContext();
+  const apiFetch = context?.apiFetch;
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const printRef = useRef(null);
@@ -85,16 +86,16 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
       borderRadius: 'var(--radius-xl)',
       width: '100%',
       maxWidth: '850px',
-      maxHeight: readOnly ? 'none' : '90vh',
-      boxShadow: readOnly ? 'none' : 'var(--shadow-xl)',
+      maxHeight: '90vh',
+      boxShadow: 'var(--shadow-xl)',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
-      border: readOnly ? 'none' : '1px solid var(--border)'
+      border: '1px solid var(--border)'
     }} onClick={(e) => e.stopPropagation()}>
       
       {/* Modal Header (Hidden during print) */}
-      {!readOnly && (
+      {(onClose || !readOnly) && (
         <div className="print-hide" style={{
           padding: '1.25rem 2rem',
           borderBottom: '1px solid var(--gray-100)',
@@ -115,14 +116,16 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
             <button onClick={handlePrint} className="btn btn-outline" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
               <Printer size={16} /> Download Resume
             </button>
-            {isEditing ? (
-              <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
-                <Save size={16} /> {isSaving ? 'Saving...' : 'Save'}
-              </button>
-            ) : (
-              <button onClick={() => setIsEditing(true)} className="btn btn-primary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
-                <Edit2 size={16} /> Edit
-              </button>
+            {!readOnly && (
+              isEditing ? (
+                <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
+                  <Save size={16} /> {isSaving ? 'Saving...' : 'Save'}
+                </button>
+              ) : (
+                <button onClick={() => setIsEditing(true)} className="btn btn-primary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
+                  <Edit2 size={16} /> Edit
+                </button>
+              )
             )}
             {onClose && (
               <button onClick={onClose} style={{
