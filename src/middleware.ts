@@ -11,8 +11,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect all /admin/* routes except /admin/login
-  if (path.startsWith("/admin") && !path.startsWith("/admin/login")) {
+  // Protect all /admin/* and /video-bot-admin/* routes except /admin/login
+  if ((path.startsWith("/admin") || path.startsWith("/video-bot-admin")) && !path.startsWith("/admin/login")) {
     const adminSession = request.cookies.get("kl_admin_session");
 
     if (!adminSession) {
