@@ -11,7 +11,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const pdfParse = require('pdf-parse');
+const fs = require('fs');
 
 const PYTHON_SCRIPT = path.join(process.cwd(), 'src', 'lib', 'parser', 'extractors', 'pdf_extractor.py');
 const PYTHON_TIMEOUT_MS = 8000;       // 8s max — PyMuPDF is fast; fail quickly to fallback
@@ -97,6 +97,12 @@ function extractWithPyMuPDF(filePath) {
  * Less accurate for multi-column but widely compatible.
  */
 async function extractWithPdfParse(filePath) {
+  let pdfParse;
+  try {
+    pdfParse = require('pdf-parse');
+  } catch (e) {
+    throw new Error('pdf-parse not available or crashed on load. Error: ' + e.message);
+  }
   const buffer = fs.readFileSync(filePath);
   const parseFn = typeof pdfParse === 'function' ? pdfParse : pdfParse.default || pdfParse;
   const data = await parseFn(buffer);
