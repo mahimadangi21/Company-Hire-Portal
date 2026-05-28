@@ -9,7 +9,6 @@ export const useAppContext = () => useContext(AppContext);
 const API_URL = typeof window !== 'undefined' 
   ? window.location.origin 
   : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
-
 const API_SECRET = process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || process.env.INTERNAL_API_SECRET;
 
 /** Authenticated fetch — automatically attaches the internal API secret header */
