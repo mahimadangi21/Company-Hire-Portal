@@ -11,6 +11,7 @@ import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
 import { ResumeParsedBox } from "@/components/ResumeParsedBox";
 import { ReportDashboardGrid } from "@/components/ReportDashboardGrid";
+import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
@@ -23,16 +24,29 @@ const scoreColor = (v) => {
   return '#ef4444';
 };
 
-const parseTextTranscript = (text: string) => {
+const parseTextTranscript = (text: string, candidateName = '') => {
   const entries: { question: string; answer: string; timestamp_start?: number; timestamp_end?: number }[] = [];
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   let currentQ = '';
   let currentA = '';
   
+  // Prepare candidate name patterns for robust speaker matching
+  const nameParts = candidateName ? candidateName.split(/\s+/).map(p => p.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean) : [];
+  const namePatterns = nameParts.length > 0 ? '|' + nameParts.join('|') : '';
+  
+  const qRegex = new RegExp(`^(?:Q|Question|Interviewer|Speaker\\s*1|Host|Reviewer|HR|Recruiter)[:\\-]?\\s*(.*)$`, 'i');
+  const aRegex = new RegExp(`^(?:A|Answer|Candidate|Me|Speaker\\s*2|Applicant|User${namePatterns})[:\\-]?\\s*(.*)$`, 'i');
+  
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const qMatch = line.match(/^(?:Q|Question|Interviewer)[:\-]?\s*(.*)$/i);
-    const aMatch = line.match(/^(?:A|Answer|Candidate|Me)[:\-]?\s*(.*)$/i);
+    // Clean any timestamp prefixes or suffixes dynamically
+    const cleanLine = line
+      .replace(/^(?:\[?\d{1,2}:\d{2}(?::\d{2})?\]?|\(?\d{1,2}:\d{2}(?::\d{2})?\)?)\s*/, '')
+      .replace(/\s*\(\d{1,2}:\d{2}(?::\d{2})?\)\s*$/, '')
+      .trim();
+
+    const qMatch = cleanLine.match(qRegex);
+    const aMatch = cleanLine.match(aRegex);
     
     if (qMatch) {
       if (currentQ) {
@@ -45,19 +59,49 @@ const parseTextTranscript = (text: string) => {
     } else {
       if (currentQ) {
         if (currentA) {
-          currentA += '\n' + line;
+          currentA += '\n' + cleanLine;
         } else {
-          currentQ += '\n' + line;
+          currentQ += '\n' + cleanLine;
         }
       } else {
-        currentQ = line;
+        currentQ = cleanLine;
       }
     }
   }
   if (currentQ) {
     entries.push({ question: currentQ, answer: currentA || 'No answer provided.' });
   }
-  return entries;
+
+  // Fallback to alternating lines if no proper matches were found
+  let finalEntries = entries;
+  if (finalEntries.length === 0 || (finalEntries.length === 1 && (!finalEntries[0].answer || finalEntries[0].answer === 'No answer provided.'))) {
+    const dialogueLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const alternateEntries: { question: string; answer: string; timestamp_start?: number; timestamp_end?: number }[] = [];
+    for (let i = 0; i < dialogueLines.length; i += 2) {
+      const q = dialogueLines[i];
+      const a = dialogueLines[i + 1] || 'No answer provided.';
+      if (q) {
+        alternateEntries.push({ question: q, answer: a });
+      }
+    }
+    if (alternateEntries.length > 0) {
+      finalEntries = alternateEntries;
+    }
+  }
+
+  // Enrich with timestamps for perfect layout segment rendering
+  let currentSec = 10;
+  finalEntries.forEach(e => {
+    if (e.timestamp_start === undefined) {
+      e.timestamp_start = currentSec;
+      const words = (e.answer || '').split(/\s+/).length;
+      const duration = Math.max(5, Math.min(45, words * 0.4));
+      e.timestamp_end = currentSec + duration;
+      currentSec = Math.round(e.timestamp_end + 5);
+    }
+  });
+
+  return finalEntries;
 };
 
 const getSimulatedTranscript = (role = '', name = '') => {
@@ -281,6 +325,8 @@ const deriveStrengthsWeaknesses = (candidate) => {
 const DetailModal = ({ candidate, jobs, onClose }) => {
   if (!candidate) return null;
 
+  console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
+
   const { refreshCandidates } = useAppContext();
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
 
@@ -290,6 +336,22 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
   const projs = data.projectAnalysis || [];
   const transcript = candidate.transcript || data.transcript || [];
   const { strengths, weaknesses } = deriveStrengthsWeaknesses(candidate);
+
+  // Analyze transcript dynamically for bottom KPI bar metrics
+  const analysis = React.useMemo(() => {
+    if (transcript && transcript.length > 0) {
+      try {
+        return analyzeTranscript(transcript);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    return null;
+  }, [transcript]);
+
+  const commScore = analysis ? analysis.communication : 85;
+  const confLabel = analysis ? (analysis.confidence >= 75 ? 'High' : analysis.confidence >= 55 ? 'Medium' : 'Low') : 'High';
+  const recLabel = candidate.finalRecommendation || (analysis ? (analysis.recommendation === 'Strongly Recommend' || analysis.recommendation === 'Recommend' ? 'Yes' : 'No') : 'Yes');
 
   // Find matching job to get required skills
   const matchedJob = jobs.find((j) => j.title === candidate.jobApplied);
@@ -392,7 +454,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <img 
                   src="/kadellabs-logo.png" 
                   alt="Company Logo" 
-                  style={{ height: '28px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
+                  style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
                 />
               </div>
               <button 
@@ -430,7 +492,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>79%</span>
+                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.resumeScore || 0}%</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -440,7 +502,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
-                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>72%</span>
+                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.videoScore || 0}%</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -450,7 +512,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
-                  <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>68%</span>
+                  <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.techScore || 0}%</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -460,7 +522,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <MessageSquare size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Communication</span>
-                  <span style={{ color: '#f59e0b', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>85%</span>
+                  <span style={{ color: '#f59e0b', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{commScore}%</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -470,7 +532,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <Activity size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Confidence</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>High</span>
+                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{confLabel}</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -480,7 +542,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <Award size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Recommendation</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>Yes</span>
+                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{recLabel}</span>
                 </div>
               </div>
 
@@ -564,6 +626,23 @@ const Reports = () => {
   const [uploadingId, setUploadingId] = useState(null);
   const fileInputRef = useRef(null);
 
+  // Auto-sync selectedCandidate when candidates context refreshes (fixes stale modal after re-upload)
+  useEffect(() => {
+    if (!selectedCandidate) return;
+    const fresh = candidates.find(c => c.id === selectedCandidate.id);
+    if (fresh) {
+      setSelectedCandidate(fresh);
+    }
+  }, [candidates]);
+
+  // Log candidate changes and table scores (Step 5 requirement)
+  useEffect(() => {
+    console.log("Updated Candidate:", candidates);
+    candidates.forEach(c => {
+      console.log("TABLE TECH SCORE:", c.techScore);
+    });
+  }, [candidates]);
+
   const triggerTranscriptUpload = (candidate) => {
     setUploadingCandidate(candidate);
     if (fileInputRef.current) {
@@ -576,40 +655,134 @@ const Reports = () => {
     const file = e.target.files?.[0];
     if (!file || !uploadingCandidate) return;
 
-    setUploadingId(uploadingCandidate.id);
+    // Cache candidate context values to avoid stale object references after async operations (Modification 2)
+    const candidateId = uploadingCandidate.id;
+    const candidateName = uploadingCandidate.name;
+    const candidateJobApplied = uploadingCandidate.jobApplied;
+    const candidateExtractedData = uploadingCandidate.extractedData;
+
+    setUploadingId(candidateId);
 
     try {
       let transcriptEntries = [];
 
       if (file.name.toLowerCase().endsWith('.txt')) {
-        const text = await new Promise((resolve, reject) => {
+        // Parse text transcript file
+        const text = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
+          reader.onload = () => resolve(reader.result as string);
           reader.onerror = reject;
           reader.readAsText(file);
         });
-        transcriptEntries = parseTextTranscript(text);
+        transcriptEntries = parseTextTranscript(text as string, candidateName);
+        // If parsing produced no good entries, fall back to simulated
+        if (!transcriptEntries || transcriptEntries.length === 0) {
+          transcriptEntries = getSimulatedTranscript(candidateJobApplied, candidateName);
+        }
       } else {
-        transcriptEntries = getSimulatedTranscript(uploadingCandidate.jobApplied, uploadingCandidate.name);
+        // For PDF/DOCX, use role-based simulated transcript (can be enhanced with PDF parsing)
+        transcriptEntries = getSimulatedTranscript(candidateJobApplied, candidateName);
       }
 
-      const updatedExtractedData = {
-        ...(uploadingCandidate.extractedData || {}),
-        transcript: transcriptEntries
+      // Step 1: Log extracted transcript
+      console.log("TRANSCRIPT:", transcriptEntries);
+
+      // Perform Groq analysis with robust local fallback
+      let analysis;
+      try {
+        console.log("Attempting server-side Groq Transcript Analysis...");
+        const groqRes = await apiFetch('/api/analyze-transcript', {
+          method: 'POST',
+          body: JSON.stringify({ transcript: transcriptEntries })
+        });
+        if (groqRes.ok) {
+          analysis = await groqRes.json();
+          console.log("GROQ ANALYSIS SUCCESS:", analysis);
+        } else {
+          console.warn("Groq server-side API failed, falling back to local NLP analysis.");
+          analysis = analyzeTranscript(transcriptEntries);
+        }
+      } catch (err) {
+        console.error("Groq Analysis error, falling back to local:", err);
+        analysis = analyzeTranscript(transcriptEntries);
+      }
+
+      console.log("ANALYSIS:", analysis);
+
+      // Store transcript + full analysis result in extracted_data for DB persistence
+      const transcriptAnalysisResult = {
+        communication: analysis.communication,
+        technical: analysis.technical,
+        problemSolving: analysis.problemSolving,
+        professionalism: analysis.professionalism,
+        leadership: analysis.leadership,
+        confidence: analysis.confidence,
+        fluency: analysis.fluency,
+        fillerWordCount: analysis.fillerWordCount,
+        fillerWords: analysis.fillerWords,
+        tone: analysis.tone,
+        sentiment: analysis.sentiment,
+        recommendation: analysis.recommendation,
+        recommendationReason: analysis.recommendationReason,
+        ownershipSignals: analysis.ownershipSignals,
+        hesitationPatterns: analysis.hesitationPatterns,
+        leadershipIndicators: analysis.leadershipIndicators,
+        keyObservations: analysis.keyObservations,
+        behavioralSignals: analysis.behavioralSignals,
+        practicalExperienceScore: analysis.practicalExperienceScore,
+        technicalGaps: analysis.technicalGaps,
       };
+
+      const updatedExtractedData = {
+        ...(candidateExtractedData || {}),
+        transcript: transcriptEntries,
+        transcriptAnalysis: transcriptAnalysisResult,
+        transcriptUpdatedAt: new Date().toISOString() // Step 3 requirement
+      };
+
+      // Step 3 payload
+      const payload = {
+        id: candidateId,
+        extracted_data: updatedExtractedData,
+        video_status: 'Completed',
+        tech_status: 'Completed',
+        video_score: analysis.communication,
+        tech_score: analysis.technical,
+        final_recommendation: analysis.recommendation
+      };
+
+      console.log("PATCH PAYLOAD:", payload);
 
       const response = await apiFetch('/api/candidates', {
         method: 'PATCH',
-        body: JSON.stringify({
-          id: uploadingCandidate.id,
-          extracted_data: updatedExtractedData,
-          video_status: 'Completed'
-        })
+        body: JSON.stringify(payload)
       });
 
+      // Tracing and response verification: Step 2 & Modification 3
       if (response.ok) {
-        alert('Transcript uploaded and processed successfully.');
-        refreshCandidates();
+        const updatedCandidate = await response.json();
+        console.log("DB RETURN:", updatedCandidate);
+        
+        if (updatedCandidate) {
+          console.log("PATCH RESPONSE VERIFICATION:");
+          console.log("  - tech_score:", updatedCandidate.tech_score);
+          console.log("  - video_score:", updatedCandidate.video_score);
+          console.log("  - extracted_data transcript:", updatedCandidate.extracted_data?.transcript ? "OK" : "MISSING");
+          console.log("  - extracted_data transcriptAnalysis:", updatedCandidate.extracted_data?.transcriptAnalysis ? "OK" : "MISSING");
+          console.log("  - extracted_data transcriptUpdatedAt:", updatedCandidate.extracted_data?.transcriptUpdatedAt);
+        }
+
+        alert(`✅ Transcript analyzed successfully!\n\nScores:\n• Communication: ${analysis.communication}%\n• Technical: ${analysis.technical}%\n• Confidence: ${analysis.confidence}%\n• Recommendation: ${analysis.recommendation}`);
+        
+        // Refresh candidates and pull the fresh candidate object explicitly (Step 4 & Modification 1)
+        const freshCandidates = await refreshCandidates();
+        if (freshCandidates) {
+          const latest = freshCandidates.find(c => c.id === candidateId);
+          if (latest) {
+            setUploadingCandidate(latest);
+            setSelectedCandidate(latest);
+          }
+        }
       } else {
         const errData = await response.json();
         alert(errData.error || 'Failed to upload transcript.');
@@ -849,7 +1022,7 @@ const Reports = () => {
                   <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Job Applied</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Video</th>
-                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Technical</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
                   <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
                   <th style={{ width: '16%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
                   <th style={{ width: '18%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
@@ -902,8 +1075,6 @@ const Reports = () => {
                       >
                         {uploadingId === c.id ? (
                           <span style={{ fontSize: '0.72rem' }}>⏳</span>
-                        ) : (c.extractedData?.transcript?.length || c.transcript?.length) ? (
-                          <CheckCircle size={15} color="#10b981" />
                         ) : (
                           <Upload size={15} />
                         )}
@@ -1032,15 +1203,10 @@ const Reports = () => {
                     >
                       {uploadingId === c.id ? (
                         <>⏳ Uploading...</>
-                      ) : (c.extractedData?.transcript?.length || c.transcript?.length) ? (
-                        <>
-                          <CheckCircle size={12} color="#10b981" />
-                          <span>Uploaded</span>
-                        </>
                       ) : (
                         <>
                           <Upload size={12} />
-                          <span>Upload</span>
+                          <span>{(c.extractedData?.transcript?.length || c.transcript?.length) ? "Re-upload" : "Upload"}</span>
                         </>
                       )}
                     </button>

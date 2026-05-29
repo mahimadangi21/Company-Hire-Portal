@@ -89,6 +89,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
   const edu = candidate.extractedData?.educationDetails || [];
   const skills = candidate.skills || [];
   const transcript = candidate.transcript || candidate.extractedData?.transcript || [];
+  const storedAnalysis = candidate.extractedData?.transcriptAnalysis || null;
   
   // Derive strengths and weaknesses
   const strengths: string[] = [];
@@ -248,7 +249,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
               <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}><X size={20} /></button>
             </div>
             <div style={{ padding: '0.5rem 0' }}>
-              <TranscriptIntelligenceEngine transcript={transcript} />
+              <TranscriptIntelligenceEngine transcript={transcript} storedAnalysis={storedAnalysis} />
             </div>
           </div>
         );
@@ -424,64 +425,143 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
 
       </div>
 
-      {/* COLUMN 2: Video Screening & Tech Video Interview (width: 38%) */}
+      {/* COLUMN 2: Video Screening & Transcript (width: 38%) */}
       <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflow: 'hidden' }}>
         
         {/* Video Screening Summary Card */}
-        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.65rem', flex: 1, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '6px', flexShrink: 0 }}>
             <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '750', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
               🎥 Video Screening & Transcript
             </p>
           </div>
-          {transcript.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden', flex: 1 }}>
-              <div style={{ padding: '8px 10px', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)' }}>
-                <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '700', color: '#1e40af' }}>
-                  AI Video Interview Summary
-                </p>
-                <p style={{ margin: '4px 0 0', fontSize: '0.7rem', color: 'var(--gray-700)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                  Candidate demonstrated strong domain communication. Answered {transcript.length} structured queries covering core conceptual topics with stable confidence metrics.
-                </p>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden', maxHeight: '72px' }}>
-                {transcript.slice(0, 1).map((t: any, idx: number) => (
-                  <div key={idx} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: '#fafbfe' }}>
-                    <p style={{ margin: 0, fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Q: {t.question}</p>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: 'var(--gray-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>A: {t.answer}</p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+            {/* Row 1: Video and Highlights */}
+            <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch', flexShrink: 0 }}>
+              {/* Video Player */}
+              <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', backgroundImage: 'url(/video_screening_thumbnail.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                {/* Play Button Overlay */}
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 8px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
+                  <svg width="12" height="14" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '2px' }}>
+                    <path d="M14.5 9L1.75 16.3612L1.75 1.63878L14.5 9Z" fill="white"/>
+                  </svg>
+                </div>
+                {/* Control Bar */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)', display: 'flex', flexDirection: 'column', padding: '4px 8px 6px', flexShrink: 0 }}>
+                  {/* Progress Line */}
+                  <div style={{ position: 'relative', width: '100%', height: '3px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px', marginBottom: '4px' }}>
+                    <div style={{ width: '26%', height: '100%', backgroundColor: '#ef4444', borderRadius: '2px' }} />
+                    <div style={{ position: 'absolute', top: '50%', left: '26%', transform: 'translate(-50%, -50%)', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
                   </div>
-                ))}
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* Play Icon */}
+                      <svg width="8" height="10" viewBox="0 0 10 12" fill="white" style={{ opacity: 0.9 }}>
+                        <path d="M1 1L9 6L1 11V1Z" fill="white"/>
+                      </svg>
+                      {/* Skip Icon */}
+                      <svg width="8" height="8" viewBox="0 0 10 10" fill="white" style={{ opacity: 0.9 }}>
+                        <path d="M1 1V9L6.5 5L1 1Z" fill="white"/>
+                        <rect x="7.5" y="1" width="1.5" height="8" fill="white"/>
+                      </svg>
+                      <span style={{ fontSize: '0.62rem', color: '#fff', fontWeight: '500', fontFamily: 'sans-serif' }}>2:14 / 8:32</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* CC */}
+                      <svg width="12" height="10" viewBox="0 0 14 12" fill="none" style={{ opacity: 0.9 }}>
+                        <rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
+                        <text x="2.5" y="8" fill="white" fontSize="6" fontWeight="900" fontFamily="sans-serif">CC</text>
+                      </svg>
+                      {/* Settings */}
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
+                        <circle cx="6" cy="6" r="1.5" stroke="white" strokeWidth="1.5"/>
+                        <path d="M6 1V2M6 10V11M1 6H2M10 6H11M2.5 2.5L3.2 3.2M8.8 8.8L9.5 9.5M2.5 9.5L3.2 8.8M8.8 3.2L9.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      {/* PIP */}
+                      <svg width="10" height="8" viewBox="0 0 12 10" fill="none" style={{ opacity: 0.9 }}>
+                        <rect x="0.75" y="0.75" width="10.5" height="8.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
+                        <rect x="6" y="5" width="3.5" height="2.5" rx="0.5" fill="white"/>
+                      </svg>
+                      {/* Maximize */}
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
+                        <path d="M1.5 4V1.5H4M10.5 4V1.5H8M1.5 8V10.5H4M10.5 8V10.5H8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Highlights */}
+              <div style={{ flex: 1.4, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Video Highlights</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  {[
+                    'Clear and confident introduction',
+                    'Explained design process well',
+                    'Good understanding of user research',
+                    'Answered 3 structured questions'
+                  ].map((hl, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <span style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginRight: '6px', marginTop: '5px', flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.64rem', color: '#334155', lineHeight: 1.25 }}>{hl}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          ) : (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--border)', borderRadius: '10px', padding: '1rem' }}>
-              <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No video screening transcript uploaded.</p>
-            </div>
-          )}
-          {transcript.length > 0 && renderViewMoreButton('videoTranscript')}
-        </div>
 
-        {/* Tech Video Interview Box */}
-        <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.65rem', flexShrink: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '750', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              💻 Tech Video Interview
-            </p>
-            <span style={{ fontSize: '0.65rem', fontWeight: '700', color: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', padding: '2px 8px', borderRadius: '99px' }}>
-              Score: {candidate.techScore || 0}%
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ flex: 1 }}>
-              <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '700', color: 'var(--gray-700)' }}>
-                Technical Coding Session
-              </p>
-              <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                Evaluates algorithm efficiency, language syntactics, system designs, and real-time interactive problem-solving logic.
-              </p>
-            </div>
-            <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Code2 size={20} color="#8b5cf6" />
+            {/* Row 2: Transcript and Analysis */}
+            <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch' }}>
+              {/* Transcript */}
+              <div style={{ flex: 1, border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: '#fff', overflow: 'hidden' }}>
+                <div>
+                  <p style={{ margin: '0 0 4px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Transcript</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    {[
+                      { time: '00:15', text: 'I have around 3 years of experience in UI/UX design.' },
+                      { time: '00:28', text: 'My design process starts with understanding the user and business goals.' },
+                      { time: '00:52', text: 'I use tools like Figma, Adobe XD, and conduct user research.' },
+                      { time: '01:24', text: 'I believe user-centered design is the key to solving real problems.' }
+                    ].map((t, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '0.64rem', fontWeight: '700', color: '#64748b', flexShrink: 0, width: '28px' }}>{t.time}</span>
+                        <span style={{ fontSize: '0.64rem', color: '#334155', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ alignSelf: 'flex-end', marginTop: '2px' }}>
+                  <span 
+                    onClick={() => setActiveModal('videoTranscript')}
+                    style={{ fontSize: '0.64rem', fontWeight: '700', color: '#3b82f6', cursor: 'pointer', textDecoration: 'none' }}
+                  >
+                    View Full Transcript
+                  </span>
+                </div>
+              </div>
+
+              {/* Video Analysis */}
+              <div style={{ flex: 1.4, border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px 10px', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
+                <p style={{ margin: '0 0 6px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Video Analysis</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {[
+                    { label: 'Confidence', value: 85 },
+                    { label: 'Clarity', value: 80 },
+                    { label: 'Communication', value: 88 },
+                    { label: 'Engagement', value: 78 }
+                  ].map((metric, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: '600', color: '#475569', width: '58px', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{metric.label}</span>
+                      <div style={{ flex: 1, height: '4px', backgroundColor: '#f1f5f9', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${metric.value}%`, backgroundColor: '#10b981', borderRadius: '99px' }} />
+                      </div>
+                      <span style={{ fontSize: '0.62rem', fontWeight: '700', color: '#1e293b', width: '22px', textAlign: 'right', flexShrink: 0 }}>{metric.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -489,7 +569,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
       </div>
 
       {/* COLUMN 3: Transcript Intelligence (width: 30%) */}
-      <div className="zoom-box" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', height: 'fit-content', overflow: 'hidden' }}>
+      <div className="zoom-box" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '20px', border: '1px solid var(--border)', padding: '0.65rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', height: '100%', overflow: 'hidden' }}>
         
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
@@ -498,8 +578,46 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
           </p>
         </div>
 
+        {/* Small Tech Video Player in Column 3 */}
+        <div style={{ width: '144px', height: '81px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', backgroundImage: 'url(/tech_video_thumbnail.png)', backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0 }}>
+          {/* Play Button Overlay */}
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
+            <svg width="10" height="12" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '1.5px' }}>
+              <path d="M14.5 9L1.75 16.3612L1.75 1.63878L14.5 9Z" fill="white"/>
+            </svg>
+          </div>
+          {/* Control Bar */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)', display: 'flex', flexDirection: 'column', padding: '3px 6px 4px', flexShrink: 0 }}>
+            {/* Progress Line */}
+            <div style={{ position: 'relative', width: '100%', height: '2px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px', marginBottom: '3px' }}>
+              <div style={{ width: '18%', height: '100%', backgroundColor: '#ef4444', borderRadius: '2px' }} />
+            </div>
+            {/* Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                {/* Play Icon */}
+                <svg width="6" height="8" viewBox="0 0 10 12" fill="white" style={{ opacity: 0.9 }}>
+                  <path d="M1 1L9 6L1 11V1Z" fill="white"/>
+                </svg>
+                <span style={{ fontSize: '0.55rem', color: '#fff', fontWeight: '500', fontFamily: 'sans-serif' }}>4:03 / 22:18</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                {/* CC */}
+                <svg width="9" height="8" viewBox="0 0 14 12" fill="none" style={{ opacity: 0.9 }}>
+                  <rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
+                  <text x="2.5" y="8" fill="white" fontSize="6" fontWeight="900" fontFamily="sans-serif">CC</text>
+                </svg>
+                {/* Maximize */}
+                <svg width="8" height="8" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
+                  <path d="M1.5 4V1.5H4M10.5 4V1.5H8M1.5 8V10.5H4M10.5 8V10.5H8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {transcript.length > 0 ? (
-          <TranscriptCompactView transcript={transcript} onViewMore={() => setActiveModal('transcript')} />
+          <TranscriptCompactView transcript={transcript} storedAnalysis={storedAnalysis} onViewMore={() => setActiveModal('transcript')} />
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '1rem' }}>
             <Brain size={28} color="var(--brand-navy)" opacity={0.25} />
@@ -539,9 +657,18 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
 }
 
 /* ─────────────── Compact Transcript View for Column 3 ───────── */
-function TranscriptCompactView({ transcript, onViewMore }: { transcript: any[]; onViewMore: () => void }) {
+function TranscriptCompactView({ transcript, storedAnalysis, onViewMore }: { transcript: any[]; storedAnalysis?: any; onViewMore: () => void }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const analysis = useMemo(() => analyzeTranscript(transcript), [transcript]);
+  const liveAnalysis = useMemo(() => analyzeTranscript(transcript), [transcript]);
+  
+  // Prefer stored analysis from DB (computed at upload time) over live recomputation
+  const analysis = useMemo(() => {
+    if (storedAnalysis && storedAnalysis.recommendation && 
+        typeof storedAnalysis.communication === 'number') {
+      return { ...liveAnalysis, ...storedAnalysis };
+    }
+    return liveAnalysis;
+  }, [liveAnalysis, storedAnalysis]);
 
   // Full SVG Radar labels to make them fully visible and clear
   const radarData = [
@@ -550,12 +677,12 @@ function TranscriptCompactView({ transcript, onViewMore }: { transcript: any[]; 
     { label: 'Problem Solving', value: analysis.problemSolving, color: '#f59e0b' },
     { label: 'Leadership', value: analysis.leadership, color: '#10b981' },
     { label: 'Confidence', value: analysis.confidence, color: '#ef4444' },
-    { label: 'Professionalism', value: analysis.professionalism * 10, color: '#0ea5e9' },
+    { label: 'Professionalism', value: analysis.professionalism, color: '#0ea5e9' },
   ];
-  const size = 270; // Enlarged as requested
+  const size = 210; // Reduced for compact layout
   const cx = size / 2;
   const cy = size / 2;
-  const radius = 74; // Leaves plenty of space for full text labels around edges
+  const radius = 58; // Adjusted radius
   const n = radarData.length;
 
   const getPoint = (index: number, r: number) => {
@@ -577,7 +704,7 @@ function TranscriptCompactView({ transcript, onViewMore }: { transcript: any[]; 
     ? '#10b981' : analysis.recommendation === 'Consider' ? '#f59e0b' : '#ef4444';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'hidden', width: '100%', alignItems: 'center' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
       
       {/* 4 Colorful Badge Pills in one horizontal line above the radar chart */}
       <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: '6px', flexShrink: 0 }}>
@@ -612,7 +739,7 @@ function TranscriptCompactView({ transcript, onViewMore }: { transcript: any[]; 
       </div>
 
       {/* Radar chart directly below badges */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', margin: '4px 0 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', margin: '0' }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: 'visible' }}>
           {/* Grid lines */}
           {gridLevels.map((level, li) => {

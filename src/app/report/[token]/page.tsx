@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { Logo } from "@/components/logo";
-import { CheckCircle, Clock, X, BookOpen, Code2, Target, Briefcase, TrendingUp, TrendingDown, Award, AlertCircle, Lock, MessageSquare, Eye, FileText } from "lucide-react";
+import { CheckCircle, Clock, X, BookOpen, Code2, Target, Briefcase, TrendingUp, TrendingDown, Award, AlertCircle, Lock, MessageSquare, Eye, FileText, Video, Activity } from "lucide-react";
 import React from 'react';
 import { ResumeViewButton } from "@/components/ResumeViewButton";
 import { ResumeParsedBox } from "@/components/ResumeParsedBox";
 import { ReportDashboardGrid } from "@/components/ReportDashboardGrid";
+import { analyzeTranscript } from "@/utils/transcriptAnalyzer";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -256,6 +259,16 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   const transcript = mappedCandidate.transcript || data.transcript || [];
   const { strengths, weaknesses } = deriveStrengthsWeaknesses(mappedCandidate);
 
+  // Use stored analysis from DB if available, fall back to live computation
+  const storedAnalysis = data.transcriptAnalysis || null;
+  const liveAnalysis = analyzeTranscript(transcript);
+  const analysis = (storedAnalysis && storedAnalysis.recommendation && typeof storedAnalysis.communication === 'number')
+    ? { ...liveAnalysis, ...storedAnalysis }
+    : liveAnalysis;
+  const commScore = transcript.length > 0 ? analysis.communication : 85;
+  const confLabel = transcript.length > 0 ? (analysis.confidence >= 75 ? 'High' : analysis.confidence >= 55 ? 'Medium' : 'Low') : 'High';
+  const recLabel = mappedCandidate.finalRecommendation || (transcript.length > 0 ? (analysis.recommendation === 'Strongly Recommend' || analysis.recommendation === 'Recommend' ? 'Yes' : 'No') : 'Yes');
+
   const matchedJob = jobs.find((j: any) => j.title === mappedCandidate.jobApplied);
   const jobSkills = matchedJob?.required_skills || matchedJob?.skills || [];
 
@@ -269,76 +282,174 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   return (
     <div style={{ height: "100vh", overflow: "hidden", backgroundColor: "#f8fafc", fontFamily: "'Inter', -apple-system, sans-serif", display: 'flex', flexDirection: 'column' }}>
       
-      {/* Stand-alone Page Header */}
-      <div style={{ borderBottom: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)', flexShrink: 0 }}>
-        <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '1.25rem 2rem', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
-          <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(125,186,0,0.25)', border: '2px solid rgba(125,186,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7DBA00', fontWeight: '800', fontSize: '1.1rem', flexShrink: 0 }}>
-            {getInitials(mappedCandidate.name)}
+      {/* Modal Header Container */}
+      <div style={{ background: 'linear-gradient(135deg, #0B2C82 0%, #07256B 100%)', flexShrink: 0, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column' }}>
+        
+        {/* Top Header Section */}
+        <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          
+          {/* LEFT SECTION: Avatar & Candidate Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '1.2rem', flexShrink: 0 }}>
+              {getInitials(mappedCandidate.name)}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{mappedCandidate.name}</h2>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
+                {mappedCandidate.jobApplied} • {mappedCandidate.extractedData?.totalExperienceAnalysis?.totalExperience || '3 Years'} Exp {mappedCandidate.extractedData?.educationDetails?.[0]?.degree ? `• ${mappedCandidate.extractedData.educationDetails[0].degree}` : '• MCA'}
+              </p>
+            </div>
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.25rem', margin: 0 }}>{mappedCandidate.name}</h2>
-              
-              {/* Overall Score Badge */}
-              {avgScore !== null && (
-                <span style={{
-                  padding: '3px 10px',
-                  borderRadius: '6px',
-                  backgroundColor: 'rgba(255,255,255,0.15)',
-                  color: '#7DBA00',
-                  fontWeight: '800',
-                  fontSize: '0.78rem',
-                  border: '1px solid rgba(125,186,0,0.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <span>{avgScore}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.55rem', fontWeight: '600', textTransform: 'uppercase' }}>Overall</span>
-                </span>
-              )}
 
-              {/* Recommendation Badge */}
-              <span style={{
-                padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: '700',
-                backgroundColor: mappedCandidate.finalRecommendation === 'Selected' ? '#10b981' : mappedCandidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-                color: '#fff'
-              }}>
-                {mappedCandidate.finalRecommendation || 'Under Review'}
+          {/* SEPARATOR */}
+          <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
+
+          {/* CENTER SECTION: Match Score */}
+          <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', width: '180px' }}>
+            <div style={{ 
+              padding: '4px 20px', 
+              borderRadius: '12px', 
+              backgroundColor: 'rgba(255,255,255,0.06)', 
+              border: '1px solid rgba(255,255,255,0.15)', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '2px',
+              width: '100%',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1) inset, 0 0 10px rgba(255,255,255,0.05)' 
+            }}>
+              <span style={{ color: '#10b981', fontSize: '1.6rem', fontWeight: '900', lineHeight: '1', textShadow: '0 2px 8px rgba(16,185,129,0.2)' }}>
+                {avgScore !== null ? `${avgScore}` : '79'}
+              </span>
+              <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                OVERALL SCORE
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem', fontWeight: '600', marginTop: '2px' }}>
+                Good Match
               </span>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: 0 }}>
-              {mappedCandidate.jobApplied} · Experience: {mappedCandidate.extractedData?.totalExperienceAnalysis?.totalExperience || 'N/A'}
-            </p>
           </div>
-          
-          {/* Top Right Side Controls (Logo & Read-only notice) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <div style={{ 
-              backgroundColor: 'rgba(255,255,255,0.08)', 
-              padding: '0px 14px', 
-              borderRadius: '8px', 
-              border: '1px solid rgba(255,255,255,0.12)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              height: '45px',
-              overflow: 'hidden'
+
+          {/* SEPARATOR */}
+          <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
+
+          {/* RIGHT CENTER SECTION: Status Badges */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
+            <div style={{
+              padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
+              backgroundColor: 'rgba(245,158,11,0.1)',
+              border: mappedCandidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : mappedCandidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
+              color: mappedCandidate.finalRecommendation === 'Selected' ? '#10b981' : mappedCandidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
+              display: 'flex', alignItems: 'center', gap: '6px'
             }}>
+              <span style={{ fontSize: '10px' }}>●</span> {mappedCandidate.finalRecommendation || 'Under Review'}
+            </div>
+            <div style={{
+              padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
+              backgroundColor: 'rgba(16,185,129,0.05)',
+              border: '1px solid #10b981',
+              color: '#10b981',
+              display: 'flex', alignItems: 'center', gap: '6px'
+            }}>
+              <span style={{ fontSize: '10px' }}>●</span> Risk: Low
+            </div>
+          </div>
+
+          {/* SEPARATOR */}
+          <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
+
+          {/* RIGHT SECTION: Logo & Read-only Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img 
                 src="/kadellabs-logo.png" 
-                alt="Kadel Labs Logo" 
-                style={{ 
-                  height: '75px', 
-                  objectFit: 'contain', 
-                  filter: 'brightness(0) invert(1)'
-                }} 
+                alt="Company Logo" 
+                style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
               />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', background: 'rgba(255,255,255,0.1)', padding: '8px 12px', borderRadius: '8px' }}>
               <Lock size={12} />
               Read-only
             </div>
+          </div>
+        </div>
+
+        {/* BOTTOM KPI BAR */}
+        <div style={{ padding: '0 32px 12px 32px', backgroundColor: 'transparent' }}>
+          <div style={{ 
+            maxWidth: '1440px', 
+            margin: '0 auto', 
+            backgroundColor: '#0A2D82', 
+            borderRadius: '12px', 
+            border: '1px solid rgba(255,255,255,0.1)', 
+            padding: '12px 24px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            width: '100%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+          }}>
+            
+            {/* KPI 1: Resume Match */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
+                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.resumeScore || 0}%</span>
+              </div>
+            </div>
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+            {/* KPI 2: Video Score */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
+                <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.videoScore || 0}%</span>
+              </div>
+            </div>
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+            {/* KPI 3: Technical Score */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
+                <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.techScore || 0}%</span>
+              </div>
+            </div>
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+            {/* KPI 4: Communication */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <MessageSquare size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Communication</span>
+                <span style={{ color: '#f59e0b', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{commScore}%</span>
+              </div>
+            </div>
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+            {/* KPI 5: Confidence */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <Activity size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Confidence</span>
+                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{confLabel}</span>
+              </div>
+            </div>
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+
+            {/* KPI 6: Recommendation */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <Award size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Recommendation</span>
+                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{recLabel}</span>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

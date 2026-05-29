@@ -228,15 +228,29 @@ const Pill = ({ label, value, color, bg }: { label: string; value: string; color
 
 interface TranscriptIntelligenceEngineProps {
   transcript: TranscriptEntry[];
+  storedAnalysis?: Partial<TranscriptAnalysisResult> | null;
 }
 
-export function TranscriptIntelligenceEngine({ transcript }: TranscriptIntelligenceEngineProps) {
+export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: TranscriptIntelligenceEngineProps) {
   const [showMore, setShowMore] = useState(false);
 
-  const analysis: TranscriptAnalysisResult = useMemo(
+  const liveAnalysis: TranscriptAnalysisResult = useMemo(
     () => analyzeTranscript(transcript),
     [transcript]
   );
+
+  // Use stored analysis from DB if available (more accurate — computed at upload time)
+  // Fall back to live computation if stored analysis is missing any critical fields
+  const analysis: TranscriptAnalysisResult = useMemo(() => {
+    if (storedAnalysis && 
+        storedAnalysis.recommendation && 
+        Array.isArray(storedAnalysis.keyObservations) && 
+        storedAnalysis.keyObservations.length > 0 &&
+        Array.isArray(storedAnalysis.leadershipIndicators)) {
+      return { ...liveAnalysis, ...storedAnalysis } as TranscriptAnalysisResult;
+    }
+    return liveAnalysis;
+  }, [liveAnalysis, storedAnalysis]);
 
   const hasTranscript = transcript && transcript.length > 0;
 
@@ -279,7 +293,7 @@ export function TranscriptIntelligenceEngine({ transcript }: TranscriptIntellige
     { label: 'Problem Solving', value: analysis.problemSolving, color: '#f59e0b' },
     { label: 'Leadership', value: analysis.leadership, color: '#10b981' },
     { label: 'Confidence', value: analysis.confidence, color: '#ef4444' },
-    { label: 'Professionalism', value: analysis.professionalism * 10, color: '#0ea5e9' },
+    { label: 'Professionalism', value: analysis.professionalism, color: '#0ea5e9' },
   ];
 
   const toneConfig: Record<string, { bg: string; color: string }> = {
@@ -311,40 +325,6 @@ export function TranscriptIntelligenceEngine({ transcript }: TranscriptIntellige
   return (
     <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-      {/* ── SECTION HEADER ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 18px', borderRadius: '14px',
-        background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1e3a8a 100%)',
-        boxShadow: '0 4px 16px rgba(14,45,123,0.2)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '34px', height: '34px', borderRadius: '10px',
-            backgroundColor: 'rgba(125,186,0,0.2)', border: '1.5px solid rgba(125,186,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <Brain size={18} color="#7DBA00" />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: '800', color: '#fff' }}>
-              Transcript Intelligence Dashboard
-            </p>
-            <p style={{ margin: 0, fontSize: '0.68rem', color: 'rgba(255,255,255,0.55)' }}>
-              Analyzed {transcript.length} Q&A pairs · AI-Powered Insights
-            </p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{
-            fontSize: '0.65rem', fontWeight: '700', color: '#7DBA00',
-            backgroundColor: 'rgba(125,186,0,0.15)', border: '1px solid rgba(125,186,0,0.3)',
-            padding: '3px 10px', borderRadius: '999px'
-          }}>
-            {analysis.recommendation}
-          </span>
-        </div>
-      </div>
 
       {/* ── TOP 4 BADGE PILLS ── */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -400,7 +380,7 @@ export function TranscriptIntelligenceEngine({ transcript }: TranscriptIntellige
               { label: 'Problem Solving', value: analysis.problemSolving,       color: '#f59e0b',  icon: Target },
               { label: 'Leadership',      value: analysis.leadership,           color: '#10b981',  icon: Users },
               { label: 'Confidence',      value: analysis.confidence,           color: '#ef4444',  icon: Star },
-              { label: 'Professionalism',  value: analysis.professionalism * 10, color: '#0ea5e9',  icon: Award },
+              { label: 'Professionalism',  value: analysis.professionalism, color: '#0ea5e9',  icon: Award },
             ].map((s, i) => (
               <div key={i} style={{
                 padding: '12px', borderRadius: '14px',
