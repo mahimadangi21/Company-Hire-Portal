@@ -231,32 +231,33 @@ export default function InterviewPage() {
     });
   };
 
-  const startInterview = async () => {
-    // 1. Request full screen synchronously inside the user gesture
+  // Split into sync (fullscreen) + async (DB update + speech)
+  const handleBeginInterview = () => {
+    // STEP 1: Fullscreen MUST be called synchronously in the click handler
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(e => {
-        console.error("Fullscreen error:", e);
-        alert("Warning: Could not enter full screen. Please ensure your browser allows full screen.");
+        console.warn("Fullscreen blocked:", e);
       });
     }
-    
+
+    // STEP 2: Switch stage immediately
     setStage("interview");
 
-    // 2. Wait for backend to confirm the 'in_progress' status
-    try {
-      await fetch(`/api/interviews/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "in_progress" })
-      });
-    } catch (err) {
-      console.error("Failed to update status:", err);
-    }
-    
-    // 3. Start AI voice
-    if (interview) {
-      await speakQuestion(interview.questions[0]);
-    }
+    // STEP 3: Run async work in background (DB update + speech)
+    (async () => {
+      try {
+        await fetch(`/api/interviews/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "in_progress", started_at: new Date().toISOString() })
+        });
+      } catch (err) {
+        console.error("Failed to update status:", err);
+      }
+      if (interview) {
+        await speakQuestion(interview.questions[0]);
+      }
+    })();
   };
 
   const handleEarlyTermination = async () => {
@@ -708,13 +709,13 @@ export default function InterviewPage() {
                 </div>
               </div>
 
-              <Button
-                onClick={startInterview}
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20"
+              <button
+                onClick={handleBeginInterview}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center transition-all"
               >
                 <Play className="w-4 h-4 mr-2" />
                 Begin Interview
-              </Button>
+              </button>
             </div>
           </div>
         </div>
