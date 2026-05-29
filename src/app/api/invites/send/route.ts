@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         subject,
         bodyText: customBody,
         senderEmail,
+        replyToEmail: body.replyToEmail,
       }),
     });
 

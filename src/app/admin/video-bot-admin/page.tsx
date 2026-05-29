@@ -25,6 +25,7 @@ const VideoBot = () => {
   const [inviteBody, setInviteBody] = useState('');
   const [senders, setSenders] = useState([]);
   const [selectedSender, setSelectedSender] = useState('');
+  const [replyTo, setReplyTo] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
   
   // Dynamic Departments from jobs
@@ -60,6 +61,7 @@ const VideoBot = () => {
           if (data.emails && data.emails.length > 0) {
             setSenders(data.emails);
             setSelectedSender(data.emails[0]);
+            setReplyTo(data.emails[0]);
           }
         }
       } catch (err) {
@@ -156,7 +158,8 @@ const VideoBot = () => {
           sub_department: subDepartment,
           subject: subject,
           body: body,
-          senderEmail: senderEmail
+          senderEmail: senderEmail,
+          replyToEmail: arguments[8] // since handleSendInvite takes 8 arguments + replyTo = 9 arguments
         })
       });
 
@@ -298,7 +301,35 @@ const VideoBot = () => {
 
             {inviteCandidateId && (
               <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Edit Email Details</h4>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Email Configuration</h4>
+                
+                <div className="grid grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Send From</label>
+                    <select 
+                      className="form-select" 
+                      value={selectedSender}
+                      onChange={e => setSelectedSender(e.target.value)}
+                    >
+                      {senders.map(email => (
+                        <option key={`sender-${email}`} value={email}>{email}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Receive Replies To</label>
+                    <select 
+                      className="form-select" 
+                      value={replyTo}
+                      onChange={e => setReplyTo(e.target.value)}
+                    >
+                      {senders.map(email => (
+                        <option key={`reply-${email}`} value={email}>{email}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
                   <label className="form-label" style={{ fontSize: '0.75rem' }}>Candidate Email</label>
                   <input 
@@ -345,7 +376,8 @@ const VideoBot = () => {
                     inviteSubDepartment,
                     inviteSubject,
                     inviteBody,
-                    selectedSender
+                    selectedSender,
+                    replyTo
                   );
                 }
               }}

@@ -1,41 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { getInterviewUrl } from "@/lib/utils";
+import { getServiceSupabase } from "@/lib/supabase/server";
+import { decrypt } from "@/lib/encryption";
 
-function getTransporter(senderEmail?: string) {
+async function getTransporter(senderEmail?: string, replyToEmail?: string) {
   const accountsStr = process.env.OUTLOOK_ACCOUNTS || "";
   const gmailUser = process.env.GMAIL_USER || "";
   const gmailPass = process.env.GMAIL_APP_PASSWORD || "";
 
-  // 1. If a specific sender is requested, look for it in OUTLOOK_ACCOUNTS
-  if (senderEmail && accountsStr) {
-    const matched = accountsStr.split(";").filter(Boolean).find(acc => {
-      const [email] = acc.split(":");
-      return email && email.trim().toLowerCase() === senderEmail.trim().toLowerCase();
-    });
+  // 1. If a specific sender is requested, look for it in DB first
+  if (senderEmail) {
+    const supabase = getServiceSupabase();
+    const { data } = await supabase
+      .from("email_settings")
+      .select("*")
+      .ilike("email", senderEmail.trim())
+      .maybeSingle();
 
-    if (matched) {
-      const [, password] = matched.split(":");
+    if (data && data.encrypted_password) {
+      const password = decrypt(data.encrypted_password);
       if (password) {
-        return {
-          transporter: nodemailer.createTransport({
-            host: "smtp.office365.com",
-            port: 587,
-            secure: false, // TLS
-            auth: {
-              user: senderEmail.trim(),
-              pass: password.trim(),
-            },
-            tls: {
-              ciphers: 'SSLv3',
-              rejectUnauthorized: false
-            }
-          }),
-          fromEmail: senderEmail.trim()
-        };
+        if (data.provider === 'outlook') {
+          return {
+            transporter: nodemailer.createTransport({
+              host: "smtp.office365.com",
+              port: 587,
+              secure: false, // TLS
+              auth: {
+                user: data.email,
+                pass: password,
+              },
+              tls: {
+                ciphers: 'SSLv3',
+                rejectUnauthorized: false
+              }
+            }),
+            fromEmail: data.email,
+            replyTo: replyToEmail || data.email
+          };
+        } else {
+          return {
+            transporter: nodemailer.createTransport({
+              service: "gmail",
+              auth: {
+                user: data.email,
+                pass: password,
+              },
+            }),
+            fromEmail: data.email,
+            replyTo: replyToEmail || data.email
+          };
+        }
       }
     }
   }
+
+  // Fallback 1: OUTLOOK_ACCOUNTS ENV
 
   // 2. If it matches GMAIL_USER
   if (senderEmail && gmailUser && senderEmail.trim().toLowerCase() === gmailUser.trim().toLowerCase()) {
@@ -102,7 +123,8 @@ function getTransporter(senderEmail?: string) {
         pass: gmailPass,
       },
     }),
-    fromEmail: gmailUser
+    fromEmail: gmailUser,
+    replyTo: replyToEmail || gmailUser
   };
 }
 
@@ -367,10 +389,11 @@ export async function POST(req: NextRequest) {
     }
 
     const fromName = process.env.MAIL_FROM_NAME || "kadellabs";
-    const { transporter, fromEmail } = getTransporter(body.senderEmail);
+    const { transporter, fromEmail, replyTo } = await getTransporter(body.senderEmail, body.replyToEmail);
 
     await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
+      replyTo,
       to,
       subject,
       html,

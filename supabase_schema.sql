@@ -73,3 +73,15 @@ CREATE POLICY "Allow all operations for authenticated users" ON public.jobs FOR 
 CREATE POLICY "Allow all operations for authenticated users" ON public.candidates FOR ALL USING (true);
 CREATE POLICY "Allow all operations for authenticated users" ON public.questions_bank FOR ALL USING (true);
 CREATE POLICY "Allow all operations for authenticated users" ON public.interviews FOR ALL USING (true);
+
+-- 5. EMAIL_SETTINGS Table
+CREATE TABLE IF NOT EXISTS public.email_settings (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  email text NOT NULL UNIQUE,
+  encrypted_password text NOT NULL,
+  provider text DEFAULT 'gmail',
+  created_at timestamp with time zone DEFAULT now()
+);
+
+ALTER TABLE public.email_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all operations for authenticated users" ON public.email_settings FOR ALL USING (true);
