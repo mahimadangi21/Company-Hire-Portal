@@ -1,3 +1,9 @@
+if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
+  try {
+    delete (globalThis as any).localStorage;
+  } catch (e) {}
+}
+
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 

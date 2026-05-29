@@ -9,15 +9,26 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   
   const getPageTitle = () => {
-    switch(pathname) {
-      case '/admin': return 'Dashboard Overview';
-      case '/admin/jobs': return 'Department';
-      case '/admin/resumes': return 'Resume Upload & Parsing';
-      case '/admin/video-bot': return 'Video Bot Screening';
-      case '/admin/scheduler': return 'Technical Interview Scheduler';
-      case '/admin/reports': return 'Reports & Evaluation';
-      default: return 'InterviewOS';
+    if (pathname === '/admin') return 'Dashboard Overview';
+    if (pathname?.startsWith('/admin/jobpostings')) return 'Department';
+    if (pathname?.startsWith('/admin/resumeupload')) return 'Resume Upload & Parsing';
+    if (pathname?.startsWith('/admin/video-bot-admin')) return 'Video Bot Screening';
+    if (pathname?.startsWith('/admin/technicalscheduler')) return 'Technical Scheduler';
+    if (pathname?.startsWith('/admin/reports')) return 'Reports & Evaluation';
+    if (pathname?.startsWith('/admin/settings')) return 'Settings';
+
+    const segments = pathname?.split('/').filter(Boolean) || [];
+    if (segments.length > 1) {
+      const lastSegment = segments[segments.length - 1];
+      const isId = /^[0-9a-fA-F-]+$/.test(lastSegment) || /^\d+$/.test(lastSegment);
+      if (isId && segments.length > 2) {
+        const preLast = segments[segments.length - 2];
+        return preLast.charAt(0).toUpperCase() + preLast.slice(1).replace(/[-_]/g, ' ');
+      }
+      return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/[-_]/g, ' ');
     }
+
+    return 'Dashboard Overview';
   };
 
   return (

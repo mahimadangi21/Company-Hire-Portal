@@ -11,6 +11,7 @@ const JobPostings = () => {
   const [department, setDepartment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingJob, setEditingJob] = useState<any>(null);
+  const formRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     refreshJobs();
@@ -31,10 +32,23 @@ const JobPostings = () => {
     try {
       let res;
       if (editingJob) {
-        res = await apiFetch('/api/jobs', {
-          method: 'PATCH',
-          body: JSON.stringify({ id: editingJob.id, title: title.trim(), department: department.trim() })
-        });
+        if (editingJob.isParentEdit) {
+          const jobsToUpdate = jobs.filter((j: any) => j.department === editingJob.oldDeptName);
+          await Promise.all(
+            jobsToUpdate.map((j: any) =>
+              apiFetch('/api/jobs', {
+                method: 'PATCH',
+                body: JSON.stringify({ id: j.id, department: department.trim() })
+              })
+            )
+          );
+          res = { ok: true };
+        } else {
+          res = await apiFetch('/api/jobs', {
+            method: 'PATCH',
+            body: JSON.stringify({ id: editingJob.id, title: title.trim(), department: department.trim() })
+          });
+        }
       } else {
         res = await apiFetch('/api/jobs', {
           method: 'POST',
@@ -49,7 +63,7 @@ const JobPostings = () => {
         setShowForm(false);
         refreshJobs(); // Reload jobs from Supabase
       } else {
-        const err = await res.json();
+        const err = await (res as any).json();
         alert(err.error || "Failed to save department");
       }
     } catch (e) {
@@ -64,7 +78,21 @@ const JobPostings = () => {
     setTitle(job.title);
     setDepartment(job.department || '');
     setShowForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  const handleEditParentDept = (deptName: string, subDepts: any[]) => {
+    const firstJob = subDepts[0];
+    if (!firstJob) return;
+    setEditingJob({ ...firstJob, isParentEdit: true, oldDeptName: deptName });
+    setTitle('');
+    setDepartment(deptName);
+    setShowForm(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const handleDeleteJob = async (job: any) => {
@@ -103,17 +131,20 @@ const JobPostings = () => {
           setEditingJob(null);
           setTitle('');
           setDepartment('');
-          setShowForm(!showForm);
+          setShowForm(true);
+          setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
         }}>
           <Plus size={16} /> Create New Department Configuration
         </button>
       </div>
 
       {showForm && (
-        <div className="card animate-slide-up" style={{ backgroundColor: 'var(--gray-50)' }}>
+        <div ref={formRef} className="card animate-slide-up" style={{ backgroundColor: 'var(--gray-50)', scrollMarginTop: '2rem' }}>
           <div className="card-header">
             <h3 className="card-title" style={{ fontSize: '1.125rem' }}>
-              {editingJob ? 'Edit Department Configuration' : 'New Department Configuration'}
+              {editingJob ? (editingJob.isParentEdit ? 'Edit Parent Department' : 'Edit Department Configuration') : 'New Department Configuration'}
             </h3>
           </div>
           <div className="card-body">
@@ -143,8 +174,11 @@ const JobPostings = () => {
                    placeholder="e.g. Frontend, Backend, UI/UX"
                    value={title}
                    onChange={(e) => setTitle(e.target.value)}
+                   disabled={editingJob?.isParentEdit}
                  />
-                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>The sub-department under the parent department.</span>
+                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                   {editingJob?.isParentEdit ? 'Sub-departments cannot be edited when editing the parent department.' : 'The sub-department under the parent department.'}
+                 </span>
               </div>
             </div>
              <div className="flex gap-4">
@@ -182,6 +216,9 @@ const JobPostings = () => {
                   <span className="badge" style={{ backgroundColor: 'var(--gray-100)', color: 'var(--text-main)', marginLeft: '0.5rem' }}>
                     {subDepts.length} {subDepts.length === 1 ? 'Sub-Department' : 'Sub-Departments'}
                   </span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn btn-ghost" style={{ padding: '0.25rem' }} onClick={() => handleEditParentDept(deptName, subDepts)} title="Edit Parent Department"><Edit2 size={16} /></button>
                 </div>
               </div>
               <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>

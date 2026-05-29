@@ -1,3 +1,9 @@
+if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
+  try {
+    delete (globalThis as any).localStorage;
+  } catch (e) {}
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["nodemailer", "pdf2json"],
