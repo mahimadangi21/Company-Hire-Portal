@@ -600,12 +600,21 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
         </div>
 
         {/* Small Tech Video Player in Column 3 */}
-        <div style={{ width: '144px', height: '81px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
+        <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
           <video 
             src={displayVideoUrl}
             controls
             playsInline
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+            onClick={(e) => {
+              const video = e.currentTarget;
+              if (video.paused) {
+                video.play().catch(err => console.error("Video play failed:", err));
+              } else {
+                video.pause();
+              }
+            }}
+            title="Click to Play / Pause"
           />
         </div>
 
