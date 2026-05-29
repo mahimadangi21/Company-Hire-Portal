@@ -745,7 +745,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         </div>
 
         {/* Small Tech Video Player in Column 3 */}
-        <div style={{ width: '100%', height: '240px', margin: '0 auto 8px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
+        <div style={{ width: '100%', aspectRatio: '16/9', height: 'auto', margin: '0 auto 8px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
           <EmbeddableVideo 
             key={technicalVideoUrl}
             controls
