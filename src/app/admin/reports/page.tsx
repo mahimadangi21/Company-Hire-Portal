@@ -746,6 +746,17 @@ const Reports = () => {
         analysisVersion: "2.0.0"
       };
 
+      const transcriptIntelligenceScore = Math.round(
+        analysis.communication * 0.20 +
+        analysis.technical * 0.35 +
+        analysis.problemSolving * 0.15 +
+        analysis.leadership * 0.10 +
+        analysis.confidence * 0.10 +
+        analysis.professionalism * 0.10
+      );
+
+      console.log("FINAL TRANSCRIPT SCORE:", transcriptIntelligenceScore);
+
       // Step 3 payload
       const payload = {
         id: candidateId,
@@ -753,7 +764,7 @@ const Reports = () => {
         video_status: 'Completed',
         tech_status: 'Completed',
         video_score: analysis.communication,
-        tech_score: analysis.technical,
+        tech_score: transcriptIntelligenceScore,
         final_recommendation: analysis.recommendation
       };
 
