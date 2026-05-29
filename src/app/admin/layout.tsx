@@ -1,5 +1,11 @@
 "use client";
 
+if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
+  try {
+    delete (globalThis as any).localStorage;
+  } catch (e) {}
+}
+
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { AppProvider } from '@/components/admin/context/AppContext';

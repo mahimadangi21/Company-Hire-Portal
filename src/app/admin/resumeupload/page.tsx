@@ -211,7 +211,7 @@ const ResumeUpload = () => {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Upload Resumes</h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Select a job listed and upload applicant resumes for AI parsing.</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Select a Department and Sub Department and upload applicant resumes for AI parsing.</p>
         </div>
         <div className="card-body">
           <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
@@ -337,7 +337,7 @@ const ResumeUpload = () => {
               <tr>
                 <th>Candidate Name</th>
                 <th>Email</th>
-                <th>Job Applied</th>
+                <th>Sub Department</th>
                 <th>Actions</th>
               </tr>
             </thead>
