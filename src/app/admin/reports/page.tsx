@@ -933,7 +933,30 @@ const Reports = () => {
       console.log(`=== VIDEO UPLOAD START ===`);
       console.log(`Candidate: ${candidateId}, Original file: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
 
-      // ── Step 1: Try FFmpeg compression ─────────────────────────────────────
+      // ── Step 1: FFmpeg compression (two-pass if needed) ───────────────────
+      const MAX_UPLOAD_MB = 48; // Supabase free tier hard limit is ~50MB per object
+
+      const runCompression = async (ffmpeg: any, inputName: string, outputName: string, pass: number) => {
+        const isPass2 = pass === 2;
+        const args = [
+          '-i', inputName,
+          '-c:v',    'libx264',
+          '-preset', 'ultrafast',
+          '-crf',    isPass2 ? '36' : '32',          // Pass2: crf 36 (more aggressive)
+          '-r',      '24',
+          '-vf',     isPass2
+            ? "scale='min(640,iw)':-2"               // Pass2: 360p max
+            : "scale='min(960,iw)':-2",              // Pass1: 480-540p max
+          '-b:v',    isPass2 ? '500k' : '700k',      // Pass2: 500k, Pass1: 700k
+          '-c:a',    'aac',
+          '-b:a',    '96k',
+          '-movflags', '+faststart',                 // Optimise for streaming
+          outputName,
+        ];
+        console.log(`[FFmpeg] Pass ${pass} args:`, args.join(' '));
+        await ffmpeg.exec(args);
+      };
+
       try {
         setUploadStatusMessage("Loading FFmpeg...");
         const { FFmpeg } = await import('@ffmpeg/ffmpeg');
@@ -963,45 +986,94 @@ const Reports = () => {
         }
 
         const inputExt  = file.name.split('.').pop() || 'mp4';
-        const inputName = `input_${Date.now()}.${inputExt}`;
-        const outputName = `output_${Date.now()}.mp4`;
+        const ts        = Date.now();
+        const inputName = `input_${ts}.${inputExt}`;
+        const out1Name  = `out1_${ts}.mp4`;
+        const out2Name  = `out2_${ts}.mp4`;
+
+        const originalMB = file.size / 1024 / 1024;
+        console.log("=== COMPRESSION START ===");
+        console.log("Original Size:", originalMB.toFixed(2), "MB");
 
         await ffmpeg.writeFile(inputName, await fetchFile(file));
         setUploadStatusMessage("Compressing... 0%");
 
-        await ffmpeg.exec([
-          '-i', inputName,
-          '-vcodec', 'libx264',
-          '-acodec', 'aac',
-          '-preset', 'ultrafast',
-          '-vf', "scale='min(1280,iw)':-2",
-          '-r', '24',
-          '-crf', '28',
-          '-b:v', '1000k',
-          outputName,
-        ]);
+        // ── Pass 1: crf32, 480p, 700k ───────────────────────────────────────
+        await runCompression(ffmpeg, inputName, out1Name, 1);
 
-        const compressedData = await ffmpeg.readFile(outputName);
-        const compressedBlob = new Blob([compressedData], { type: 'video/mp4' });
+        const pass1Data = await ffmpeg.readFile(out1Name);
+        const pass1Blob = new Blob([pass1Data], { type: 'video/mp4' });
+        const pass1MB   = pass1Blob.size / 1024 / 1024;
 
-        // ── Debug: Verify compressed file ────────────────────────────────────
-        console.log("Compressed blob size:", compressedBlob.size);
-        if (!compressedBlob || compressedBlob.size === 0) {
+        console.log("Compressed Size (Pass 1):", pass1MB.toFixed(2), "MB");
+        console.log("Reduction %:", (((file.size - pass1Blob.size) / file.size) * 100).toFixed(1) + "%");
+
+        let compressedBlob = pass1Blob;
+
+        // ── Pass 2 (emergency): crf36, 360p, 500k — only if still too large ─
+        if (pass1MB > MAX_UPLOAD_MB) {
+          console.warn(`Pass 1 output (${pass1MB.toFixed(2)}MB) exceeds ${MAX_UPLOAD_MB}MB limit — running emergency Pass 2...`);
+          setUploadStatusMessage("Extra compression... 0%");
+
+          await runCompression(ffmpeg, inputName, out2Name, 2);
+
+          const pass2Data = await ffmpeg.readFile(out2Name);
+          const pass2Blob = new Blob([pass2Data], { type: 'video/mp4' });
+          const pass2MB   = pass2Blob.size / 1024 / 1024;
+
+          console.log("Compressed Size (Pass 2):", pass2MB.toFixed(2), "MB");
+          console.log("Reduction %:", (((file.size - pass2Blob.size) / file.size) * 100).toFixed(1) + "%");
+
+          if (pass2Blob.size === 0) {
+            throw new Error("Emergency compression produced an empty file");
+          }
+
+          if (pass2MB > MAX_UPLOAD_MB) {
+            throw new Error(
+              `Video still too large after compression (${pass2MB.toFixed(1)} MB). ` +
+              `Maximum allowed is ${MAX_UPLOAD_MB} MB. Please use a shorter clip.`
+            );
+          }
+
+          compressedBlob = pass2Blob;
+          try { await ffmpeg.deleteFile(out2Name); } catch { /* ignore */ }
+        }
+
+        if (compressedBlob.size === 0) {
           throw new Error("Compressed file missing or empty after FFmpeg");
         }
+
+        const compressedMB = compressedBlob.size / 1024 / 1024;
+        console.log("=== COMPRESSION RESULT ===");
+        console.log("Original Size:", originalMB.toFixed(2), "MB");
+        console.log("Compressed Size:", compressedMB.toFixed(2), "MB");
+        console.log("Reduction %:", (((file.size - compressedBlob.size) / file.size) * 100).toFixed(1) + "%");
 
         const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
         finalFileToUpload = new File([compressedBlob], `${baseName}_compressed.mp4`, { type: 'video/mp4' });
         isCompressed = true;
-        console.log(`Compression OK — new size: ${(finalFileToUpload.size / (1024 * 1024)).toFixed(2)} MB (from ${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
 
         try { await ffmpeg.deleteFile(inputName); } catch { /* ignore */ }
-        try { await ffmpeg.deleteFile(outputName); } catch { /* ignore */ }
+        try { await ffmpeg.deleteFile(out1Name); } catch { /* ignore */ }
 
-      } catch (compressErr) {
+      } catch (compressErr: any) {
+        // If this is a user-facing size error, rethrow — don't fall back to original
+        if (compressErr.message?.includes('too large after compression') ||
+            compressErr.message?.includes('Maximum allowed')) {
+          throw compressErr;
+        }
         console.warn("FFmpeg compression failed — falling back to original file:", compressErr);
         finalFileToUpload = file;
         isCompressed = false;
+
+        // Still enforce the 50MB limit on the original file
+        const originalMB = file.size / 1024 / 1024;
+        if (originalMB > MAX_UPLOAD_MB) {
+          throw new Error(
+            `File is ${originalMB.toFixed(1)} MB and compression failed. ` +
+            `Maximum allowed upload is ${MAX_UPLOAD_MB} MB. Please use a shorter/smaller video.`
+          );
+        }
       }
 
       // ── Step 2: Upload (compressed or original) ─────────────────────────────
