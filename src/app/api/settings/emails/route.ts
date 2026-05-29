@@ -41,13 +41,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const trimmedEmail = typeof email === 'string' ? email.trim() : '';
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
+      return NextResponse.json(
+        { error: "Please provide a valid email address following standard email format rules." },
+        { status: 400 }
+      );
+    }
+
     const encrypted_password = encrypt(password);
 
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
       .from("email_settings")
       .insert({
-        email,
+        email: trimmedEmail,
         encrypted_password,
         provider: provider || 'gmail'
       })

@@ -35,11 +35,18 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!newEmail || !newPassword) return;
 
+    const trimmedEmail = newEmail.trim();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      alert('Please enter a valid email address (e.g., careers@kadellabs.com).');
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await apiFetch('/api/settings/emails', {
         method: 'POST',
-        body: JSON.stringify({ email: newEmail, password: newPassword, provider })
+        body: JSON.stringify({ email: trimmedEmail, password: newPassword, provider })
       });
       if (res.ok) {
         setNewEmail('');
