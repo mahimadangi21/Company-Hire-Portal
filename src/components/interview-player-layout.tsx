@@ -15,10 +15,10 @@ function RadarChart({ scores }: { scores: Record<string, number> }) {
   const count = entries.length;
   if (count < 3) return null;
 
-  const size = 280;
+  const size = 320;
   const cx = size / 2;
   const cy = size / 2;
-  const radius = 80;
+  const radius = 90;
   const levels = 5;
 
   const angleStep = (2 * Math.PI) / count;
@@ -45,9 +45,9 @@ function RadarChart({ scores }: { scores: Record<string, number> }) {
     return `${p.x},${p.y}`;
   });
 
-  // Label positions
+  // Label positions — extra offset so long labels like "Communication" don't clip
   const labelPoints = entries.map(([label], j) => {
-    const r = radius + 24;
+    const r = radius + 30;
     const p = getPoint(j * angleStep, r);
     return { label, ...p };
   });
@@ -59,7 +59,7 @@ function RadarChart({ scores }: { scores: Record<string, number> }) {
   });
 
   return (
-    <svg width={size} height={size} className="mx-auto">
+    <svg width={size} height={size} className="mx-auto" overflow="visible">
       {/* Grid polygons */}
       {gridPolygons.map((pts, i) => (
         <polygon

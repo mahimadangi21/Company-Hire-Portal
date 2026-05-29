@@ -20,7 +20,7 @@ const ResumeUpload = () => {
   const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
   
   const getAvailableSubDepartments = (dept) => {
-    return jobs.filter(j => j.department === dept).map(j => j.title);
+    return Array.from(new Set(jobs.filter(j => j.department === dept).map(j => j.title)));
   };
 
   // Close dropdown when clicking outside
