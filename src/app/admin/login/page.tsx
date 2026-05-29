@@ -108,7 +108,7 @@ const Login = () => {
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <p suppressHydrationWarning style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             © {new Date().getFullYear()} Kadellabs. All rights reserved.
           </p>
         </div>
