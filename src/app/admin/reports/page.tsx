@@ -791,24 +791,8 @@ const Reports = () => {
 
         alert(`✅ Transcript analyzed successfully!\n\nScores:\n• Communication: ${analysis.communication}%\n• Technical: ${transcriptIntelligenceScore}%\n• Confidence: ${analysis.confidence}%\n• Recommendation: ${analysis.recommendation}`);
         
-        // Construct optimistic updated candidate to open report modal instantly (eliminates fetch latency)
-        const optimisticCandidate = {
-          ...uploadingCandidate,
-          techScore: transcriptIntelligenceScore,
-          videoScore: analysis.communication,
-          finalRecommendation: analysis.recommendation,
-          extractedData: updatedExtractedData
-        };
-        setSelectedCandidate(optimisticCandidate);
-
-        // Refresh candidates in background and sync modal state
-        const freshCandidates = await refreshCandidates();
-        if (freshCandidates) {
-          const latest = freshCandidates.find(c => c.id === candidateId);
-          if (latest) {
-            setSelectedCandidate(latest);
-          }
-        }
+        // Refresh candidates list in the table to display updated scores
+        await refreshCandidates();
       } else {
         const errData = await response.json();
         alert(errData.error || 'Failed to upload transcript.');
