@@ -36,13 +36,22 @@ export function VideoPlayerOverlay({ videoUrl, status, transcript, onTimeUpdate,
     }
   };
 
+  const resolvedVideoUrl = (() => {
+    if (!videoUrl) return "/sample-video.mp4";
+    const clean = String(videoUrl).trim();
+    if (clean === "" || clean === "—" || clean === "null" || clean === "undefined" || clean.includes("mixkit.co")) {
+      return "/sample-video.mp4";
+    }
+    return clean;
+  })();
+
   return (
     <div className={`relative rounded-2xl overflow-hidden border border-[#E2E8F0] bg-black shadow-md flex items-center justify-center group h-full w-full ${isFullscreen ? '' : 'aspect-video'}`}>
-      {videoUrl ? (
+      {resolvedVideoUrl ? (
         <>
           <video
             ref={videoRef}
-            src={videoUrl}
+            src={resolvedVideoUrl}
             controls
             controlsList="nofullscreen"
             className="w-full h-full object-contain"

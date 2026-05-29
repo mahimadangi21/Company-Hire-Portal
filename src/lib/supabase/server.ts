@@ -4,7 +4,7 @@ import { getMockSupabaseClient } from "./mockClient";
 
 function isSupabaseConfigured() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !!(url && url.startsWith("http") && !url.includes("your_supabase_project_url"));
+  return !!(url && url.startsWith("http") && !url.includes("your_supabase_project_url") && !url.includes("gsevnubsikjmonlpoeux"));
 }
 
 export async function createClient() {

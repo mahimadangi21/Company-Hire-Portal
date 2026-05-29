@@ -327,10 +327,40 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
 
   console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
 
-  const { refreshCandidates } = useAppContext();
+  const { refreshCandidates, apiFetch } = useAppContext();
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
+  const [matchedInterview, setMatchedInterview] = useState(null);
 
   const data = candidate.extractedData || {};
+
+  useEffect(() => {
+    const fetchInterviewData = async () => {
+      try {
+        if (!apiFetch) return;
+        const res = await apiFetch(`/api/interviews/list?t=${Date.now()}`);
+        if (res.ok) {
+          const list = await res.json();
+          const targetEmail = (candidate.email || candidate.extractedData?.personalInformation?.email || "").trim().toLowerCase();
+          const cleanName = (n: string) => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+          const candName = cleanName(candidate.name || "");
+          
+          if (Array.isArray(list)) {
+            const match = list.find((i: any) => {
+              const matchesEmail = targetEmail && (i.candidate_email || "").trim().toLowerCase() === targetEmail;
+              const matchesName = candName && cleanName(i.candidate_name || "") === candName;
+              return (matchesEmail || matchesName) && i.status === 'completed';
+            });
+            if (match) {
+              setMatchedInterview(match);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch interview details in modal:", err);
+      }
+    };
+    fetchInterviewData();
+  }, [candidate, apiFetch]);
 
   // Bug 1: Experience always static
   const dynamicExperience = React.useMemo(() => {
@@ -359,7 +389,20 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
   const skills = candidate.skills || [];
   const edu = data.educationDetails || [];
   const projs = data.projectAnalysis || [];
-  const transcript = candidate.transcript || data.transcript || [];
+  
+  // Use DB Whisper transcript if available, fallback to candidate transcript
+  const transcript = React.useMemo(() => {
+    if (matchedInterview?.transcript && Array.isArray(matchedInterview.transcript) && matchedInterview.transcript.length > 0) {
+      return matchedInterview.transcript.map((t: any) => ({
+        question: t.question || "",
+        answer: t.text || t.answer || "",
+        timestamp_start: t.timestamp_start,
+        timestamp_end: t.timestamp_end
+      }));
+    }
+    return candidate.transcript || data.transcript || [];
+  }, [matchedInterview, candidate, data]);
+
   const { strengths, weaknesses } = deriveStrengthsWeaknesses(candidate);
 
   // Analyze transcript dynamically for bottom KPI bar metrics
@@ -374,18 +417,40 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
     return null;
   }, [transcript]);
 
-  const commScore = analysis ? analysis.communication : 85;
-  const confLabel = analysis ? (analysis.confidence >= 75 ? 'High' : analysis.confidence >= 55 ? 'Medium' : 'Low') : 'High';
-  const recLabel = candidate.finalRecommendation || (analysis ? (analysis.recommendation === 'Strongly Recommend' || analysis.recommendation === 'Recommend' ? 'Yes' : 'No') : 'Yes');
+  // Compute scores perfectly consistent with the real database records
+  const resolvedScores = React.useMemo(() => {
+    const s = matchedInterview?.scores || {};
+    const resumeScoreVal = candidate.resumeScore || 0;
+    const videoScoreVal = candidate.videoScore || 0;
+    const techScoreVal = candidate.techScore || 0;
+    const recLabelVal = candidate.finalRecommendation || 'Under Review';
+
+    const commScoreVal = s.Communication !== undefined ? s.Communication * 20 : videoScoreVal;
+    const confidenceVal = s.Confidence !== undefined ? s.Confidence * 20 : videoScoreVal;
+    const confLabelVal = confidenceVal >= 75 ? 'High' : confidenceVal >= 55 ? 'Medium' : 'Low';
+
+    const scoresList = [resumeScoreVal, videoScoreVal, techScoreVal].filter((v) => v !== null && v !== undefined);
+    const avgScoreVal = scoresList.length ? Math.round(scoresList.reduce((a, b) => a + b, 0) / scoresList.length) : 75;
+
+    return {
+      commScore: commScoreVal,
+      confLabel: confLabelVal,
+      recLabel: recLabelVal,
+      resumeScore: resumeScoreVal,
+      videoScore: videoScoreVal,
+      techScore: techScoreVal,
+      avgScore: avgScoreVal
+    };
+  }, [matchedInterview, candidate]);
+
+  const commScore = resolvedScores.commScore;
+  const confLabel = resolvedScores.confLabel;
+  const recLabel = resolvedScores.recLabel;
+  const avgScore = resolvedScores.avgScore;
 
   // Find matching job to get required skills
   const matchedJob = jobs.find((j) => j.title === candidate.jobApplied);
   const jobSkills = matchedJob?.required_skills || matchedJob?.skills || [];
-
-  const avgScore = (() => {
-    const vals = [candidate.resumeScore, candidate.videoScore, candidate.techScore].filter(Boolean);
-    return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
-  })();
 
   return (
     <div
@@ -517,7 +582,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.resumeScore || 0}%</span>
+                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.resumeScore || 0}%</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -527,7 +592,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
-                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.videoScore || 0}%</span>
+                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.videoScore || 0}%</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -537,7 +602,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
-                  <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.techScore || 0}%</span>
+                  <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.techScore || 0}%</span>
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -599,7 +664,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
 
         {/* Dashboard Main Grid Area — no scroll */}
         <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem 1.5rem', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
-          <ReportDashboardGrid candidate={candidate} NEXT_JS_URL={NEXT_JS_URL} />
+          <ReportDashboardGrid candidate={candidate} NEXT_JS_URL={NEXT_JS_URL} matchedInterviewFromDb={matchedInterview} />
         </div>
 
       </div>
@@ -852,20 +917,35 @@ const Reports = () => {
     setUploadingVideoId(candidateId);
 
     try {
-      // 1. Generate local object URL for instant playback (if needed)
-      const objectUrl = URL.createObjectURL(file);
+      // 1. Upload file using FormData to the new upload route
+      const formData = new FormData();
+      formData.append("video", file);
+      formData.append("candidateId", candidateId);
 
-      // 2. We persist a premium public streaming video URL under videoUrl in the database
-      // so it remains permanently valid and playable after any context updates or page refreshes.
-      const fallbackVideoUrl = "https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-coffee-shop-42686-large.mp4";
+      const secret = process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "kl_internal_admin_secret_2026_secure";
+      const uploadResponse = await fetch(`${NEXT_JS_URL}/api/upload-video`, {
+        method: "POST",
+        headers: {
+          "x-api-key": secret
+        },
+        body: formData
+      });
 
+      if (!uploadResponse.ok) {
+        const errData = await uploadResponse.json();
+        throw new Error(errData.error || "Failed to upload video to server.");
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const uploadedVideoUrl = uploadResult.videoUrl;
+
+      // 2. Persist the uploaded URL under all key mappings
       const updatedExtractedData = {
         ...candidateExtractedData,
-        video: fallbackVideoUrl,
-        videoUrl: fallbackVideoUrl,
-        video_url: fallbackVideoUrl,
-        video_path: fallbackVideoUrl,
-        localVideoBlobUrl: objectUrl,
+        video: uploadedVideoUrl,
+        videoUrl: uploadedVideoUrl,
+        video_url: uploadedVideoUrl,
+        video_path: uploadedVideoUrl,
         videoUploadedAt: new Date().toISOString()
       };
 
@@ -873,6 +953,7 @@ const Reports = () => {
         id: candidateId,
         extracted_data: updatedExtractedData,
         video_status: 'Completed',
+        // Note: video_url stored inside extracted_data above (videoUrl, video_url, video keys)
         video_score: 90
       };
 
@@ -882,15 +963,15 @@ const Reports = () => {
       });
 
       if (response.ok) {
-        alert('✅ Video uploaded successfully!');
+        alert('✅ Video uploaded and saved successfully!');
         await refreshCandidates();
       } else {
         const errData = await response.json();
-        alert(errData.error || 'Failed to upload video.');
+        alert(errData.error || 'Failed to update candidate record.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error reading/uploading video file.');
+      alert(`Error uploading video: ${err.message || err}`);
     } finally {
       setUploadingVideoId(null);
       setVideoUploadCandidate(null);
