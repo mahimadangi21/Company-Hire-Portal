@@ -131,7 +131,7 @@ function BarChart({ scores }: { scores: Record<string, number> }) {
   const gap = 20;
   const maxH = 120;
   const chartW = entries.length * (barW + gap) + gap;
-  const chartH = maxH + 50;
+  const chartH = maxH + 80;
 
   const COLORS = ["#6366F1", "#8B5CF6", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
 
@@ -165,8 +165,16 @@ function BarChart({ scores }: { scores: Record<string, number> }) {
               {score}/5
             </text>
             {/* Category label below */}
-            <text x={x + barW / 2} y={maxH + 14} textAnchor="middle" fontSize="9" fontWeight="600" fill="#94A3B8">
-              {label.length > 6 ? label.slice(0, 5) + "…" : label}
+            <text 
+              x={x + barW / 2} 
+              y={maxH + 20} 
+              textAnchor="end" 
+              transform={`rotate(-45, ${x + barW / 2}, ${maxH + 20})`}
+              fontSize="9" 
+              fontWeight="600" 
+              fill="#94A3B8"
+            >
+              {label}
             </text>
           </g>
         );
@@ -369,7 +377,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
                 <div className="w-full space-y-2 mt-2">
                   {Object.entries(scores).map(([cat, val]) => (
                     <div key={cat} className="flex items-center gap-2 text-xs">
-                      <span className="w-20 text-slate-500 font-medium truncate">{cat}</span>
+                      <span className="w-28 text-slate-500 font-medium truncate">{cat}</span>
                       <div className="flex-1 bg-slate-100 rounded-full h-1.5">
                         <div
                           className="h-1.5 rounded-full bg-indigo-500 transition-all duration-700"
