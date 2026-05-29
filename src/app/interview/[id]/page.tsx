@@ -232,24 +232,28 @@ export default function InterviewPage() {
   };
 
   const startInterview = async () => {
-    // Request full screen synchronously inside the user gesture
+    // 1. Request full screen synchronously inside the user gesture
     if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(e => console.error("Fullscreen error:", e));
+      document.documentElement.requestFullscreen().catch(e => {
+        console.error("Fullscreen error:", e);
+        alert("Warning: Could not enter full screen. Please ensure your browser allows full screen.");
+      });
     }
     
     setStage("interview");
 
+    // 2. Wait for backend to confirm the 'in_progress' status
     try {
-      // Background async update to backend
-      fetch(`/api/interviews/${id}`, {
+      await fetch(`/api/interviews/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "in_progress" })
-      }).catch(e => console.error("Failed to update status:", e));
+      });
     } catch (err) {
-      console.error(err);
+      console.error("Failed to update status:", err);
     }
     
+    // 3. Start AI voice
     if (interview) {
       await speakQuestion(interview.questions[0]);
     }
