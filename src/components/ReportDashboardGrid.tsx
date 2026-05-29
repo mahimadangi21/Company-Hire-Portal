@@ -11,38 +11,47 @@ import { TranscriptIntelligenceEngine } from '@/components/reports/TranscriptInt
 import { useAppContext } from '@/components/admin/context/AppContext';
 import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
 
-/* ─────────────────── Embeddable Video ─────────────────────── */
 export const EmbeddableVideo = ({ url, ...props }: any) => {
   if (!url) return null;
+  const trimmedUrl = url.trim();
+
   // Google Drive Link
-  if (url.includes('drive.google.com/file/d/')) {
-    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (trimmedUrl.includes('drive.google.com/file/d/')) {
+    const match = trimmedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
       const embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
       return <iframe src={embedUrl} allow="autoplay" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
     }
   }
   // YouTube Link
-  if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
-    const match = url.match(/(?:v=|youtu\.be\/)([^&]+)/);
+  if (trimmedUrl.includes('youtube.com/watch') || trimmedUrl.includes('youtu.be/')) {
+    const match = trimmedUrl.match(/(?:v=|youtu\.be\/)([^&]+)/);
     if (match && match[1]) {
       const embedUrl = `https://www.youtube.com/embed/${match[1]}`;
       return <iframe src={embedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
     }
   }
-  // OneDrive / SharePoint (basic attempt, though iframe headers often block this unless it's an explicit embed link)
-  if (url.includes('sharepoint.com') || url.includes('1drv.ms')) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', backgroundColor: '#0f172a', padding: '1rem', textAlign: 'center' }}>
-        <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline', fontWeight: 'bold' }}>
-          🔗 Open OneDrive Video in New Tab
-        </a>
-      </div>
-    );
+
+  // SharePoint auto-conversion to embed view
+  let embedUrl = trimmedUrl;
+  if (trimmedUrl.includes('sharepoint.com') && !trimmedUrl.includes('action=') && !trimmedUrl.includes('Action=')) {
+    try {
+      const urlObj = new URL(trimmedUrl);
+      urlObj.searchParams.set('action', 'embedview');
+      embedUrl = urlObj.toString();
+    } catch (e) {
+      // Keep original
+    }
+  }
+
+  // If it's a web link and does NOT end with a direct video extension, render in an iframe
+  const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v|avi|mkv)(?:\?|$)/i.test(trimmedUrl);
+  if (trimmedUrl.startsWith('http') && !isDirectVideo) {
+    return <iframe src={embedUrl} allow="autoplay; encrypted-media" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
   }
   
   // Standard video fallback
-  return <video src={url} {...props} />;
+  return <video src={trimmedUrl} {...props} />;
 };
 
 /* ─────────────────── SVG Radial Progress ─────────────────────── */
