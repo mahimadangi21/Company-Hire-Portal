@@ -61,7 +61,7 @@ export default function InterviewPage() {
   const [selectedMic, setSelectedMic] = useState<string>("");
   const [selectedCamera, setSelectedCamera] = useState<string>("");
 
-  // Fetch interview
+  // Fetch interview and immediately lock it
   useEffect(() => {
     const load = async () => {
       try {
@@ -73,6 +73,17 @@ export default function InterviewPage() {
         if (data.status === "completed") { setStage("already-completed"); return; }
         if (data.status === "in_progress") { setStage("in-progress-blocked"); return; }
         if (isExpired(data.expires_at)) { setStage("expired"); return; }
+
+        // status is "pending" — immediately lock it so refreshing is blocked
+        try {
+          await fetch(`/api/interviews/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "in_progress" })
+          });
+        } catch (lockErr) {
+          console.error("Failed to lock interview:", lockErr);
+        }
 
         setInterview(data);
         setStage("welcome");
@@ -234,28 +245,41 @@ export default function InterviewPage() {
   // Split into sync (fullscreen) + async (DB update + speech)
   const handleBeginInterview = () => {
     // STEP 1: Fullscreen MUST be called synchronously in the click handler
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(e => {
-        console.warn("Fullscreen blocked:", e);
-      });
-    }
+    const fsPromise = document.documentElement.requestFullscreen
+      ? document.documentElement.requestFullscreen().catch(e => {
+          console.warn("Fullscreen blocked:", e);
+        })
+      : Promise.resolve();
 
     // STEP 2: Switch stage immediately
     setStage("interview");
 
-    // STEP 3: Run async work in background (DB update + speech)
+    // STEP 3: Wait for fullscreen to fully complete, THEN speak
+    // The browser cancels speech synthesis during the fullscreen transition,
+    // so we must wait for it to finish before starting TTS.
     (async () => {
       try {
-        await fetch(`/api/interviews/${id}`, {
+        // Update DB in parallel
+        fetch(`/api/interviews/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "in_progress", started_at: new Date().toISOString() })
-        });
+        }).catch(err => console.error("Failed to update status:", err));
+
+        // Wait for fullscreen to finish (or 600ms max) before speaking
+        await Promise.race([
+          fsPromise,
+          new Promise(resolve => setTimeout(resolve, 600))
+        ]);
+
+        // Extra small buffer to let the browser fully settle after fullscreen
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        if (interview) {
+          await speakQuestion(interview.questions[0]);
+        }
       } catch (err) {
-        console.error("Failed to update status:", err);
-      }
-      if (interview) {
-        await speakQuestion(interview.questions[0]);
+        console.error("Failed in begin interview:", err);
       }
     })();
   };
