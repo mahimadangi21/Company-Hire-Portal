@@ -169,12 +169,27 @@ Respond ONLY with the JSON object.`
     if (body.status === "completed" && data) {
       try {
         const videoScore = Math.round(80 + Math.random() * 15);
+        
+        // Fetch current extracted_data first to prevent overwriting
+        const { data: cand } = await supabase
+          .from("candidates")
+          .select("extracted_data")
+          .ilike("email", data.candidate_email.trim())
+          .single();
+
+        const currentExt = cand?.extracted_data || {};
+        const updatedExt = {
+          ...currentExt,
+          videoUrl: data.video_url
+        };
+
         const { error: syncError } = await supabase
           .from("candidates")
           .update({
             video_status: "Completed",
             video_score: videoScore,
-            stage: "Technical Scheduler"
+            stage: "Technical Scheduler",
+            extracted_data: updatedExt
           })
           .ilike("email", data.candidate_email.trim());
         
