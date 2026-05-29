@@ -789,14 +789,23 @@ const Reports = () => {
           console.log("  - extracted_data transcriptUpdatedAt:", updatedCandidate.extracted_data?.transcriptUpdatedAt);
         }
 
-        alert(`✅ Transcript analyzed successfully!\n\nScores:\n• Communication: ${analysis.communication}%\n• Technical: ${analysis.technical}%\n• Confidence: ${analysis.confidence}%\n• Recommendation: ${analysis.recommendation}`);
+        alert(`✅ Transcript analyzed successfully!\n\nScores:\n• Communication: ${analysis.communication}%\n• Technical: ${transcriptIntelligenceScore}%\n• Confidence: ${analysis.confidence}%\n• Recommendation: ${analysis.recommendation}`);
         
-        // Refresh candidates and pull the fresh candidate object explicitly (Step 4 & Modification 1)
+        // Construct optimistic updated candidate to open report modal instantly (eliminates fetch latency)
+        const optimisticCandidate = {
+          ...uploadingCandidate,
+          techScore: transcriptIntelligenceScore,
+          videoScore: analysis.communication,
+          finalRecommendation: analysis.recommendation,
+          extractedData: updatedExtractedData
+        };
+        setSelectedCandidate(optimisticCandidate);
+
+        // Refresh candidates in background and sync modal state
         const freshCandidates = await refreshCandidates();
         if (freshCandidates) {
           const latest = freshCandidates.find(c => c.id === candidateId);
           if (latest) {
-            setUploadingCandidate(latest);
             setSelectedCandidate(latest);
           }
         }
