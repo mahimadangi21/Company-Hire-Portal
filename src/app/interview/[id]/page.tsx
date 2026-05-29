@@ -27,6 +27,7 @@ type Stage =
   | "interview"
   | "processing"
   | "completed"
+  | "error"
   | "expired"
   | "already-completed"
   | "in-progress-blocked";
