@@ -242,12 +242,50 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
   // Use stored analysis from DB if available (more accurate — computed at upload time)
   // Fall back to live computation if stored analysis is missing any critical fields
   const analysis: TranscriptAnalysisResult = useMemo(() => {
-    if (storedAnalysis && 
-        storedAnalysis.recommendation && 
-        Array.isArray(storedAnalysis.keyObservations) && 
-        storedAnalysis.keyObservations.length > 0 &&
-        Array.isArray(storedAnalysis.leadershipIndicators)) {
-      return { ...liveAnalysis, ...storedAnalysis } as TranscriptAnalysisResult;
+    if (storedAnalysis && storedAnalysis.recommendation) {
+      const normalized = { ...storedAnalysis };
+
+      // Map keyObservations from [{observation, evidence}] to ["Observation (Evidence: ...)"]
+      if (Array.isArray(normalized.keyObservations)) {
+        normalized.keyObservations = normalized.keyObservations.map((item: any) => {
+          if (item && typeof item === 'object' && 'observation' in item) {
+            return `${item.observation} [Evidence: ${item.evidence || 'N/A'}]`;
+          }
+          return String(item);
+        });
+      }
+
+      // Map leadershipIndicators from [{indicator, evidence}] to ["Indicator (Evidence: ...)"]
+      if (Array.isArray(normalized.leadershipIndicators)) {
+        normalized.leadershipIndicators = normalized.leadershipIndicators.map((item: any) => {
+          if (item && typeof item === 'object' && 'indicator' in item) {
+            return `${item.indicator} [Evidence: ${item.evidence || 'N/A'}]`;
+          }
+          return String(item);
+        });
+      }
+
+      // Map technicalGaps from [{gap, evidence}] to ["Gap (Evidence: ...)"]
+      if (Array.isArray(normalized.technicalGaps)) {
+        normalized.technicalGaps = normalized.technicalGaps.map((item: any) => {
+          if (item && typeof item === 'object' && 'gap' in item) {
+            return `${item.gap} [Evidence: ${item.evidence || 'N/A'}]`;
+          }
+          return String(item);
+        });
+      }
+
+      // Map ownershipSignals from [{signal, evidence}] to ["Signal (Evidence: ...)"]
+      if (Array.isArray(normalized.ownershipSignals)) {
+        normalized.ownershipSignals = normalized.ownershipSignals.map((item: any) => {
+          if (item && typeof item === 'object' && 'signal' in item) {
+            return `${item.signal} [Evidence: ${item.evidence || 'N/A'}]`;
+          }
+          return String(item);
+        });
+      }
+
+      return { ...liveAnalysis, ...normalized } as TranscriptAnalysisResult;
     }
     return liveAnalysis;
   }, [liveAnalysis, storedAnalysis]);

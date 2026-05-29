@@ -665,6 +665,7 @@ const Reports = () => {
 
     try {
       let transcriptEntries = [];
+      let sourceTextLength = 0;
 
       if (file.name.toLowerCase().endsWith('.txt')) {
         // Parse text transcript file
@@ -674,14 +675,17 @@ const Reports = () => {
           reader.onerror = reject;
           reader.readAsText(file);
         });
+        sourceTextLength = (text as string).length;
         transcriptEntries = parseTextTranscript(text as string, candidateName);
         // If parsing produced no good entries, fall back to simulated
         if (!transcriptEntries || transcriptEntries.length === 0) {
           transcriptEntries = getSimulatedTranscript(candidateJobApplied, candidateName);
+          sourceTextLength = JSON.stringify(transcriptEntries).length;
         }
       } else {
         // For PDF/DOCX, use role-based simulated transcript (can be enhanced with PDF parsing)
         transcriptEntries = getSimulatedTranscript(candidateJobApplied, candidateName);
+        sourceTextLength = JSON.stringify(transcriptEntries).length;
       }
 
       // Step 1: Log extracted transcript
@@ -737,7 +741,9 @@ const Reports = () => {
         ...(candidateExtractedData || {}),
         transcript: transcriptEntries,
         transcriptAnalysis: transcriptAnalysisResult,
-        transcriptUpdatedAt: new Date().toISOString() // Step 3 requirement
+        transcriptUpdatedAt: new Date().toISOString(), // Step 3 requirement
+        sourceTranscriptLength: sourceTextLength,
+        analysisVersion: "2.0.0"
       };
 
       // Step 3 payload
