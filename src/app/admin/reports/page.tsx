@@ -953,6 +953,7 @@ const Reports = () => {
         id: candidateId,
         extracted_data: updatedExtractedData,
         video_status: 'Completed',
+        // Note: video_url stored inside extracted_data above (videoUrl, video_url, video keys)
         video_score: 90
       };
 
