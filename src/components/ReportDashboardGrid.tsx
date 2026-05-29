@@ -745,22 +745,13 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         </div>
 
         {/* Small Tech Video Player in Column 3 */}
-        <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
+        <div style={{ width: '100%', aspectRatio: '16/9', margin: '0 auto 8px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
           <EmbeddableVideo 
             key={technicalVideoUrl}
             controls
             preload="metadata"
             url={technicalVideoUrl}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-            onClick={(e: any) => {
-              const video = e.currentTarget;
-              if (video.paused) {
-                video.play().catch((err: any) => console.error("Video play failed:", err));
-              } else {
-                video.pause();
-              }
-            }}
-            title="Click to Play / Pause"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
 
