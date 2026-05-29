@@ -201,6 +201,35 @@ Respond ONLY with the JSON object.`
       } catch (dbErr) {
         console.error("Failed to sync candidate completion status:", dbErr);
       }
+
+      // Trigger completion notification email if sender_email is available
+      if (data.sender_email) {
+        try {
+          const reviewUrl = new URL(`/video-bot-admin/dashboard/interviews/${id}`, req.url).toString().replace("localhost", "127.0.0.1");
+          const emailUrl = new URL("/api/emails/send", req.url).toString().replace("localhost", "127.0.0.1");
+          
+          const emailRes = await fetch(emailUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "completion",
+              to: data.sender_email,
+              senderEmail: data.sender_email,
+              candidateName: data.candidate_name,
+              jobRole: data.job_role,
+              reviewUrl: reviewUrl,
+            }),
+          });
+
+          if (!emailRes.ok) {
+            console.error("Failed to send completion email");
+          } else {
+            console.log(`Successfully sent completion email to ${data.sender_email}`);
+          }
+        } catch (emailErr) {
+          console.error("Failed to trigger completion email:", emailErr);
+        }
+      }
     }
 
     return NextResponse.json({ data });

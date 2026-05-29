@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
         questions: selectedQuestions,
         status: "pending",
         expires_at: expiry,
+        sender_email: senderEmail || null,
       })
       .select()
       .single();

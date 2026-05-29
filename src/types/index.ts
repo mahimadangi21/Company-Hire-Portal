@@ -13,6 +13,7 @@ export interface Interview {
   summary?: string;
   scores?: Record<string, number>;
   share_token: string;
+  sender_email?: string;
 }
 
 export interface TranscriptEntry {
