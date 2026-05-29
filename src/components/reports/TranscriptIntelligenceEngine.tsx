@@ -11,7 +11,7 @@ import { analyzeTranscript, TranscriptEntry, TranscriptAnalysisResult } from '@/
 /* ─────────────────── SVG Radar Chart ─────────────────────────── */
 const RadarChart = ({ data }: { data: { label: string; value: number; color: string }[] }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const size = 330; // Increased size to make it clearly visible in View More
+  const size = 380; // Increased size to make it clearly visible in View More
   const cx = size / 2;
   const cy = size / 2;
   const radius = 80;
@@ -364,7 +364,7 @@ export function TranscriptIntelligenceEngine({ transcript }: TranscriptIntellige
           border: '1px solid var(--border)',
           padding: '1.25rem',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
-          minWidth: '330px',
+          minWidth: '380px',
           justifyContent: 'center'
         }}>
           <p style={{ margin: 0, fontSize: '0.74rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

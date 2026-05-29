@@ -15,7 +15,7 @@ function RadarChart({ scores }: { scores: Record<string, number> }) {
   const count = entries.length;
   if (count < 3) return null;
 
-  const size = 220;
+  const size = 280;
   const cx = size / 2;
   const cy = size / 2;
   const radius = 80;

@@ -339,7 +339,7 @@ const VideoBot = () => {
                   <label className="form-label" style={{ fontSize: '0.75rem' }}>Email Body</label>
                   <textarea 
                     className="form-input" 
-                    rows="4"
+                    rows="14"
                     value={inviteBody}
                     onChange={(e) => setInviteBody(e.target.value)}
                     style={{ resize: 'vertical', fontSize: '0.875rem' }}
