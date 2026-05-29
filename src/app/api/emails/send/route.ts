@@ -4,7 +4,7 @@ import { getInterviewUrl } from "@/lib/utils";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/encryption";
 
-async function getTransporter(senderEmail?: string, replyToEmail?: string) {
+async function getTransporter(senderEmail?: string) {
   const accountsStr = process.env.OUTLOOK_ACCOUNTS || "";
   const gmailUser = process.env.GMAIL_USER || "";
   const gmailPass = process.env.GMAIL_APP_PASSWORD || "";
@@ -36,8 +36,7 @@ async function getTransporter(senderEmail?: string, replyToEmail?: string) {
                 rejectUnauthorized: false
               }
             }),
-            fromEmail: data.email,
-            replyTo: replyToEmail || data.email
+            fromEmail: data.email
           };
         } else {
           return {
@@ -48,8 +47,7 @@ async function getTransporter(senderEmail?: string, replyToEmail?: string) {
                 pass: password,
               },
             }),
-            fromEmail: data.email,
-            replyTo: replyToEmail || data.email
+            fromEmail: data.email
           };
         }
       }
@@ -123,8 +121,7 @@ async function getTransporter(senderEmail?: string, replyToEmail?: string) {
         pass: gmailPass,
       },
     }),
-    fromEmail: gmailUser,
-    replyTo: replyToEmail || gmailUser
+    fromEmail: gmailUser
   };
 }
 
@@ -389,11 +386,10 @@ export async function POST(req: NextRequest) {
     }
 
     const fromName = process.env.MAIL_FROM_NAME || "kadellabs";
-    const { transporter, fromEmail, replyTo } = await getTransporter(body.senderEmail, body.replyToEmail);
+    const { transporter, fromEmail } = await getTransporter(body.senderEmail);
 
     await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
-      replyTo,
       to,
       subject,
       html,

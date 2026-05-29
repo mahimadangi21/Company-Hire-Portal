@@ -25,7 +25,6 @@ const VideoBot = () => {
   const [inviteBody, setInviteBody] = useState('');
   const [senders, setSenders] = useState([]);
   const [selectedSender, setSelectedSender] = useState('');
-  const [replyTo, setReplyTo] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
   
   // Dynamic Departments from jobs
@@ -61,7 +60,6 @@ const VideoBot = () => {
           if (data.emails && data.emails.length > 0) {
             setSenders(data.emails);
             setSelectedSender(data.emails[0]);
-            setReplyTo(data.emails[0]);
           }
         }
       } catch (err) {
@@ -158,8 +156,7 @@ const VideoBot = () => {
           sub_department: subDepartment,
           subject: subject,
           body: body,
-          senderEmail: senderEmail,
-          replyToEmail: arguments[8] // since handleSendInvite takes 8 arguments + replyTo = 9 arguments
+          senderEmail: senderEmail
         })
       });
 
@@ -235,6 +232,151 @@ const VideoBot = () => {
       {showQuestionModal && (
         <QuestionBankModal onClose={() => setShowQuestionModal(false)} />
       )}
+
+      {/* Send Invite Panel (horizontal layout) */}
+      <div className="card" style={{ backgroundColor: 'var(--gray-50)' }}>
+        <div className="card-header">
+          <h3 className="card-title" style={{ fontSize: '1.125rem' }}>Send Video Invite</h3>
+        </div>
+        <div className="card-body">
+          
+          <div className="grid grid-cols-3 gap-6" style={{ marginBottom: '1.5rem' }}>
+            <div className="form-group">
+              <label className="form-label">Department</label>
+              <select 
+                className="form-select" 
+                value={inviteDepartment}
+                onChange={e => {
+                  const newDept = e.target.value;
+                  setInviteDepartment(newDept);
+                  const subs = getAvailableSubDepartments(newDept);
+                  setInviteSubDepartment(subs[0]);
+                  setInviteCandidateId('');
+                }}
+              >
+                {availableDepartments.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Sub-Department</label>
+              <select 
+                className="form-select"
+                value={inviteSubDepartment}
+                onChange={e => {
+                  setInviteSubDepartment(e.target.value);
+                  setInviteCandidateId('');
+                }}
+              >
+                {(getAvailableSubDepartments(inviteDepartment)).map(sd => (
+                  <option key={sd} value={sd}>{sd}</option>
+                ))}
+              </select>
+              <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
+                Candidate will be asked all questions configured for this sub-department.
+              </span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Select Candidate</label>
+              <select className="form-select" value={inviteCandidateId} onChange={e => setInviteCandidateId(e.target.value)}>
+                <option value="">Choose candidate...</option>
+                {filteredCandidatesForDropdown.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Sub-Department'})</option>
+                ))}
+              </select>
+              {filteredCandidatesForDropdown.length === 0 && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem', display: 'block' }}>
+                  No candidates found for this department.
+                </span>
+              )}
+            </div>
+          </div>
+
+          {inviteCandidateId && (
+            <div className="grid grid-cols-2 gap-6" style={{ marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Email Configuration</h4>
+                
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Send From</label>
+                  <select 
+                    className="form-select" 
+                    value={selectedSender}
+                    onChange={e => setSelectedSender(e.target.value)}
+                  >
+                    {senders.map(email => (
+                      <option key={`sender-${email}`} value={email}>{email}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Candidate Email</label>
+                  <input 
+                    type="email" 
+                    className="form-input" 
+                    value={targetEmail}
+                    onChange={(e) => setTargetEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Message Content</h4>
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Subject</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    value={inviteSubject}
+                    onChange={(e) => setInviteSubject(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Email Body</label>
+                  <textarea 
+                    className="form-input" 
+                    rows="4"
+                    value={inviteBody}
+                    onChange={(e) => setInviteBody(e.target.value)}
+                    style={{ resize: 'vertical', fontSize: '0.875rem' }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button 
+              className="btn btn-primary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '150px', justifyContent: 'center' }}
+              onClick={() => {
+                const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
+                if (candidate) {
+                  const jobRole = candidate.jobApplied || 'Common';
+                  handleSendInvite(
+                    candidate, 
+                    targetEmail, 
+                    jobRole, 
+                    inviteDepartment, 
+                    inviteSubDepartment,
+                    inviteSubject,
+                    inviteBody,
+                    selectedSender
+                  );
+                }
+              }}
+              disabled={sending || !inviteCandidateId || !inviteSubject || !inviteBody}
+            >
+              {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <><Send size={16} /> Send Mail</>}
+            </button>
+          </div>
+          
+        </div>
+      </div>
 
       {/* Unified Dashboard Table */}
       <div className="card">
@@ -336,166 +478,6 @@ const VideoBot = () => {
               })}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Send Invite Panel (horizontal layout) */}
-      <div className="card" style={{ backgroundColor: 'var(--gray-50)' }}>
-        <div className="card-header">
-          <h3 className="card-title" style={{ fontSize: '1.125rem' }}>Send Video Invite</h3>
-        </div>
-        <div className="card-body">
-          
-          <div className="grid grid-cols-3 gap-6" style={{ marginBottom: '1.5rem' }}>
-            <div className="form-group">
-              <label className="form-label">Department</label>
-              <select 
-                className="form-select" 
-                value={inviteDepartment}
-                onChange={e => {
-                  const newDept = e.target.value;
-                  setInviteDepartment(newDept);
-                  const subs = getAvailableSubDepartments(newDept);
-                  setInviteSubDepartment(subs[0]);
-                  setInviteCandidateId('');
-                }}
-              >
-                {availableDepartments.map(d => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Sub-Department</label>
-              <select 
-                className="form-select"
-                value={inviteSubDepartment}
-                onChange={e => {
-                  setInviteSubDepartment(e.target.value);
-                  setInviteCandidateId('');
-                }}
-              >
-                {(getAvailableSubDepartments(inviteDepartment)).map(sd => (
-                  <option key={sd} value={sd}>{sd}</option>
-                ))}
-              </select>
-              <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
-                Candidate will be asked all questions configured for this sub-department.
-              </span>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Select Candidate</label>
-              <select className="form-select" value={inviteCandidateId} onChange={e => setInviteCandidateId(e.target.value)}>
-                <option value="">Choose candidate...</option>
-                {filteredCandidatesForDropdown.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Sub-Department'})</option>
-                ))}
-              </select>
-              {filteredCandidatesForDropdown.length === 0 && (
-                <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem', display: 'block' }}>
-                  No candidates found for this department.
-                </span>
-              )}
-            </div>
-          </div>
-
-          {inviteCandidateId && (
-            <div className="grid grid-cols-2 gap-6" style={{ marginBottom: '1.5rem' }}>
-              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)' }}>
-                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Email Configuration</h4>
-                
-                <div className="grid grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Send From</label>
-                    <select 
-                      className="form-select" 
-                      value={selectedSender}
-                      onChange={e => setSelectedSender(e.target.value)}
-                    >
-                      {senders.map(email => (
-                        <option key={`sender-${email}`} value={email}>{email}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Receive Replies To</label>
-                    <select 
-                      className="form-select" 
-                      value={replyTo}
-                      onChange={e => setReplyTo(e.target.value)}
-                    >
-                      {senders.map(email => (
-                        <option key={`reply-${email}`} value={email}>{email}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Candidate Email</label>
-                  <input 
-                    type="email" 
-                    className="form-input" 
-                    value={targetEmail}
-                    onChange={(e) => setTargetEmail(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)' }}>
-                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Message Content</h4>
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
-                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Subject</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    value={inviteSubject}
-                    onChange={(e) => setInviteSubject(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Email Body</label>
-                  <textarea 
-                    className="form-input" 
-                    rows="4"
-                    value={inviteBody}
-                    onChange={(e) => setInviteBody(e.target.value)}
-                    style={{ resize: 'vertical', fontSize: '0.875rem' }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button 
-              className="btn btn-primary" 
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '150px', justifyContent: 'center' }}
-              onClick={() => {
-                const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
-                if (candidate) {
-                  const jobRole = candidate.jobApplied || 'Common';
-                  handleSendInvite(
-                    candidate, 
-                    targetEmail, 
-                    jobRole, 
-                    inviteDepartment, 
-                    inviteSubDepartment,
-                    inviteSubject,
-                    inviteBody,
-                    selectedSender,
-                    replyTo
-                  );
-                }
-              }}
-              disabled={sending || !inviteCandidateId || !inviteSubject || !inviteBody}
-            >
-              {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <><Send size={16} /> Send Mail</>}
-            </button>
-          </div>
-          
         </div>
       </div>
 
