@@ -871,10 +871,6 @@ const Reports = () => {
 
       const payload = {
         id: candidateId,
-        video: fallbackVideoUrl,
-        videoUrl: fallbackVideoUrl,
-        video_url: fallbackVideoUrl,
-        video_path: fallbackVideoUrl,
         extracted_data: updatedExtractedData,
         video_status: 'Completed',
         video_score: 90
