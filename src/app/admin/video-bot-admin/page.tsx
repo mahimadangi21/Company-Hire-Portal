@@ -32,7 +32,7 @@ const VideoBot = () => {
   const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
   
   const getAvailableSubDepartments = (dept) => {
-    const subDepts = jobs.filter(j => j.department === dept).map(j => j.title);
+    const subDepts = Array.from(new Set(jobs.filter(j => j.department === dept).map(j => j.title)));
     if (subDepts.length > 0) return subDepts;
     
     const defaults = {
