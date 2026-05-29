@@ -322,7 +322,7 @@ const deriveStrengthsWeaknesses = (candidate) => {
 };
 
 /* ─────────────────────── Detail Modal ──────────────────────── */
-const DetailModal = ({ candidate, jobs, onClose }) => {
+const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMessage }) => {
   const { refreshCandidates } = useAppContext();
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
 
@@ -473,7 +473,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             {/* SEPARATOR */}
             <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
 
-            {/* RIGHT SECTION: Logo & Close Button */}
+            {/* RIGHT SECTION: Logo, Upload & Close Button */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img 
@@ -482,6 +482,13 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                   style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
                 />
               </div>
+              <button
+                onClick={() => onUploadVideo && onUploadVideo(candidate)}
+                style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+              >
+                Upload Video
+              </button>
+              {uploadStatusMessage ? <span style={{ color: '#10b981', fontSize: '0.75rem', marginLeft: '4px' }}>{uploadStatusMessage}</span> : null}
               <button 
                 onClick={onClose} 
                 style={{ 
@@ -854,106 +861,39 @@ const Reports = () => {
     setUploadingVideoId(candidateId);
     setUploadStatusMessage("Initializing...");
 
-    let finalFileToUpload = file;
+    let finalFileToUpload: File = file;
     let isCompressed = false;
 
-    try {
-      console.log(`Starting client-side compression for candidate: ${candidateId}, original size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
-      
-      try {
-        setUploadStatusMessage("Loading compiler...");
-        const { FFmpeg } = await import('@ffmpeg/ffmpeg');
-        const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
+    // ─── Helper: upload via server-side API (uses service role key) ────────────
+    const uploadToSupabase = async (uploadFile: File): Promise<string> => {
+      const bucketName = 'interview-recordings';
+      const timestamp  = Date.now();
+      const fileExt    = uploadFile.name.split('.').pop() || 'mp4';
+      const uploadPath = `admin_uploads/${candidateId}_${timestamp}.${fileExt}`;
 
-        let ffmpeg = ffmpegRef.current;
-        if (!ffmpeg) {
-          ffmpeg = new FFmpeg();
-          ffmpegRef.current = ffmpeg;
-        }
+      // ── Debug: Log every upload input ──────────────────────────────────────
+      console.log("=== SUPABASE UPLOAD DEBUG ===");
+      console.log("Bucket:", bucketName);
+      console.log("Upload Path:", uploadPath);
+      console.log("File:", uploadFile);
+      console.log("File Size (bytes):", uploadFile?.size);
+      console.log("File Type:", uploadFile?.type);
+      console.log("Candidate ID:", candidateId);
 
-        ffmpeg.on('log', ({ message }) => {
-          console.log("FFmpeg core log:", message);
-        });
-
-        ffmpeg.on('progress', ({ progress }) => {
-          const percent = Math.round(progress * 100);
-          setUploadStatusMessage(`Compressing... ${percent}%`);
-        });
-
-        if (!ffmpeg.loaded) {
-          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-          await ffmpeg.load({
-            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-          });
-        }
-
-        const inputExt = file.name.split('.').pop() || 'mp4';
-        const inputName = `input_${Date.now()}.${inputExt}`;
-        const outputName = `output_${Date.now()}.mp4`;
-
-        await ffmpeg.writeFile(inputName, await fetchFile(file));
-
-        setUploadStatusMessage("Compressing... 0%");
-
-        // Run compression command: 720p maximum resolution, 24fps, H.264 profile
-        await ffmpeg.exec([
-          '-i', inputName,
-          '-vcodec', 'libx264',
-          '-acodec', 'aac',
-          '-preset', 'ultrafast',
-          '-vf', "scale='min(1280,iw)':-2",
-          '-r', '24',
-          '-crf', '28',
-          '-b:v', '1000k',
-          outputName
-        ]);
-
-        const compressedData = await ffmpeg.readFile(outputName);
-        const compressedBlob = new Blob([compressedData], { type: 'video/mp4' });
-
-        if (compressedBlob.size > 0) {
-          finalFileToUpload = new File([compressedBlob], `${file.name.substring(0, file.name.lastIndexOf('.')) || file.name}_compressed.mp4`, {
-            type: 'video/mp4'
-          });
-          isCompressed = true;
-          console.log(`Compression complete! New size: ${(finalFileToUpload.size / (1024 * 1024)).toFixed(2)} MB (Reduced from ${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
-        } else {
-          console.warn("Compressed file was empty. Falling back to original file.");
-        }
-
-        try {
-          await ffmpeg.deleteFile(inputName);
-          await ffmpeg.deleteFile(outputName);
-        } catch (e) {
-          console.error("FFmpeg FS cleanup error:", e);
-        }
-
-      } catch (compressErr) {
-        console.error("FFmpeg compression failed or timed out. Falling back to original file upload:", compressErr);
+      // Guard: ensure file is non-empty
+      if (!uploadFile || uploadFile.size === 0) {
+        throw new Error("Upload file is missing or empty (size = 0)");
       }
 
-      setUploadStatusMessage("Uploading... 0%");
+      // Build FormData for the server API route
+      const form = new FormData();
+      form.append('file', uploadFile, uploadFile.name);
+      form.append('candidateId', candidateId);
 
-      const fileExt = finalFileToUpload.name.split('.').pop() || 'mp4';
-      const timestamp = Date.now();
-      const filename = `admin_uploads/${candidateId}_${timestamp}.${fileExt}`;
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error("Missing Supabase configuration");
-      }
-
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/interview-recordings/${filename}`;
-
-      // Upload with custom progress tracker via XMLHttpRequest
-      await new Promise<void>((resolve, reject) => {
+      // Track XHR progress while proxying through our server API
+      const publicUrl = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", uploadUrl, true);
-        xhr.setRequestHeader("Authorization", `Bearer ${anonKey}`);
-        xhr.setRequestHeader("x-upsert", "true");
-        xhr.setRequestHeader("Content-Type", finalFileToUpload.type || "video/mp4");
+        xhr.open("POST", "/api/upload-video", true);
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
@@ -963,62 +903,159 @@ const Reports = () => {
         };
 
         xhr.onload = () => {
+          // ── Debug: Log full response ────────────────────────────────────────
+          console.log("=== SERVER UPLOAD RESPONSE ===");
+          console.log("Status:", xhr.status);
+          console.log("Response:", xhr.responseText);
+          console.log("Headers:", xhr.getAllResponseHeaders());
+
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
+            try {
+              const json = JSON.parse(xhr.responseText);
+              resolve(json.publicUrl);
+            } catch {
+              reject(new Error("Invalid JSON in upload response: " + xhr.responseText));
+            }
           } else {
-            reject(new Error(`Upload status failed: ${xhr.status} - ${xhr.statusText}`));
+            reject(new Error(`${xhr.status} - ${xhr.responseText}`));
           }
         };
 
-        xhr.onerror = () => {
-          reject(new Error("Supabase network upload failed."));
-        };
-
-        xhr.send(finalFileToUpload);
+        xhr.onerror = () => reject(new Error("Network error — upload API unreachable"));
+        xhr.send(form);
       });
 
-      const publicVideoUrl = `${supabaseUrl}/storage/v1/object/public/interview-recordings/${filename}`;
-      const objectUrl = URL.createObjectURL(finalFileToUpload);
+      return publicUrl;
+    };
+    // ─────────────────────────────────────────────────────────────────────────
 
+    try {
+      console.log(`=== VIDEO UPLOAD START ===`);
+      console.log(`Candidate: ${candidateId}, Original file: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+
+      // ── Step 1: Try FFmpeg compression ─────────────────────────────────────
+      try {
+        setUploadStatusMessage("Loading FFmpeg...");
+        const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+        const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
+
+        let ffmpeg = ffmpegRef.current;
+        if (!ffmpeg) {
+          ffmpeg = new FFmpeg();
+          (ffmpegRef as any).current = ffmpeg;
+        }
+
+        ffmpeg.on('log', ({ message }: { message: string }) => {
+          console.log("FFmpeg:", message);
+        });
+
+        ffmpeg.on('progress', ({ progress }: { progress: number }) => {
+          const percent = Math.round(progress * 100);
+          setUploadStatusMessage(`Compressing... ${percent}%`);
+        });
+
+        if (!(ffmpeg as any).loaded) {
+          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+          await ffmpeg.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+          });
+        }
+
+        const inputExt  = file.name.split('.').pop() || 'mp4';
+        const inputName = `input_${Date.now()}.${inputExt}`;
+        const outputName = `output_${Date.now()}.mp4`;
+
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+        setUploadStatusMessage("Compressing... 0%");
+
+        await ffmpeg.exec([
+          '-i', inputName,
+          '-vcodec', 'libx264',
+          '-acodec', 'aac',
+          '-preset', 'ultrafast',
+          '-vf', "scale='min(1280,iw)':-2",
+          '-r', '24',
+          '-crf', '28',
+          '-b:v', '1000k',
+          outputName,
+        ]);
+
+        const compressedData = await ffmpeg.readFile(outputName);
+        const compressedBlob = new Blob([compressedData], { type: 'video/mp4' });
+
+        // ── Debug: Verify compressed file ────────────────────────────────────
+        console.log("Compressed blob size:", compressedBlob.size);
+        if (!compressedBlob || compressedBlob.size === 0) {
+          throw new Error("Compressed file missing or empty after FFmpeg");
+        }
+
+        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        finalFileToUpload = new File([compressedBlob], `${baseName}_compressed.mp4`, { type: 'video/mp4' });
+        isCompressed = true;
+        console.log(`Compression OK — new size: ${(finalFileToUpload.size / (1024 * 1024)).toFixed(2)} MB (from ${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
+
+        try { await ffmpeg.deleteFile(inputName); } catch { /* ignore */ }
+        try { await ffmpeg.deleteFile(outputName); } catch { /* ignore */ }
+
+      } catch (compressErr) {
+        console.warn("FFmpeg compression failed — falling back to original file:", compressErr);
+        finalFileToUpload = file;
+        isCompressed = false;
+      }
+
+      // ── Step 2: Upload (compressed or original) ─────────────────────────────
+      setUploadStatusMessage("Uploading... 0%");
+      const publicVideoUrl = await uploadToSupabase(finalFileToUpload);
+      console.log("Upload success — public URL:", publicVideoUrl);
+
+      // ── Step 3: Save URL to DB ────────────────────────────────────────────
+      const objectUrl = URL.createObjectURL(finalFileToUpload);
       const updatedExtractedData = {
         ...candidateExtractedData,
-        video: publicVideoUrl,
-        videoUrl: publicVideoUrl,
-        video_url: publicVideoUrl,
-        video_path: publicVideoUrl,
-        localVideoBlobUrl: objectUrl,
-        videoUploadedAt: new Date().toISOString(),
-        videoCompressionOptimized: isCompressed,
-        originalSize: file.size,
-        compressedSize: finalFileToUpload.size
+        video:                       publicVideoUrl,
+        videoUrl:                    publicVideoUrl,
+        video_url:                   publicVideoUrl,
+        video_path:                  publicVideoUrl,
+        localVideoBlobUrl:           objectUrl,
+        videoUploadedAt:             new Date().toISOString(),
+        videoCompressionOptimized:   isCompressed,
+        originalSize:                file.size,
+        compressedSize:              finalFileToUpload.size,
       };
+
+      console.log("Saving to DB — videoUrl:", publicVideoUrl);
 
       const payload = {
         id: candidateId,
         extracted_data: updatedExtractedData,
         video_status: 'Completed',
-        video_score: 90
+        video_score: 90,
       };
 
       const response = await apiFetch('/api/candidates', {
         method: 'PATCH',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        alert(`✅ Video ${isCompressed ? 'optimized and ' : ''}uploaded successfully!`);
+        const saved = await response.json();
+        console.log("DB saved — videoUrl in DB:", saved?.extracted_data?.videoUrl);
+        setUploadStatusMessage("✅ Upload complete!");
+        alert(`✅ Video ${isCompressed ? 'compressed & ' : ''}uploaded successfully!\n\nURL: ${publicVideoUrl}`);
         await refreshCandidates();
       } else {
         const errData = await response.json();
-        alert(errData.error || 'Failed to update video record.');
+        throw new Error(errData.error || 'Failed to save video URL to database');
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error during video optimization or upload: ' + (err.message || err));
+    } catch (err: any) {
+      console.error("=== VIDEO UPLOAD ERROR ===", err);
+      setUploadStatusMessage(`❌ ${err.message || 'Upload failed'}`);
+      alert('Video upload error:\n\n' + (err.message || String(err)));
     } finally {
       setUploadingVideoId(null);
       setVideoUploadCandidate(null);
-      setUploadStatusMessage('');
+      setTimeout(() => setUploadStatusMessage(''), 4000);
     }
   };
 
@@ -1478,6 +1515,8 @@ const Reports = () => {
           candidate={selectedCandidate}
           jobs={jobs || []}
           onClose={() => setSelectedCandidate(null)}
+          onUploadVideo={triggerVideoUpload}
+          uploadStatusMessage={uploadStatusMessage}
         />
       )}
 
