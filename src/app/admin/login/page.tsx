@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_DASHBOARD_EMAIL;
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD;
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_DASHBOARD_EMAIL || 'careers@kadellabs.com';
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'hr_kadellabs@2026';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -108,7 +108,7 @@ const Login = () => {
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <p suppressHydrationWarning style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             © {new Date().getFullYear()} Kadellabs. All rights reserved.
           </p>
         </div>
