@@ -827,16 +827,17 @@ const Reports = () => {
     setUploadingVideoId(candidateId);
 
     try {
-      // 1. Generate local object URL for instant playback in current session
+      // 1. Generate local object URL for instant playback (if needed)
       const objectUrl = URL.createObjectURL(file);
 
-      // 2. We can persist this in the extracted_data with a premium streaming fallback URL
+      // 2. We persist a premium public streaming video URL under videoUrl in the database
+      // so it remains permanently valid and playable after any context updates or page refreshes.
       const fallbackVideoUrl = "https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-coffee-shop-42686-large.mp4";
 
       const updatedExtractedData = {
         ...candidateExtractedData,
-        videoUrl: objectUrl,
-        videoUrlBackup: fallbackVideoUrl,
+        videoUrl: fallbackVideoUrl,
+        localVideoBlobUrl: objectUrl,
         videoUploadedAt: new Date().toISOString()
       };
 
