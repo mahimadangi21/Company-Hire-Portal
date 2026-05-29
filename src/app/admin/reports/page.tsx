@@ -331,6 +331,31 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
 
   const data = candidate.extractedData || {};
+
+  // Bug 1: Experience always static
+  const dynamicExperience = React.useMemo(() => {
+    console.log("Extracted Experience:", data);
+    
+    // Check all possible database experience fields
+    const directExp = data.experience || data.totalExperience;
+    if (directExp && String(directExp).trim() && String(directExp).trim() !== "—" && String(directExp).trim() !== "null") {
+      const val = String(directExp).trim();
+      return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+    }
+
+    const expAnalysis = data.totalExperienceAnalysis;
+    if (expAnalysis) {
+      if (expAnalysis.totalExperience && String(expAnalysis.totalExperience).trim() && String(expAnalysis.totalExperience).trim() !== "—" && String(expAnalysis.totalExperience).trim() !== "null") {
+        const val = String(expAnalysis.totalExperience).trim();
+        return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+      }
+      if (typeof expAnalysis.domainExperience === 'number' && expAnalysis.domainExperience > 0) {
+        return `${expAnalysis.domainExperience} Years Exp`;
+      }
+    }
+
+    return "Fresher";
+  }, [data]);
   const skills = candidate.skills || [];
   const edu = data.educationDetails || [];
   const projs = data.projectAnalysis || [];
@@ -385,7 +410,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
                 <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
-                  {candidate.jobApplied} • {candidate.extractedData?.totalExperienceAnalysis?.totalExperience ? `${candidate.extractedData.totalExperienceAnalysis.totalExperience}` : '3 Years'} Exp {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
+                  {candidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
                 </p>
               </div>
             </div>
@@ -836,13 +861,20 @@ const Reports = () => {
 
       const updatedExtractedData = {
         ...candidateExtractedData,
+        video: fallbackVideoUrl,
         videoUrl: fallbackVideoUrl,
+        video_url: fallbackVideoUrl,
+        video_path: fallbackVideoUrl,
         localVideoBlobUrl: objectUrl,
         videoUploadedAt: new Date().toISOString()
       };
 
       const payload = {
         id: candidateId,
+        video: fallbackVideoUrl,
+        videoUrl: fallbackVideoUrl,
+        video_url: fallbackVideoUrl,
+        video_path: fallbackVideoUrl,
         extracted_data: updatedExtractedData,
         video_status: 'Completed',
         video_score: 90

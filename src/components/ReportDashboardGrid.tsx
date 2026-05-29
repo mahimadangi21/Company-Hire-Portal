@@ -90,21 +90,24 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
     // Gracefully handle case where AppContext is not available
   }
 
+  const candidateVideoUrlFromProp = useMemo(() => {
+    const ext = candidate.extractedData || candidate.extracted_data || {};
+    const url = candidate.video || 
+                candidate.videoUrl || 
+                candidate.video_url || 
+                candidate.video_path ||
+                ext.video || 
+                ext.videoUrl || 
+                ext.video_url || 
+                ext.video_path;
+    return url;
+  }, [candidate]);
+
   const [candidateVideoUrl, setCandidateVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (candidate.extractedData?.videoUrl) {
-      setCandidateVideoUrl(candidate.extractedData.videoUrl);
-      return;
-    }
-
-    if (candidate.extractedData?.video_url) {
-      setCandidateVideoUrl(candidate.extractedData.video_url);
-      return;
-    }
-
-    if (candidate.video_url) {
-      setCandidateVideoUrl(candidate.video_url);
+    if (candidateVideoUrlFromProp) {
+      setCandidateVideoUrl(candidateVideoUrlFromProp);
       return;
     }
 
@@ -135,17 +138,21 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
     if (targetEmail && context?.apiFetch) {
       fetchVideoUrl();
     }
-  }, [candidate, context]);
+  }, [candidate, context, candidateVideoUrlFromProp]);
 
-  const displayVideoUrl = useMemo(() => {
+  const videoUrl = useMemo(() => {
     const defaultFallback = "https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-coffee-shop-42686-large.mp4";
     if (!candidateVideoUrl) return defaultFallback;
-    const clean = candidateVideoUrl.trim();
+    const clean = String(candidateVideoUrl).trim();
     if (clean === "" || clean === "—" || clean === "null" || clean === "undefined") {
       return defaultFallback;
     }
     return clean;
   }, [candidateVideoUrl]);
+
+  useEffect(() => {
+    console.log("Video URL:", videoUrl);
+  }, [videoUrl]);
 
   useEffect(() => {
     setMounted(true);
@@ -507,9 +514,10 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
               {/* Video Player */}
               <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
                 <video 
-                  src={displayVideoUrl}
                   controls
-                  playsInline
+                  preload="metadata"
+                  width="100%"
+                  src={videoUrl}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
@@ -602,9 +610,10 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
         {/* Small Tech Video Player in Column 3 */}
         <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
           <video 
-            src={displayVideoUrl}
             controls
-            playsInline
+            preload="metadata"
+            width="100%"
+            src={videoUrl}
             style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
             onClick={(e) => {
               const video = e.currentTarget;

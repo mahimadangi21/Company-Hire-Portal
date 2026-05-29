@@ -253,6 +253,31 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   };
 
   const data = mappedCandidate.extractedData || {};
+
+  // Bug 1: Experience always static
+  const dynamicExperience = (() => {
+    console.log("Extracted Experience:", data);
+    
+    // Check all possible database experience fields
+    const directExp = data.experience || data.totalExperience;
+    if (directExp && String(directExp).trim() && String(directExp).trim() !== "—" && String(directExp).trim() !== "null") {
+      const val = String(directExp).trim();
+      return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+    }
+
+    const expAnalysis = data.totalExperienceAnalysis;
+    if (expAnalysis) {
+      if (expAnalysis.totalExperience && String(expAnalysis.totalExperience).trim() && String(expAnalysis.totalExperience).trim() !== "—" && String(expAnalysis.totalExperience).trim() !== "null") {
+        const val = String(expAnalysis.totalExperience).trim();
+        return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+      }
+      if (typeof expAnalysis.domainExperience === 'number' && expAnalysis.domainExperience > 0) {
+        return `${expAnalysis.domainExperience} Years Exp`;
+      }
+    }
+
+    return "Fresher";
+  })();
   const skills = mappedCandidate.skills || [];
   const edu = data.educationDetails || [];
   const projs = data.projectAnalysis || [];
@@ -296,7 +321,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{mappedCandidate.name}</h2>
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
-                {mappedCandidate.jobApplied} • {mappedCandidate.extractedData?.totalExperienceAnalysis?.totalExperience ? `${mappedCandidate.extractedData.totalExperienceAnalysis.totalExperience}` : '3 Years'} Exp {mappedCandidate.extractedData?.educationDetails?.[0]?.degree ? `• ${mappedCandidate.extractedData.educationDetails[0].degree}` : '• MCA'}
+                {mappedCandidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {mappedCandidate.extractedData?.educationDetails?.[0]?.degree ? `• ${mappedCandidate.extractedData.educationDetails[0].degree}` : '• MCA'}
               </p>
             </div>
           </div>
