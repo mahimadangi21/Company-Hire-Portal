@@ -13,8 +13,11 @@ export default function SettingsPage() {
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [provider, setProvider] = useState('gmail');
+  
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     fetchEmails();
   }, []);
 
@@ -190,7 +193,7 @@ export default function SettingsPage() {
                           </span>
                         </td>
                         <td style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>
-                          {new Date(email.created_at).toLocaleDateString()}
+                          {mounted ? new Date(email.created_at).toLocaleDateString() : ''}
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <button 
