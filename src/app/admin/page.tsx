@@ -15,13 +15,10 @@ const Dashboard = () => {
   const analytics = [
     { title: 'Total Candidates', value: candidates.length, icon: Users, color: 'var(--brand-navy)', bg: 'rgba(14, 45, 123, 0.08)' },
     { title: 'Resumes Parsed', value: candidates.filter(c => c.resumeStatus === 'Parsed').length, icon: FileText, color: 'var(--info)', bg: 'var(--info-bg)' },
-
     { title: 'Screening Completed', value: candidates.filter(c => c.videoStatus === 'Completed').length, icon: Video, color: 'var(--brand-green)', bg: 'rgba(125, 186, 0, 0.15)' },
     { title: 'Tech Interviews', value: candidates.filter(c => c.techStatus === 'Scheduled' || c.techStatus === 'Completed').length, icon: Calendar, color: 'var(--warning)', bg: 'var(--warning-bg)' },
     { title: 'Reports Generated', value: candidates.filter(c => c.reportStatus !== 'Not Shared').length, icon: BarChart2, color: 'var(--gray-600)', bg: 'var(--gray-100)' }
   ];
-
-
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -41,8 +38,6 @@ const Dashboard = () => {
         ))}
       </div>
 
-
-      
       {/* Active Jobs Quick View */}
       <div className="card">
         <div className="card-header">
@@ -52,19 +47,15 @@ const Dashboard = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Department Title</th>
                 <th>Department</th>
-                <th>Candidates</th>
-                <th>Status</th>
+                <th>Sub-Department</th>
               </tr>
             </thead>
             <tbody>
               {jobs.map(job => (
                 <tr key={job.id}>
-                  <td style={{ fontWeight: '600', color: 'var(--brand-navy)' }}>{job.title}</td>
                   <td>{job.department}</td>
-                  <td>{job.applicants} applied</td>
-                  <td><span className="badge badge-success">{job.status}</span></td>
+                  <td style={{ fontWeight: '600', color: 'var(--brand-navy)' }}>{job.title}</td>
                 </tr>
               ))}
             </tbody>
