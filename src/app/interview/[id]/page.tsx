@@ -65,7 +65,7 @@ export default function InterviewPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/api/interviews/${id}`);
+        const res = await fetch(`/api/interviews/${id}`, { cache: "no-store" });
         if (!res.ok) { setStage("error"); setError("Interview not found."); return; }
         const { data } = await res.json();
         if (!data) { setStage("error"); setError("Interview not found."); return; }
@@ -232,19 +232,24 @@ export default function InterviewPage() {
   };
 
   const startInterview = async () => {
+    // Request full screen synchronously inside the user gesture
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(e => console.error("Fullscreen error:", e));
+    }
+    
+    setStage("interview");
+
     try {
-      await fetch(`/api/interviews/${id}`, {
+      // Background async update to backend
+      fetch(`/api/interviews/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "in_progress" })
-      });
-      if (document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen().catch(e => console.error(e));
-      }
+      }).catch(e => console.error("Failed to update status:", e));
     } catch (err) {
       console.error(err);
     }
-    setStage("interview");
+    
     if (interview) {
       await speakQuestion(interview.questions[0]);
     }
