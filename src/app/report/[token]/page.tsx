@@ -213,6 +213,28 @@ export default async function CandidateReportPage({ params }: { params: Promise<
     notFound();
   }
 
+  // Load completed interview matching by candidate email or name
+  let matchedInterview = null;
+  const candidateEmail = (candidate.email || candidate.extracted_data?.personalInformation?.email || "").trim().toLowerCase();
+  const cleanName = (n: string) => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+  const candName = cleanName(candidate.name || "");
+  
+  const { data: interviews } = await supabase
+    .from("interviews")
+    .select("*")
+    .eq("status", "completed");
+    
+  if (interviews && interviews.length > 0) {
+    const match = interviews.find((i: any) => {
+      const matchesEmail = candidateEmail && (i.candidate_email || "").trim().toLowerCase() === candidateEmail;
+      const matchesName = candName && cleanName(i.candidate_name || "") === candName;
+      return matchesEmail || matchesName;
+    });
+    if (match) {
+      matchedInterview = match;
+    }
+  }
+
   // Check expiry stored inside extracted_data
   const expiresAt = candidate.extracted_data?._reportShareExpiresAt;
   if (expiresAt && new Date(expiresAt) < new Date()) {
@@ -281,7 +303,16 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   const skills = mappedCandidate.skills || [];
   const edu = data.educationDetails || [];
   const projs = data.projectAnalysis || [];
-  const transcript = mappedCandidate.transcript || data.transcript || [];
+  // Use DB Whisper transcript if available, fallback to candidate transcript
+  const transcript = (matchedInterview?.transcript && Array.isArray(matchedInterview.transcript) && matchedInterview.transcript.length > 0)
+    ? matchedInterview.transcript.map((t: any) => ({
+        question: t.question || "",
+        answer: t.text || t.answer || "",
+        timestamp_start: t.timestamp_start,
+        timestamp_end: t.timestamp_end
+      }))
+    : (mappedCandidate.transcript || data.transcript || []);
+
   const { strengths, weaknesses } = deriveStrengthsWeaknesses(mappedCandidate);
 
   // Use stored analysis from DB if available, fall back to live computation
@@ -290,17 +321,40 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   const analysis = (storedAnalysis && storedAnalysis.recommendation && typeof storedAnalysis.communication === 'number')
     ? { ...liveAnalysis, ...storedAnalysis }
     : liveAnalysis;
-  const commScore = transcript.length > 0 ? analysis.communication : 85;
-  const confLabel = transcript.length > 0 ? (analysis.confidence >= 75 ? 'High' : analysis.confidence >= 55 ? 'Medium' : 'Low') : 'High';
-  const recLabel = mappedCandidate.finalRecommendation || (transcript.length > 0 ? (analysis.recommendation === 'Strongly Recommend' || analysis.recommendation === 'Recommend' ? 'Yes' : 'No') : 'Yes');
+
+  // Compute scores perfectly consistent with the real database records
+  const resolvedScores = (() => {
+    const s = matchedInterview?.scores || {};
+    const resumeScoreVal = mappedCandidate.resumeScore || 0;
+    const videoScoreVal = mappedCandidate.videoScore || 0;
+    const techScoreVal = mappedCandidate.techScore || 0;
+    const recLabelVal = mappedCandidate.finalRecommendation || 'Under Review';
+
+    const commScoreVal = s.Communication !== undefined ? s.Communication * 20 : videoScoreVal;
+    const confidenceVal = s.Confidence !== undefined ? s.Confidence * 20 : videoScoreVal;
+    const confLabelVal = confidenceVal >= 75 ? 'High' : confidenceVal >= 55 ? 'Medium' : 'Low';
+
+    const scoresList = [resumeScoreVal, videoScoreVal, techScoreVal].filter((v) => v !== null && v !== undefined);
+    const avgScoreVal = scoresList.length ? Math.round(scoresList.reduce((a, b) => a + b, 0) / scoresList.length) : 75;
+
+    return {
+      commScore: commScoreVal,
+      confLabel: confLabelVal,
+      recLabel: recLabelVal,
+      resumeScore: resumeScoreVal,
+      videoScore: videoScoreVal,
+      techScore: techScoreVal,
+      avgScore: avgScoreVal
+    };
+  })();
+
+  const commScore = resolvedScores.commScore;
+  const confLabel = resolvedScores.confLabel;
+  const recLabel = resolvedScores.recLabel;
+  const avgScore = resolvedScores.avgScore;
 
   const matchedJob = jobs.find((j: any) => j.title === mappedCandidate.jobApplied);
   const jobSkills = matchedJob?.required_skills || matchedJob?.skills || [];
-
-  const avgScore = (() => {
-    const vals = [mappedCandidate.resumeScore, mappedCandidate.videoScore, mappedCandidate.techScore].filter(Boolean);
-    return vals.length ? Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length) : null;
-  })();
 
   const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
@@ -421,7 +475,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
               <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.resumeScore || 0}%</span>
+                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.resumeScore || 0}%</span>
               </div>
             </div>
             <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -431,7 +485,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
               <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
-                <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.videoScore || 0}%</span>
+                <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.videoScore || 0}%</span>
               </div>
             </div>
             <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -441,7 +495,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
               <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
-                <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.techScore || 0}%</span>
+                <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.techScore || 0}%</span>
               </div>
             </div>
             <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -505,7 +559,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
 
         {/* Main 3-column grid — no scroll */}
         <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem 1.5rem', backgroundColor: '#f8fafc', maxWidth: '1440px', margin: '0 auto', width: '100%', overflow: 'hidden' }}>
-          <ReportDashboardGrid candidate={mappedCandidate} NEXT_JS_URL={NEXT_JS_URL} />
+          <ReportDashboardGrid candidate={mappedCandidate} NEXT_JS_URL={NEXT_JS_URL} matchedInterviewFromDb={matchedInterview} />
         </div>
 
       </div>

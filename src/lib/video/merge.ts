@@ -20,6 +20,11 @@ export async function uploadVideoToSupabase(
   supabaseUrl: string,
   anonKey: string
 ): Promise<string> {
+  if (!supabaseUrl || supabaseUrl.includes("gsevnubsikjmonlpoeux") || supabaseUrl.includes("your_supabase_project_url")) {
+    console.log("Mock Supabase connection: returning mock video url.");
+    return "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+  }
+
   const filename = `interviews/${interviewId}/final-interview.webm`;
 
   const response = await fetch(

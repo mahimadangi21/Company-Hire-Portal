@@ -40,4 +40,4 @@ yarn-error.log*
 next-env.d.ts
 # Verify .gitignore contains:
 .env*.local
-    
+/public/uploads
