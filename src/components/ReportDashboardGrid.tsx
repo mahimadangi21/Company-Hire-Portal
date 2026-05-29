@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { ResumeViewButton } from '@/components/ResumeViewButton';
 import { TranscriptIntelligenceEngine } from '@/components/reports/TranscriptIntelligenceEngine';
+import { useAppContext } from '@/components/admin/context/AppContext';
 import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
 
 /* ─────────────────── SVG Radial Progress ─────────────────────── */
@@ -81,6 +82,53 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
   const [activeModal, setActiveModal] = useState<'scores' | 'resume' | 'strengths' | 'transcript' | 'videoTranscript' | null>(null);
   const [scoresViewMode, setScoresViewMode] = useState<'radial' | 'bar'>('radial');
   const [mounted, setMounted] = useState(false);
+
+  let context: any = null;
+  try {
+    context = useAppContext();
+  } catch (e) {
+    // Gracefully handle case where AppContext is not available
+  }
+
+  const [candidateVideoUrl, setCandidateVideoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (candidate.extractedData?.videoUrl) {
+      setCandidateVideoUrl(candidate.extractedData.videoUrl);
+      return;
+    }
+
+    if (candidate.extractedData?.video_url) {
+      setCandidateVideoUrl(candidate.extractedData.video_url);
+      return;
+    }
+
+    if (candidate.video_url) {
+      setCandidateVideoUrl(candidate.video_url);
+      return;
+    }
+
+    // Dynamic fetch by matching email (only if inside Admin dashboard context)
+    const fetchVideoUrl = async () => {
+      try {
+        if (!context?.apiFetch) return;
+        const res = await context.apiFetch(`/api/interviews?t=${Date.now()}`);
+        if (res.ok) {
+          const { data } = await res.json();
+          const match = data.find((i: any) => i.candidate_email === candidate.email && i.status === 'completed');
+          if (match?.video_url) {
+            setCandidateVideoUrl(match.video_url);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch interview video URL:", err);
+      }
+    };
+
+    if (candidate.email && context?.apiFetch) {
+      fetchVideoUrl();
+    }
+  }, [candidate, context]);
 
   useEffect(() => {
     setMounted(true);
@@ -440,57 +488,69 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
             {/* Row 1: Video and Highlights */}
             <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch', flexShrink: 0 }}>
               {/* Video Player */}
-              <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', backgroundImage: 'url(/video_screening_thumbnail.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                {/* Play Button Overlay */}
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 8px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
-                  <svg width="12" height="14" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '2px' }}>
-                    <path d="M14.5 9L1.75 16.3612L1.75 1.63878L14.5 9Z" fill="white"/>
-                  </svg>
-                </div>
-                {/* Control Bar */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)', display: 'flex', flexDirection: 'column', padding: '4px 8px 6px', flexShrink: 0 }}>
-                  {/* Progress Line */}
-                  <div style={{ position: 'relative', width: '100%', height: '3px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px', marginBottom: '4px' }}>
-                    <div style={{ width: '26%', height: '100%', backgroundColor: '#ef4444', borderRadius: '2px' }} />
-                    <div style={{ position: 'absolute', top: '50%', left: '26%', transform: 'translate(-50%, -50%)', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
-                  </div>
-                  {/* Buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {/* Play Icon */}
-                      <svg width="8" height="10" viewBox="0 0 10 12" fill="white" style={{ opacity: 0.9 }}>
-                        <path d="M1 1L9 6L1 11V1Z" fill="white"/>
-                      </svg>
-                      {/* Skip Icon */}
-                      <svg width="8" height="8" viewBox="0 0 10 10" fill="white" style={{ opacity: 0.9 }}>
-                        <path d="M1 1V9L6.5 5L1 1Z" fill="white"/>
-                        <rect x="7.5" y="1" width="1.5" height="8" fill="white"/>
-                      </svg>
-                      <span style={{ fontSize: '0.62rem', color: '#fff', fontWeight: '500', fontFamily: 'sans-serif' }}>2:14 / 8:32</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {/* CC */}
-                      <svg width="12" height="10" viewBox="0 0 14 12" fill="none" style={{ opacity: 0.9 }}>
-                        <rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
-                        <text x="2.5" y="8" fill="white" fontSize="6" fontWeight="900" fontFamily="sans-serif">CC</text>
-                      </svg>
-                      {/* Settings */}
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
-                        <circle cx="6" cy="6" r="1.5" stroke="white" strokeWidth="1.5"/>
-                        <path d="M6 1V2M6 10V11M1 6H2M10 6H11M2.5 2.5L3.2 3.2M8.8 8.8L9.5 9.5M2.5 9.5L3.2 8.8M8.8 3.2L9.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                      {/* PIP */}
-                      <svg width="10" height="8" viewBox="0 0 12 10" fill="none" style={{ opacity: 0.9 }}>
-                        <rect x="0.75" y="0.75" width="10.5" height="8.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
-                        <rect x="6" y="5" width="3.5" height="2.5" rx="0.5" fill="white"/>
-                      </svg>
-                      {/* Maximize */}
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
-                        <path d="M1.5 4V1.5H4M10.5 4V1.5H8M1.5 8V10.5H4M10.5 8V10.5H8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
+                {candidateVideoUrl ? (
+                  <video 
+                    src={candidateVideoUrl}
+                    controls
+                    playsInline
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <>
+                    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/video_screening_thumbnail.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                    {/* Play Button Overlay */}
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 8px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
+                      <svg width="12" height="14" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '2px' }}>
+                        <path d="M14.5 9L1.75 16.3612L1.75 1.63878L14.5 9Z" fill="white"/>
                       </svg>
                     </div>
-                  </div>
-                </div>
+                    {/* Control Bar */}
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)', display: 'flex', flexDirection: 'column', padding: '4px 8px 6px', flexShrink: 0 }}>
+                      {/* Progress Line */}
+                      <div style={{ position: 'relative', width: '100%', height: '3px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px', marginBottom: '4px' }}>
+                        <div style={{ width: '26%', height: '100%', backgroundColor: '#ef4444', borderRadius: '2px' }} />
+                        <div style={{ position: 'absolute', top: '50%', left: '26%', transform: 'translate(-50%, -50%)', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+                      </div>
+                      {/* Buttons */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {/* Play Icon */}
+                          <svg width="8" height="10" viewBox="0 0 10 12" fill="white" style={{ opacity: 0.9 }}>
+                            <path d="M1 1L9 6L1 11V1Z" fill="white"/>
+                          </svg>
+                          {/* Skip Icon */}
+                          <svg width="8" height="8" viewBox="0 0 10 10" fill="white" style={{ opacity: 0.9 }}>
+                            <path d="M1 1V9L6.5 5L1 1Z" fill="white"/>
+                            <rect x="7.5" y="1" width="1.5" height="8" fill="white"/>
+                          </svg>
+                          <span style={{ fontSize: '0.62rem', color: '#fff', fontWeight: '500', fontFamily: 'sans-serif' }}>2:14 / 8:32</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {/* CC */}
+                          <svg width="12" height="10" viewBox="0 0 14 12" fill="none" style={{ opacity: 0.9 }}>
+                            <rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
+                            <text x="2.5" y="8" fill="white" fontSize="6" fontWeight="900" fontFamily="sans-serif">CC</text>
+                          </svg>
+                          {/* Settings */}
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
+                            <circle cx="6" cy="6" r="1.5" stroke="white" strokeWidth="1.5"/>
+                            <path d="M6 1V2M6 10V11M1 6H2M10 6H11M2.5 2.5L3.2 3.2M8.8 8.8L9.5 9.5M2.5 9.5L3.2 8.8M8.8 3.2L9.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                          {/* PIP */}
+                          <svg width="10" height="8" viewBox="0 0 12 10" fill="none" style={{ opacity: 0.9 }}>
+                            <rect x="0.75" y="0.75" width="10.5" height="8.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
+                            <rect x="6" y="5" width="3.5" height="2.5" rx="0.5" fill="white"/>
+                          </svg>
+                          {/* Maximize */}
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
+                            <path d="M1.5 4V1.5H4M10.5 4V1.5H8M1.5 8V10.5H4M10.5 8V10.5H8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               
               {/* Highlights */}
