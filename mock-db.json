@@ -124,12 +124,12 @@
         ],
         "_reportShareToken": "cd392fd46736471aa565ffc266735a354d8a80f9a88944309935a720e8b88978",
         "_reportShareExpiresAt": "2026-06-28T11:06:26.423Z",
-        "video": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "videoUrl": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "video_url": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "video_path": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
+        "video": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "videoUrl": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_url": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_path": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
         "localVideoBlobUrl": "blob:http://localhost:3001/9c771b2b-663c-4fe2-ae2c-2532bf6b66f3",
-        "videoUploadedAt": "2026-05-29T11:35:19.257Z",
+        "videoUploadedAt": "2026-05-29T12:07:49.135Z",
         "transcript": [
           {
             "question": "Why are you interested in joining our company?",
@@ -326,12 +326,12 @@
         ],
         "_reportShareToken": "cd392fd46736471aa565ffc266735a354d8a80f9a88944309935a720e8b88978",
         "_reportShareExpiresAt": "2026-06-28T11:06:26.423Z",
-        "video": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "videoUrl": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "video_url": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "video_path": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
+        "video": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "videoUrl": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_url": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_path": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
         "localVideoBlobUrl": "blob:http://localhost:3001/9c771b2b-663c-4fe2-ae2c-2532bf6b66f3",
-        "videoUploadedAt": "2026-05-29T11:35:19.257Z",
+        "videoUploadedAt": "2026-05-29T12:07:49.135Z",
         "transcript": [
           {
             "question": "Why are you interested in joining our company?",
@@ -526,12 +526,12 @@
         ],
         "_reportShareToken": "cd392fd46736471aa565ffc266735a354d8a80f9a88944309935a720e8b88978",
         "_reportShareExpiresAt": "2026-06-28T11:06:26.423Z",
-        "video": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "videoUrl": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "video_url": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
-        "video_path": "/uploads/candidate-1780052786595-937-1780054518726.mp4",
+        "video": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "videoUrl": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_url": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_path": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
         "localVideoBlobUrl": "blob:http://localhost:3001/9c771b2b-663c-4fe2-ae2c-2532bf6b66f3",
-        "videoUploadedAt": "2026-05-29T11:35:19.257Z",
+        "videoUploadedAt": "2026-05-29T12:07:49.135Z",
         "transcript": [
           {
             "question": "Why are you interested in joining our company?",
@@ -628,16 +628,16 @@
       ],
       "status": "completed",
       "expires_at": "2026-05-30T11:12:13.103Z",
-      "started_at": "2026-05-29T11:32:03.431Z",
+      "started_at": "2026-05-29T11:45:09.124Z",
       "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
       "transcript": [
         {
           "question": "tell me about your self?",
           "timestamp_start": 0,
-          "timestamp_end": 3.237
+          "timestamp_end": 4.689
         }
       ],
-      "completed_at": "2026-05-29T11:32:10.944Z",
+      "completed_at": "2026-05-29T11:45:22.025Z",
       "summary": "- Demonstrates a strong understanding of artificial intelligence and machine learning.\n- Clearly articulates personal qualifications and specialized stream project experience.\n- Good communication style, structured logic, and confidence during responses.",
       "scores": {
         "Confidence": 4,
@@ -658,16 +658,38 @@
       ],
       "status": "completed",
       "expires_at": "2026-05-30T11:30:39.720Z",
-      "started_at": "2026-05-29T11:32:03.431Z",
+      "started_at": "2026-05-29T11:45:09.124Z",
       "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
       "transcript": [
         {
           "question": "tell me about your self?",
           "timestamp_start": 0,
-          "timestamp_end": 3.237
+          "timestamp_end": 4.689
         }
       ],
-      "completed_at": "2026-05-29T11:32:10.944Z"
+      "completed_at": "2026-05-29T11:45:22.025Z"
+    },
+    {
+      "id": "interview-1780055088795-390",
+      "created_at": "2026-05-29T11:44:48.795Z",
+      "candidate_name": "Unnati Sutradhar",
+      "candidate_email": "mahimadangi78@gmail.com",
+      "job_role": "AI Research Scientist",
+      "questions": [
+        "tell me about your self?"
+      ],
+      "status": "completed",
+      "expires_at": "2026-05-30T11:44:48.794Z",
+      "started_at": "2026-05-29T11:45:09.124Z",
+      "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "transcript": [
+        {
+          "question": "tell me about your self?",
+          "timestamp_start": 0,
+          "timestamp_end": 4.689
+        }
+      ],
+      "completed_at": "2026-05-29T11:45:22.025Z"
     }
   ],
   "questions_bank": [
