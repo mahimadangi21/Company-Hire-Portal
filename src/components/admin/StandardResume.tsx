@@ -165,10 +165,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
           </div>
         </div>
 
-        {/* Notice of Blind Resume */}
-        <div style={{ padding: '0.75rem', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', color: '#64748b', fontSize: '0.85rem', marginBottom: '2.5rem', borderRadius: '0 4px 4px 0' }}>
-          <strong>Note:</strong> Contact details (Email, Phone) have been hidden for unbiased review.
-        </div>
+
 
         {/* Single Column Sections */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>

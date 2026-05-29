@@ -1029,7 +1029,7 @@ const Reports = () => {
               <thead>
                 <tr>
                   <th style={{ width: '23%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate</th>
-                  <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Job Applied</th>
+                  <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Sub Department</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Video</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>

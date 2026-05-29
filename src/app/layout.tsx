@@ -1,3 +1,9 @@
+if (typeof window === 'undefined' && typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
+  try {
+    delete (globalThis as any).localStorage;
+  } catch (e) {}
+}
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";

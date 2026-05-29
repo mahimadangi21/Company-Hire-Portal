@@ -103,7 +103,8 @@ const DEFAULT_MODAL_FORM = {
 
 const getInitialState = () => {
   let storedPanelists = [];
-  if (typeof window !== 'undefined') {
+  const hasLocalStorage = typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function';
+  if (hasLocalStorage) {
     try {
       const raw = localStorage.getItem('kl_scheduler_panelists');
       if (raw) storedPanelists = JSON.parse(raw);
@@ -114,7 +115,7 @@ const getInitialState = () => {
 
   if (!storedPanelists || storedPanelists.length === 0) {
     storedPanelists = [...INITIAL_PANELISTS];
-    if (typeof window !== 'undefined') {
+    if (hasLocalStorage && typeof localStorage.setItem === 'function') {
       try {
         localStorage.setItem('kl_scheduler_panelists', JSON.stringify(storedPanelists));
       } catch {}
@@ -127,7 +128,7 @@ const getInitialState = () => {
     currentDate: new Date(),
     activeTab: 'calendar',   // 'calendar' | 'analytics'
     selectedPanelistId: null, // highlight panelist on calendar
-    darkMode: typeof window !== 'undefined' ? localStorage.getItem('scheduler-theme') === 'dark' : false,
+    darkMode: hasLocalStorage ? localStorage.getItem('scheduler-theme') === 'dark' : false,
 
     // Server state
     interviews: [],
@@ -377,7 +378,7 @@ function schedulerReducer(state, action) {
 
     case ACTIONS.TOGGLE_THEME: {
       const nextMode = !state.darkMode;
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
         localStorage.setItem('scheduler-theme', nextMode ? 'dark' : 'light');
       }
       return { ...state, darkMode: nextMode };
@@ -385,7 +386,7 @@ function schedulerReducer(state, action) {
 
     case ACTIONS.ADD_PANELIST: {
       const nextPanelists = [...state.panelists, action.payload];
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
         try {
           localStorage.setItem('kl_scheduler_panelists', JSON.stringify(nextPanelists));
         } catch {}
@@ -398,7 +399,7 @@ function schedulerReducer(state, action) {
 
     case ACTIONS.REMOVE_PANELIST: {
       const nextPanelists = state.panelists.filter(p => p.id !== action.payload);
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
         try {
           localStorage.setItem('kl_scheduler_panelists', JSON.stringify(nextPanelists));
         } catch {}

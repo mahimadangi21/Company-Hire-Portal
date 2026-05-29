@@ -59,7 +59,7 @@ const isDummyInterview = (iv) => {
 const storage = {
   getAll() {
     try {
-      if (typeof window === 'undefined') return [];
+      if (typeof window === 'undefined' || typeof localStorage === 'undefined' || typeof localStorage.getItem !== 'function') return [];
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return []; // no stored data — return clean empty list
       const parsed = JSON.parse(raw);
@@ -77,7 +77,7 @@ const storage = {
 
   saveAll(interviews) {
     try {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(interviews));
       }
     } catch (e) {
