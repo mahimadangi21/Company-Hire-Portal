@@ -11,6 +11,40 @@ import { TranscriptIntelligenceEngine } from '@/components/reports/TranscriptInt
 import { useAppContext } from '@/components/admin/context/AppContext';
 import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
 
+/* ─────────────────── Embeddable Video ─────────────────────── */
+export const EmbeddableVideo = ({ url, ...props }: any) => {
+  if (!url) return null;
+  // Google Drive Link
+  if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      const embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+      return <iframe src={embedUrl} allow="autoplay" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
+    }
+  }
+  // YouTube Link
+  if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+    const match = url.match(/(?:v=|youtu\.be\/)([^&]+)/);
+    if (match && match[1]) {
+      const embedUrl = `https://www.youtube.com/embed/${match[1]}`;
+      return <iframe src={embedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
+    }
+  }
+  // OneDrive / SharePoint (basic attempt, though iframe headers often block this unless it's an explicit embed link)
+  if (url.includes('sharepoint.com') || url.includes('1drv.ms')) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', backgroundColor: '#0f172a', padding: '1rem', textAlign: 'center' }}>
+        <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline', fontWeight: 'bold' }}>
+          🔗 Open OneDrive Video in New Tab
+        </a>
+      </div>
+    );
+  }
+  
+  // Standard video fallback
+  return <video src={url} {...props} />;
+};
+
 /* ─────────────────── SVG Radial Progress ─────────────────────── */
 const RadialProgress = ({ value = 0, size = 80, stroke = 7, color = '#3b82f6', label }: any) => {
   const r = (size - stroke) / 2;
@@ -620,12 +654,11 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
             <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch', flexShrink: 0 }}>
               {/* Video Player */}
               <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
-                <video 
+                <EmbeddableVideo 
                   key={screeningVideoUrl}
                   controls
                   preload="metadata"
-                  width="100%"
-                  src={screeningVideoUrl}
+                  url={screeningVideoUrl}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
@@ -704,17 +737,16 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
 
         {/* Small Tech Video Player in Column 3 */}
         <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
-          <video 
+          <EmbeddableVideo 
             key={technicalVideoUrl}
             controls
             preload="metadata"
-            width="100%"
-            src={technicalVideoUrl}
+            url={technicalVideoUrl}
             style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-            onClick={(e) => {
+            onClick={(e: any) => {
               const video = e.currentTarget;
               if (video.paused) {
-                video.play().catch(err => console.error("Video play failed:", err));
+                video.play().catch((err: any) => console.error("Video play failed:", err));
               } else {
                 video.pause();
               }

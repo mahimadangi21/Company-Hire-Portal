@@ -900,14 +900,49 @@ const Reports = () => {
   };
 
   const triggerVideoUpload = (candidate) => {
-    setVideoUploadCandidate(candidate);
-    if (videoFileInputRef.current) {
-      videoFileInputRef.current.value = '';
-      videoFileInputRef.current.click();
-    }
+    const url = prompt("Enter Video URL (e.g., Google Drive link, YouTube, or direct MP4 link):");
+    if (!url) return;
+
+    setUploadingVideoId(candidate.id);
+    const candidateExtractedData = candidate.extractedData || candidate.extracted_data || {};
+
+    const updatedExtractedData = {
+      ...candidateExtractedData,
+      video: url,
+      videoUrl: url,
+      video_url: url,
+      video_path: url,
+      videoUploadedAt: new Date().toISOString()
+    };
+
+    const payload = {
+      id: candidate.id,
+      extracted_data: updatedExtractedData,
+      video_status: 'Completed',
+      video_score: 90
+    };
+
+    apiFetch('/api/candidates', {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    }).then(async (response) => {
+      if (response.ok) {
+        alert('✅ Video URL saved successfully!');
+        await refreshCandidates();
+      } else {
+        const errData = await response.json();
+        alert(errData.error || 'Failed to update candidate record.');
+      }
+    }).catch(err => {
+      console.error(err);
+      alert(`Error saving video URL: ${err.message || err}`);
+    }).finally(() => {
+      setUploadingVideoId(null);
+    });
   };
 
   const handleVideoFileChange = async (e) => {
+    // Kept for backward compatibility, though not used anymore
     const file = e.target.files?.[0];
     if (!file || !videoUploadCandidate) return;
 
