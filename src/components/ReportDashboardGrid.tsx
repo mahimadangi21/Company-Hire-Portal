@@ -90,21 +90,24 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
     // Gracefully handle case where AppContext is not available
   }
 
+  const candidateVideoUrlFromProp = useMemo(() => {
+    const ext = candidate.extractedData || candidate.extracted_data || {};
+    const url = candidate.video || 
+                candidate.videoUrl || 
+                candidate.video_url || 
+                candidate.video_path ||
+                ext.video || 
+                ext.videoUrl || 
+                ext.video_url || 
+                ext.video_path;
+    return url;
+  }, [candidate]);
+
   const [candidateVideoUrl, setCandidateVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (candidate.extractedData?.videoUrl) {
-      setCandidateVideoUrl(candidate.extractedData.videoUrl);
-      return;
-    }
-
-    if (candidate.extractedData?.video_url) {
-      setCandidateVideoUrl(candidate.extractedData.video_url);
-      return;
-    }
-
-    if (candidate.video_url) {
-      setCandidateVideoUrl(candidate.video_url);
+    if (candidateVideoUrlFromProp) {
+      setCandidateVideoUrl(candidateVideoUrlFromProp);
       return;
     }
 
@@ -135,17 +138,21 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
     if (targetEmail && context?.apiFetch) {
       fetchVideoUrl();
     }
-  }, [candidate, context]);
+  }, [candidate, context, candidateVideoUrlFromProp]);
 
-  const displayVideoUrl = useMemo(() => {
+  const videoUrl = useMemo(() => {
     const defaultFallback = "https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-coffee-shop-42686-large.mp4";
     if (!candidateVideoUrl) return defaultFallback;
-    const clean = candidateVideoUrl.trim();
+    const clean = String(candidateVideoUrl).trim();
     if (clean === "" || clean === "—" || clean === "null" || clean === "undefined") {
       return defaultFallback;
     }
     return clean;
   }, [candidateVideoUrl]);
+
+  useEffect(() => {
+    console.log("Video URL:", videoUrl);
+  }, [videoUrl]);
 
   useEffect(() => {
     setMounted(true);
@@ -507,9 +514,10 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
               {/* Video Player */}
               <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
                 <video 
-                  src={displayVideoUrl}
                   controls
-                  playsInline
+                  preload="metadata"
+                  width="100%"
+                  src={videoUrl}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
@@ -600,41 +608,23 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
         </div>
 
         {/* Small Tech Video Player in Column 3 */}
-        <div style={{ width: '144px', height: '81px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', backgroundImage: 'url(/tech_video_thumbnail.png)', backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0 }}>
-          {/* Play Button Overlay */}
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
-            <svg width="10" height="12" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '1.5px' }}>
-              <path d="M14.5 9L1.75 16.3612L1.75 1.63878L14.5 9Z" fill="white"/>
-            </svg>
-          </div>
-          {/* Control Bar */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)', display: 'flex', flexDirection: 'column', padding: '3px 6px 4px', flexShrink: 0 }}>
-            {/* Progress Line */}
-            <div style={{ position: 'relative', width: '100%', height: '2px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px', marginBottom: '3px' }}>
-              <div style={{ width: '18%', height: '100%', backgroundColor: '#ef4444', borderRadius: '2px' }} />
-            </div>
-            {/* Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                {/* Play Icon */}
-                <svg width="6" height="8" viewBox="0 0 10 12" fill="white" style={{ opacity: 0.9 }}>
-                  <path d="M1 1L9 6L1 11V1Z" fill="white"/>
-                </svg>
-                <span style={{ fontSize: '0.55rem', color: '#fff', fontWeight: '500', fontFamily: 'sans-serif' }}>4:03 / 22:18</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                {/* CC */}
-                <svg width="9" height="8" viewBox="0 0 14 12" fill="none" style={{ opacity: 0.9 }}>
-                  <rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
-                  <text x="2.5" y="8" fill="white" fontSize="6" fontWeight="900" fontFamily="sans-serif">CC</text>
-                </svg>
-                {/* Maximize */}
-                <svg width="8" height="8" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
-                  <path d="M1.5 4V1.5H4M10.5 4V1.5H8M1.5 8V10.5H4M10.5 8V10.5H8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
+        <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
+          <video 
+            controls
+            preload="metadata"
+            width="100%"
+            src={videoUrl}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+            onClick={(e) => {
+              const video = e.currentTarget;
+              if (video.paused) {
+                video.play().catch(err => console.error("Video play failed:", err));
+              } else {
+                video.pause();
+              }
+            }}
+            title="Click to Play / Pause"
+          />
         </div>
 
         {transcript.length > 0 ? (
