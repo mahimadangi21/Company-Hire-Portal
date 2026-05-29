@@ -143,7 +143,7 @@ const ResumeUpload = () => {
           : Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
 
         const payload = {
-          name: data.personalInformation?.fullName || file.name.replace('.pdf', ''),
+          name: data.personalInformation?.fullName || (file.name.replace(/\.pdf$/i, '').replace(/[_-]/g, ' ').replace(/\b(resume|cv|document|copy)\b/gi, '').replace(/\s+/g, ' ').trim() || 'Unknown Candidate'),
           email: data.personalInformation?.email || 'No email provided',
           phone: data.personalInformation?.phoneNumber || 'No phone provided',
           skills: data.skillExtraction?.extractedSkills || [],
