@@ -1,0 +1,8 @@
+Q: Can you describe a recent project where you demonstrated technical leadership and solved a complex system architecture challenge?
+A: Um, yeah, so... I was working on this project. It was basically, you know, a website. We had to put some information on it. I didn't really do the setup or the architecture, because another guy did that. I just helped with, like, putting the text on the screen and making sure the buttons worked. I didn't really use Docker or AWS or anything, just some basic stuff. It was okay, I guess. I didn't really have to solve any huge challenges because it was a pretty simple website.
+
+Q: How do you guide your junior developers when they face technical roadblocks or code design issues?
+A: Well, we don't really have many junior developers, and honestly, I usually just do my own work. If someone asks me a question, I just tell them to google it or search on StackOverflow because that's what I do. I don't really do mentoring or pair programming. Everyone just does their own tasks.
+
+Q: What is your approach to handling debugging in production under tight deadlines?
+A: Oh, um, when there is a bug, I usually get really nervous. I just try to change some lines of code randomly and deploy it to see if it fixes the problem. Sometimes I ask the senior guy because he knows how to read the logs. I don't really know how to use Datadog or CloudWatch. I just try to keep it simple, you know.

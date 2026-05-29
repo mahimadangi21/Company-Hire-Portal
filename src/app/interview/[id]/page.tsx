@@ -29,7 +29,8 @@ type Stage =
   | "completed"
   | "error"
   | "expired"
-  | "already-completed";
+  | "already-completed"
+  | "in-progress-blocked";
 
 export default function InterviewPage() {
   const params = useParams();
@@ -44,6 +45,8 @@ export default function InterviewPage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [allChunks, setAllChunks] = useState<RecordingChunk[]>([]);
+  const [strikes, setStrikes] = useState(0);
+  const [showWarning, setShowWarning] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,12 +65,13 @@ export default function InterviewPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/api/interviews/${id}`);
+        const res = await fetch(`/api/interviews/${id}`, { cache: "no-store" });
         if (!res.ok) { setStage("error"); setError("Interview not found."); return; }
         const { data } = await res.json();
         if (!data) { setStage("error"); setError("Interview not found."); return; }
 
         if (data.status === "completed") { setStage("already-completed"); return; }
+        if (data.status === "in_progress") { setStage("in-progress-blocked"); return; }
         if (isExpired(data.expires_at)) { setStage("expired"); return; }
 
         setInterview(data);
@@ -228,11 +232,93 @@ export default function InterviewPage() {
   };
 
   const startInterview = async () => {
+    // 1. Request full screen synchronously inside the user gesture
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(e => {
+        console.error("Fullscreen error:", e);
+        alert("Warning: Could not enter full screen. Please ensure your browser allows full screen.");
+      });
+    }
+    
     setStage("interview");
+
+    // 2. Wait for backend to confirm the 'in_progress' status
+    try {
+      await fetch(`/api/interviews/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "in_progress" })
+      });
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
+    
+    // 3. Start AI voice
     if (interview) {
       await speakQuestion(interview.questions[0]);
     }
   };
+
+  const handleEarlyTermination = async () => {
+    let chunk;
+    if (isRecordingRef.current) {
+       chunk = stopRecording();
+    } else {
+       chunk = {
+         question: interview!.questions[currentQuestionIndex],
+         questionIndex: currentQuestionIndex,
+         blob: new Blob(),
+         duration: 0,
+       };
+    }
+    
+    const finalBlob = await new Promise<Blob>((resolve) => {
+      const recorder = recorderRef.current;
+      if (!recorder) return resolve(new Blob());
+      recorder.onstop = () => resolve(new Blob(rawChunksRef.current, { type: "video/webm" }));
+      if (recorder.state !== "inactive") recorder.stop();
+      else resolve(new Blob(rawChunksRef.current, { type: "video/webm" }));
+    });
+
+    await processAndUpload([...allChunks, chunk], finalBlob);
+  };
+
+  useEffect(() => {
+    if (stage !== "interview") return;
+
+    const handleViolation = () => {
+      if (stage !== "interview") return;
+      
+      setStrikes(s => {
+        const newStrikes = s + 1;
+        if (newStrikes >= 3) {
+          handleEarlyTermination();
+        } else {
+          setShowWarning(true);
+          if (isRecordingRef.current && recorderRef.current?.state === "recording") {
+            recorderRef.current.pause();
+          }
+        }
+        return newStrikes;
+      });
+    };
+
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement && !showWarning) handleViolation();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden && !showWarning) handleViolation();
+    };
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [stage, showWarning]);
 
   const startRecording = () => {
     if (!canvasRef.current || !streamRef.current) return;
@@ -416,6 +502,17 @@ export default function InterviewPage() {
         color="emerald"
         title="Already Completed"
         message="This interview has already been completed. Thank you for your time!"
+      />
+    );
+  }
+
+  if (stage === "in-progress-blocked") {
+    return (
+      <FullScreenMessage
+        icon={<AlertCircle className="w-10 h-10 text-red-500" />}
+        color="red"
+        title="Session Already Started"
+        message="This interview session has already been started. To ensure fairness, refreshing or leaving the page during the interview is not permitted."
       />
     );
   }
@@ -747,6 +844,33 @@ export default function InterviewPage() {
             </div>
           </div>
         </div>
+
+        {showWarning && (
+          <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-6 backdrop-blur-sm">
+            <AlertCircle className="w-16 h-16 text-red-500 mb-6 animate-bounce" />
+            <h2 className="text-3xl font-bold text-white mb-4">Warning: Do Not Exit Full Screen</h2>
+            <p className="text-red-400 text-lg mb-8 max-w-lg text-center leading-relaxed">
+              You have switched tabs or exited full screen. This is a violation of the test rules. 
+              <br/><br/>
+              <span className="font-bold text-white text-xl">Strike: {strikes} of 3.</span> 
+              <br/>On your 3rd strike, your interview will be terminated automatically.
+            </p>
+            <Button onClick={() => {
+              if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().then(() => {
+                  setShowWarning(false);
+                  if (isRecordingRef.current && recorderRef.current?.state === "paused") {
+                    recorderRef.current.resume();
+                  }
+                }).catch(console.error);
+              } else {
+                setShowWarning(false);
+              }
+            }} className="h-14 px-8 bg-red-600 hover:bg-red-700 text-white text-lg rounded-xl shadow-lg shadow-red-600/20">
+              Return to Full Screen & Resume
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

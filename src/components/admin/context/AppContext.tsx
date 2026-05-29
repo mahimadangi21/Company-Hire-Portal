@@ -12,8 +12,9 @@ const API_URL = typeof window !== 'undefined'
 const API_SECRET = process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || process.env.INTERNAL_API_SECRET;
 
 /** Authenticated fetch — automatically attaches the internal API secret header */
-export const apiFetch = (path, options = {}) => {
+export const apiFetch = (path, options: any = {}) => {
   return fetch(`${API_URL}${path}`, {
+    cache: 'no-store', // Disable fetch caching completely to show real-time scores
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -30,7 +31,7 @@ export const AppProvider = ({ children }) => {
 
   const fetchJobs = async () => {
     try {
-      const res = await apiFetch('/api/jobs');
+      const res = await apiFetch(`/api/jobs?t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setJobs(data);
@@ -42,10 +43,10 @@ export const AppProvider = ({ children }) => {
 
   const fetchCandidates = async () => {
     try {
-      const res = await apiFetch('/api/candidates');
+      const res = await apiFetch(`/api/candidates?t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
-        setCandidates(data.map(c => ({
+        const mapped = data.map(c => ({
           ...c,
           // Map snake_case from DB to camelCase expected by existing React UI
           jobApplied: c.job_applied,
@@ -59,7 +60,9 @@ export const AppProvider = ({ children }) => {
           techScore: c.tech_score,
           finalRecommendation: c.final_recommendation,
           extractedData: c.extracted_data
-        })));
+        }));
+        setCandidates(mapped);
+        return mapped;
       }
     } catch (e) {
       console.error("Error fetching candidates:", e);
