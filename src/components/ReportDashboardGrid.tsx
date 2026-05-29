@@ -112,12 +112,18 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
     const fetchVideoUrl = async () => {
       try {
         if (!context?.apiFetch) return;
-        const res = await context.apiFetch(`/api/interviews?t=${Date.now()}`);
+        const res = await context.apiFetch(`/api/interviews/list?t=${Date.now()}`);
         if (res.ok) {
-          const { data } = await res.json();
-          const match = data.find((i: any) => i.candidate_email === candidate.email && i.status === 'completed');
-          if (match?.video_url) {
-            setCandidateVideoUrl(match.video_url);
+          const data = await res.json();
+          const candidateEmail = (candidate.email || candidate.extractedData?.personalInformation?.email || "").trim().toLowerCase();
+          if (candidateEmail && Array.isArray(data)) {
+            const match = data.find((i: any) => 
+              (i.candidate_email || "").trim().toLowerCase() === candidateEmail && 
+              i.status === 'completed'
+            );
+            if (match?.video_url) {
+              setCandidateVideoUrl(match.video_url);
+            }
           }
         }
       } catch (err) {
@@ -125,7 +131,8 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
       }
     };
 
-    if (candidate.email && context?.apiFetch) {
+    const targetEmail = (candidate.email || candidate.extractedData?.personalInformation?.email || "").trim();
+    if (targetEmail && context?.apiFetch) {
       fetchVideoUrl();
     }
   }, [candidate, context]);
