@@ -83,36 +83,36 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
   const [scoresViewMode, setScoresViewMode] = useState<'radial' | 'bar'>('radial');
   const [mounted, setMounted] = useState(false);
 
-  let context: any = null;
-  try {
-    context = useAppContext();
-  } catch (e) {
-    // Gracefully handle case where AppContext is not available
-  }
+  // Always call hook unconditionally at top level (Rules of Hooks)
+  const contextValue = useAppContext();
+  // Safely use context — it may be null if AppContext is not in the tree
+  const context: any = contextValue ?? null;
 
-  const candidateVideoUrlFromProp = useMemo(() => {
+  // Tech Video (Admin Uploaded) - Transcript Intelligence
+  const transcriptVideoUrl = useMemo(() => {
     const ext = candidate.extractedData || candidate.extracted_data || {};
-    const url = candidate.video || 
-                candidate.videoUrl || 
-                candidate.video_url || 
-                candidate.video_path ||
-                ext.video || 
-                ext.videoUrl || 
-                ext.video_url || 
-                ext.video_path;
-    return url;
+    const url = ext.videoUrl || ext.video_url || candidate.videoUrl || candidate.video_url;
+    
+    if (!url || typeof url !== 'string') return null;
+    const clean = url.trim();
+    if (clean === "" || clean === "—" || clean === "null" || clean === "undefined") {
+      return null;
+    }
+    return clean;
   }, [candidate]);
 
-  const [candidateVideoUrl, setCandidateVideoUrl] = useState<string | null>(null);
+  // Screening Video (Video Bot) - Video Screening & Transcript
+  const [screeningVideoUrl, setScreeningVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (candidateVideoUrlFromProp) {
-      setCandidateVideoUrl(candidateVideoUrlFromProp);
+    const directScreeningUrl = candidate.screeningVideoUrl || candidate.screening_video_url;
+    if (directScreeningUrl && typeof directScreeningUrl === 'string' && directScreeningUrl.trim() !== "" && directScreeningUrl.trim() !== "—" && directScreeningUrl.trim() !== "null") {
+      setScreeningVideoUrl(directScreeningUrl.trim());
       return;
     }
 
-    // Dynamic fetch by matching email (only if inside Admin dashboard context)
-    const fetchVideoUrl = async () => {
+    // Dynamic fetch by matching email to find Video Bot screening interview
+    const fetchScreeningVideoUrl = async () => {
       try {
         if (!context?.apiFetch) return;
         const res = await context.apiFetch(`/api/interviews/list?t=${Date.now()}`);
@@ -125,34 +125,27 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
               i.status === 'completed'
             );
             if (match?.video_url) {
-              setCandidateVideoUrl(match.video_url);
+              setScreeningVideoUrl(match.video_url);
             }
           }
         }
       } catch (err) {
-        console.error("Failed to fetch interview video URL:", err);
+        console.error("Failed to fetch screening interview video URL:", err);
       }
     };
 
     const targetEmail = (candidate.email || candidate.extractedData?.personalInformation?.email || "").trim();
     if (targetEmail && context?.apiFetch) {
-      fetchVideoUrl();
+      fetchScreeningVideoUrl();
     }
-  }, [candidate, context, candidateVideoUrlFromProp]);
-
-  const videoUrl = useMemo(() => {
-    const defaultFallback = "https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-coffee-shop-42686-large.mp4";
-    if (!candidateVideoUrl) return defaultFallback;
-    const clean = String(candidateVideoUrl).trim();
-    if (clean === "" || clean === "—" || clean === "null" || clean === "undefined") {
-      return defaultFallback;
-    }
-    return clean;
-  }, [candidateVideoUrl]);
+  }, [candidate, context]);
 
   useEffect(() => {
-    console.log("Video URL:", videoUrl);
-  }, [videoUrl]);
+    console.log("Candidate Object:", candidate);
+    console.log("Candidate Screening Video URL fields:", candidate.screeningVideoUrl, candidate.screening_video_url);
+    console.log("Resolved Screening Video URL:", screeningVideoUrl);
+    console.log("Resolved Transcript Video URL:", transcriptVideoUrl);
+  }, [candidate, screeningVideoUrl, transcriptVideoUrl]);
 
   useEffect(() => {
     setMounted(true);
@@ -513,13 +506,19 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
             <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch', flexShrink: 0 }}>
               {/* Video Player */}
               <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
-                <video 
-                  controls
-                  preload="metadata"
-                  width="100%"
-                  src={videoUrl}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                {screeningVideoUrl ? (
+                  <video 
+                    controls
+                    preload="metadata"
+                    width="100%"
+                    src={screeningVideoUrl}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    Screening video unavailable
+                  </div>
+                )}
               </div>
               
               {/* Highlights */}
@@ -609,22 +608,28 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
 
         {/* Small Tech Video Player in Column 3 */}
         <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
-          <video 
-            controls
-            preload="metadata"
-            width="100%"
-            src={videoUrl}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-            onClick={(e) => {
-              const video = e.currentTarget;
-              if (video.paused) {
-                video.play().catch(err => console.error("Video play failed:", err));
-              } else {
-                video.pause();
-              }
-            }}
-            title="Click to Play / Pause"
-          />
+          {transcriptVideoUrl ? (
+            <video 
+              controls
+              preload="metadata"
+              width="100%"
+              src={transcriptVideoUrl}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+              onClick={(e) => {
+                const video = e.currentTarget;
+                if (video.paused) {
+                  video.play().catch(err => console.error("Video play failed:", err));
+                } else {
+                  video.pause();
+                }
+              }}
+              title="Click to Play / Pause"
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.75rem', fontStyle: 'italic', textAlign: 'center', padding: '0 10px' }}>
+              Transcript video unavailable
+            </div>
+          )}
         </div>
 
         {transcript.length > 0 ? (

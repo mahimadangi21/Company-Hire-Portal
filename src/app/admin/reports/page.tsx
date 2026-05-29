@@ -323,12 +323,12 @@ const deriveStrengthsWeaknesses = (candidate) => {
 
 /* ─────────────────────── Detail Modal ──────────────────────── */
 const DetailModal = ({ candidate, jobs, onClose }) => {
+  const { refreshCandidates } = useAppContext();
+  const [viewResumeOpen, setViewResumeOpen] = useState(false);
+
   if (!candidate) return null;
 
   console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
-
-  const { refreshCandidates } = useAppContext();
-  const [viewResumeOpen, setViewResumeOpen] = useState(false);
 
   const data = candidate.extractedData || {};
 
@@ -653,6 +653,8 @@ const Reports = () => {
   const [uploadingVideoId, setUploadingVideoId] = useState(null);
   const [videoUploadCandidate, setVideoUploadCandidate] = useState(null);
   const videoFileInputRef = useRef(null);
+  const [uploadStatusMessage, setUploadStatusMessage] = useState('');
+  const ffmpegRef = useRef(null);
 
   // Auto-sync selectedCandidate when candidates context refreshes (fixes stale modal after re-upload)
   useEffect(() => {
@@ -850,23 +852,145 @@ const Reports = () => {
     const candidateExtractedData = videoUploadCandidate.extractedData || videoUploadCandidate.extracted_data || {};
 
     setUploadingVideoId(candidateId);
+    setUploadStatusMessage("Initializing...");
+
+    let finalFileToUpload = file;
+    let isCompressed = false;
 
     try {
-      // 1. Generate local object URL for instant playback (if needed)
-      const objectUrl = URL.createObjectURL(file);
+      console.log(`Starting client-side compression for candidate: ${candidateId}, original size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+      
+      try {
+        setUploadStatusMessage("Loading compiler...");
+        const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+        const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
 
-      // 2. We persist a premium public streaming video URL under videoUrl in the database
-      // so it remains permanently valid and playable after any context updates or page refreshes.
-      const fallbackVideoUrl = "https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-coffee-shop-42686-large.mp4";
+        let ffmpeg = ffmpegRef.current;
+        if (!ffmpeg) {
+          ffmpeg = new FFmpeg();
+          ffmpegRef.current = ffmpeg;
+        }
+
+        ffmpeg.on('log', ({ message }) => {
+          console.log("FFmpeg core log:", message);
+        });
+
+        ffmpeg.on('progress', ({ progress }) => {
+          const percent = Math.round(progress * 100);
+          setUploadStatusMessage(`Compressing... ${percent}%`);
+        });
+
+        if (!ffmpeg.loaded) {
+          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+          await ffmpeg.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+          });
+        }
+
+        const inputExt = file.name.split('.').pop() || 'mp4';
+        const inputName = `input_${Date.now()}.${inputExt}`;
+        const outputName = `output_${Date.now()}.mp4`;
+
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+        setUploadStatusMessage("Compressing... 0%");
+
+        // Run compression command: 720p maximum resolution, 24fps, H.264 profile
+        await ffmpeg.exec([
+          '-i', inputName,
+          '-vcodec', 'libx264',
+          '-acodec', 'aac',
+          '-preset', 'ultrafast',
+          '-vf', "scale='min(1280,iw)':-2",
+          '-r', '24',
+          '-crf', '28',
+          '-b:v', '1000k',
+          outputName
+        ]);
+
+        const compressedData = await ffmpeg.readFile(outputName);
+        const compressedBlob = new Blob([compressedData], { type: 'video/mp4' });
+
+        if (compressedBlob.size > 0) {
+          finalFileToUpload = new File([compressedBlob], `${file.name.substring(0, file.name.lastIndexOf('.')) || file.name}_compressed.mp4`, {
+            type: 'video/mp4'
+          });
+          isCompressed = true;
+          console.log(`Compression complete! New size: ${(finalFileToUpload.size / (1024 * 1024)).toFixed(2)} MB (Reduced from ${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
+        } else {
+          console.warn("Compressed file was empty. Falling back to original file.");
+        }
+
+        try {
+          await ffmpeg.deleteFile(inputName);
+          await ffmpeg.deleteFile(outputName);
+        } catch (e) {
+          console.error("FFmpeg FS cleanup error:", e);
+        }
+
+      } catch (compressErr) {
+        console.error("FFmpeg compression failed or timed out. Falling back to original file upload:", compressErr);
+      }
+
+      setUploadStatusMessage("Uploading... 0%");
+
+      const fileExt = finalFileToUpload.name.split('.').pop() || 'mp4';
+      const timestamp = Date.now();
+      const filename = `admin_uploads/${candidateId}_${timestamp}.${fileExt}`;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !anonKey) {
+        throw new Error("Missing Supabase configuration");
+      }
+
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/interview-recordings/${filename}`;
+
+      // Upload with custom progress tracker via XMLHttpRequest
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", uploadUrl, true);
+        xhr.setRequestHeader("Authorization", `Bearer ${anonKey}`);
+        xhr.setRequestHeader("x-upsert", "true");
+        xhr.setRequestHeader("Content-Type", finalFileToUpload.type || "video/mp4");
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const pct = Math.round((event.loaded / event.total) * 100);
+            setUploadStatusMessage(`Uploading... ${pct}%`);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Upload status failed: ${xhr.status} - ${xhr.statusText}`));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error("Supabase network upload failed."));
+        };
+
+        xhr.send(finalFileToUpload);
+      });
+
+      const publicVideoUrl = `${supabaseUrl}/storage/v1/object/public/interview-recordings/${filename}`;
+      const objectUrl = URL.createObjectURL(finalFileToUpload);
 
       const updatedExtractedData = {
         ...candidateExtractedData,
-        video: fallbackVideoUrl,
-        videoUrl: fallbackVideoUrl,
-        video_url: fallbackVideoUrl,
-        video_path: fallbackVideoUrl,
+        video: publicVideoUrl,
+        videoUrl: publicVideoUrl,
+        video_url: publicVideoUrl,
+        video_path: publicVideoUrl,
         localVideoBlobUrl: objectUrl,
-        videoUploadedAt: new Date().toISOString()
+        videoUploadedAt: new Date().toISOString(),
+        videoCompressionOptimized: isCompressed,
+        originalSize: file.size,
+        compressedSize: finalFileToUpload.size
       };
 
       const payload = {
@@ -882,18 +1006,19 @@ const Reports = () => {
       });
 
       if (response.ok) {
-        alert('✅ Video uploaded successfully!');
+        alert(`✅ Video ${isCompressed ? 'optimized and ' : ''}uploaded successfully!`);
         await refreshCandidates();
       } else {
         const errData = await response.json();
-        alert(errData.error || 'Failed to upload video.');
+        alert(errData.error || 'Failed to update video record.');
       }
     } catch (err) {
       console.error(err);
-      alert('Error reading/uploading video file.');
+      alert('Error during video optimization or upload: ' + (err.message || err));
     } finally {
       setUploadingVideoId(null);
       setVideoUploadCandidate(null);
+      setUploadStatusMessage('');
     }
   };
 
@@ -1183,30 +1308,31 @@ const Reports = () => {
                       </button>
                     </td>
                     <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <button
-                        className="btn btn-outline"
-                        style={{
-                          padding: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: '8px',
-                          backgroundColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.1)' : '#fff',
-                          color: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? '#065f46' : 'var(--gray-700)',
-                          borderColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        onClick={() => triggerVideoUpload(c)}
-                        disabled={uploadingVideoId === c.id}
-                        title={(c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? "Video Uploaded" : "Upload Video"}
-                      >
-                        {uploadingVideoId === c.id ? (
-                          <span style={{ fontSize: '0.72rem' }}>⏳</span>
-                        ) : (
+                      {uploadingVideoId === c.id ? (
+                        <div style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--brand-navy)', whiteSpace: 'nowrap' }} title={uploadStatusMessage}>
+                          {uploadStatusMessage || "⏳ ..."}
+                        </div>
+                      ) : (
+                        <button
+                          className="btn btn-outline"
+                          style={{
+                            padding: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '8px',
+                            backgroundColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.1)' : '#fff',
+                            color: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? '#065f46' : 'var(--gray-700)',
+                            borderColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onClick={() => triggerVideoUpload(c)}
+                          title={(c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? "Video Uploaded" : "Upload Video"}
+                        >
                           <Video size={15} />
-                        )}
-                      </button>
+                        </button>
+                      )}
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span style={{
