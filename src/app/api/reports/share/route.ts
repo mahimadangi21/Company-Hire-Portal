@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import { revalidatePath } from "next/cache";
 
 const transporter = nodemailer.createTransport(
   process.env.MAIL_SERVER
@@ -198,6 +199,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    revalidatePath("/", "layout");
     return NextResponse.json({ success: true, reportUrl, token });
   } catch (error: any) {
     console.error("Report share error:", error);

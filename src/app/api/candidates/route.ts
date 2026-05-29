@@ -1,6 +1,8 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { requireInternalSecret } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -107,6 +109,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    revalidatePath("/", "layout");
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("Internal Server Error:", error);
@@ -141,6 +144,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    revalidatePath("/", "layout");
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("Internal Server Error:", error);
