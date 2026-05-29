@@ -236,16 +236,118 @@ const VideoBot = () => {
         <QuestionBankModal onClose={() => setShowQuestionModal(false)} />
       )}
 
-      <div className="grid grid-cols-3 gap-6" style={{ alignItems: 'start' }}>
-        
-        {/* Send Invite Panel (1 column) */}
-        <div className="card" style={{ backgroundColor: 'var(--gray-50)' }}>
-          <div className="card-header">
-            <h3 className="card-title" style={{ fontSize: '1.125rem' }}>Send Video Invite</h3>
-          </div>
-          <div className="card-body">
-            
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
+      {/* Unified Dashboard Table */}
+      <div className="card">
+        <div className="card-header flex justify-between items-center">
+          <h3 className="card-title">Common Interview Questions</h3>
+          <button className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }} onClick={() => setShowQuestionModal(true)}>
+            <Settings2 size={16} /> Manage Question Bank
+          </button>
+        </div>
+        <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th>Sub-Department</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>Loading interviews...</td>
+                </tr>
+              ) : interviews.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>No interviews found. Send one!</td>
+                </tr>
+              ) : interviews.map(interview => {
+                const isExpired = new Date(interview.expires_at) < new Date();
+                const status = interview.status === "completed" ? "completed" : (isExpired ? "expired" : "pending");
+
+                return (
+                  <tr key={interview.id}>
+                    <td>
+                      <div style={{ fontWeight: '500' }}>{interview.candidate_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{interview.candidate_email}</div>
+                    </td>
+                    <td>
+                      <span className="badge badge-gray">{interview.job_role}</span>
+                    </td>
+                    <td>
+                      {status === 'completed' ? (
+                        <span className="badge badge-success">Completed</span>
+                      ) : status === 'expired' ? (
+                         <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}>Expired</span>
+                      ) : (
+                        <span className="badge badge-warning">Pending</span>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {status === 'completed' ? (
+                          <>
+                            <button 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
+                              onClick={() => {
+                                const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
+                                copyToClipboard(url, `share-${interview.id}`);
+                              }}
+                            >
+                              {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Share Link"}
+                            </button>
+                            <a 
+                              href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${interview.id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-primary" 
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
+                            >
+                              <Eye size={14}/> View Interview
+                            </a>
+                          </>
+                        ) : (
+                          <button 
+                            className="btn btn-outline" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
+                            onClick={() => {
+                              const url = `${NEXT_JS_URL}/interview/${interview.id}`;
+                              copyToClipboard(url, `invite-${interview.id}`);
+                            }}
+                          >
+                            {copiedId === `invite-${interview.id}` ? "Copied!" : "Copy Invite Link"}
+                          </button>
+                        )}
+                        <button 
+                          className="btn btn-ghost" 
+                          title="Delete Interview" 
+                          style={{ padding: '0.25rem', color: 'var(--danger)' }}
+                          onClick={() => handleDeleteInterview(interview.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Send Invite Panel (horizontal layout) */}
+      <div className="card" style={{ backgroundColor: 'var(--gray-50)' }}>
+        <div className="card-header">
+          <h3 className="card-title" style={{ fontSize: '1.125rem' }}>Send Video Invite</h3>
+        </div>
+        <div className="card-body">
+          
+          <div className="grid grid-cols-3 gap-6" style={{ marginBottom: '1.5rem' }}>
+            <div className="form-group">
               <label className="form-label">Department</label>
               <select 
                 className="form-select" 
@@ -264,7 +366,7 @@ const VideoBot = () => {
               </select>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+            <div className="form-group">
               <label className="form-label">Sub-Department</label>
               <select 
                 className="form-select"
@@ -283,13 +385,12 @@ const VideoBot = () => {
               </span>
             </div>
 
-
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+            <div className="form-group">
               <label className="form-label">Select Candidate</label>
               <select className="form-select" value={inviteCandidateId} onChange={e => setInviteCandidateId(e.target.value)}>
                 <option value="">Choose candidate...</option>
                 {filteredCandidatesForDropdown.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Job'})</option>
+                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Sub-Department'})</option>
                 ))}
               </select>
               {filteredCandidatesForDropdown.length === 0 && (
@@ -298,9 +399,11 @@ const VideoBot = () => {
                 </span>
               )}
             </div>
+          </div>
 
-            {inviteCandidateId && (
-              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+          {inviteCandidateId && (
+            <div className="grid grid-cols-2 gap-6" style={{ marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)' }}>
                 <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Email Configuration</h4>
                 
                 <div className="grid grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
@@ -330,7 +433,7 @@ const VideoBot = () => {
                   </div>
                 </div>
 
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.75rem' }}>Candidate Email</label>
                   <input 
                     type="email" 
@@ -339,6 +442,10 @@ const VideoBot = () => {
                     onChange={(e) => setTargetEmail(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--brand-navy)' }}>Message Content</h4>
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
                   <label className="form-label" style={{ fontSize: '0.75rem' }}>Subject</label>
                   <input 
@@ -348,22 +455,24 @@ const VideoBot = () => {
                     onChange={(e) => setInviteSubject(e.target.value)}
                   />
                 </div>
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.75rem' }}>Email Body</label>
                   <textarea 
                     className="form-input" 
-                    rows="6"
+                    rows="4"
                     value={inviteBody}
                     onChange={(e) => setInviteBody(e.target.value)}
                     style={{ resize: 'vertical', fontSize: '0.875rem' }}
                   />
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button 
               className="btn btn-primary" 
-              style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '150px', justifyContent: 'center' }}
               onClick={() => {
                 const candidate = candidates.find(c => c.id.toString() === inviteCandidateId);
                 if (candidate) {
@@ -385,117 +494,14 @@ const VideoBot = () => {
             >
               {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <><Send size={16} /> Send Mail</>}
             </button>
-            
           </div>
+          
         </div>
-
-        {/* Unified Dashboard Table (2 columns) */}
-        <div className="card" style={{ gridColumn: 'span 2' }}>
-          <div className="card-header flex justify-between items-center">
-            <h3 className="card-title">Common Interview Questions</h3>
-            <button className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }} onClick={() => setShowQuestionModal(true)}>
-              <Settings2 size={16} /> Manage Question Bank
-            </button>
-          </div>
-          <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Candidate</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>Loading interviews...</td>
-                  </tr>
-                ) : interviews.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>No interviews found. Send one!</td>
-                  </tr>
-                ) : interviews.map(interview => {
-                  // Determine status (expired, completed, pending)
-                  const isExpired = new Date(interview.expires_at) < new Date();
-                  const status = interview.status === "completed" ? "completed" : (isExpired ? "expired" : "pending");
-
-                  return (
-                    <tr key={interview.id}>
-                      <td>
-                        <div style={{ fontWeight: '500' }}>{interview.candidate_name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{interview.candidate_email}</div>
-                      </td>
-                      <td>
-                        <span className="badge badge-gray">{interview.job_role}</span>
-                      </td>
-                      <td>
-                        {status === 'completed' ? (
-                          <span className="badge badge-success">Completed</span>
-                        ) : status === 'expired' ? (
-                           <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}>Expired</span>
-                        ) : (
-                          <span className="badge badge-warning">Pending</span>
-                        )}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                          {status === 'completed' ? (
-                            <>
-                              <button 
-                                className="btn btn-outline" 
-                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
-                                onClick={() => {
-                                  const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
-                                  copyToClipboard(url, `share-${interview.id}`);
-                                }}
-                              >
-                                {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Share Link"}
-                              </button>
-                              <a 
-                                href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${interview.id}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn btn-primary" 
-                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
-                              >
-                                <Eye size={14}/> View Interview
-                              </a>
-                            </>
-                          ) : (
-                            <button 
-                              className="btn btn-outline" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
-                              onClick={() => {
-                                const url = `${NEXT_JS_URL}/interview/${interview.id}`;
-                                copyToClipboard(url, `invite-${interview.id}`);
-                              }}
-                            >
-                              {copiedId === `invite-${interview.id}` ? "Copied!" : "Copy Invite Link"}
-                            </button>
-                          )}
-                          <button 
-                            className="btn btn-ghost" 
-                            title="Delete Interview" 
-                            style={{ padding: '0.25rem', color: 'var(--danger)' }}
-                            onClick={() => handleDeleteInterview(interview.id)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
+
     </div>
   );
 };
 
 export default VideoBot;
+

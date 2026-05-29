@@ -189,8 +189,6 @@ const JobPostings = () => {
                   <thead>
                     <tr>
                       <th style={{ paddingLeft: '1.5rem' }}>Sub-Department Title</th>
-                      <th>Status</th>
-                      <th>Candidates</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -198,8 +196,6 @@ const JobPostings = () => {
                     {subDepts.map((job: any) => (
                       <tr key={job.id}>
                         <td style={{ fontWeight: '500', paddingLeft: '1.5rem' }}>{job.title}</td>
-                        <td><span className="badge badge-success">{job.status || 'Active'}</span></td>
-                        <td>{job.applicants || 0} applied</td>
                         <td>
                           <div className="flex gap-2">
                             <button className="btn btn-ghost" style={{ padding: '0.25rem' }} onClick={() => handleEditJob(job)} title="Edit"><Edit2 size={16} /></button>
