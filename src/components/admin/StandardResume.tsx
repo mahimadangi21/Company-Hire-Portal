@@ -4,6 +4,14 @@ import React, { useState, useRef } from 'react';
 import { Edit2, Save, Printer } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 
+// Converts a string to Title Case (e.g. "JOHN DOE" → "John Doe")
+const toTitleCase = (str: string): string =>
+  str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
 // html2pdf is dynamically imported in handlePrint to prevent SSR issues
 const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
   const context = useAppContext();
@@ -13,7 +21,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
   const printRef = useRef(null);
 
   // Local state for editing
-  const [name, setName] = useState(candidate?.name || '');
+  const [name, setName] = useState(toTitleCase(candidate?.name || ''));
   const [skills, setSkills] = useState(candidate?.skills ? candidate.skills.join(', ') : '');
   
   const extractedData = candidate?.extractedData || {};
@@ -36,11 +44,14 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
         }
       };
 
+      const normalizedName = toTitleCase(name.trim());
+      setName(normalizedName);
+
       const res = await apiFetch('/api/candidates', {
         method: 'PATCH',
         body: JSON.stringify({
           id: candidate.id,
-          name,
+          name: normalizedName,
           skills: skillsArray,
           extracted_data: updatedExtractedData
         })
@@ -153,7 +164,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
               />
             ) : (
               <h1 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                {name.toUpperCase()}
+                {name}
               </h1>
             )}
             <p style={{ fontSize: '1.25rem', color: '#475569', fontWeight: '500', margin: '0.5rem 0 0 0', letterSpacing: '0.01em' }}>
