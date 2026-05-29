@@ -1,4 +1,4 @@
-if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
+if (typeof window === 'undefined' && typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
   try {
     delete (globalThis as any).localStorage;
   } catch (e) {}

@@ -89,7 +89,7 @@ export default function SchedulerHeader({ scheduledCount, onHelpClick }) {
           <button className="sched-nav-btn" onClick={() => navigate(1)} aria-label="Next">
             <ChevronRight size={18} />
           </button>
-          <span className="sched-header__date-label">
+          <span className="sched-header__date-label" suppressHydrationWarning>
             {formatHeaderDate(view, currentDate)}
           </span>
         </div>

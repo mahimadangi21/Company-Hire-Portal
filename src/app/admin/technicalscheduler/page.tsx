@@ -8,7 +8,19 @@
 
 import React from 'react';
 import { SchedulerProvider } from '../modules/scheduler/store/schedulerReducer.js';
-import { SchedulerApp }      from '../modules/scheduler/index';
+import dynamic from 'next/dynamic';
+
+const SchedulerApp = dynamic(
+  () => import('../modules/scheduler/index').then((mod) => mod.SchedulerApp),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        Loading scheduler component...
+      </div>
+    )
+  }
+);
 
 export default function TechnicalScheduler() {
   return (

@@ -74,7 +74,7 @@ function UpcomingList({ onEventClick }) {
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{iv.job_role}</div>
                   </td>
                   <td>
-                    <div style={{ fontSize: '0.875rem' }}>{new Date(iv.date + 'T00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                    <div style={{ fontSize: '0.875rem' }} suppressHydrationWarning>{new Date(iv.date + 'T00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       {iv.time.split(':').map((p, i) => {
                         if (i === 0) { const h = parseInt(p); return (h % 12 || 12) + ':'; }
