@@ -11,6 +11,10 @@ import { TranscriptIntelligenceEngine } from '@/components/reports/TranscriptInt
 import { useAppContext } from '@/components/admin/context/AppContext';
 import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
 
+// CONTROL_BAR_PX: Google Drive /preview renders its controls ~52px below the video frame.
+// We over-size the iframe height by this amount so the bar is fully visible.
+const GDRIVE_CTRL_BAR = 52;
+
 export const EmbeddableVideo = ({ url, ...props }: any) => {
   if (!url) return null;
   const trimmedUrl = url.trim();
@@ -20,7 +24,25 @@ export const EmbeddableVideo = ({ url, ...props }: any) => {
     const match = trimmedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
       const embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
-      return <iframe src={embedUrl} allow="autoplay" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
+      // Wrapper clips left/right/top flush; leaves bottom open for the controls bar.
+      return (
+        <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+          <iframe
+            src={embedUrl}
+            allow="autoplay; encrypted-media; fullscreen"
+            allowFullScreen
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              // Taller than the container so the control bar is included
+              height: `calc(100% + ${GDRIVE_CTRL_BAR}px)`,
+              border: 'none',
+            }}
+          />
+        </div>
+      );
     }
   }
   // YouTube Link
@@ -47,7 +69,7 @@ export const EmbeddableVideo = ({ url, ...props }: any) => {
   // If it's a web link and does NOT end with a direct video extension, render in an iframe
   const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v|avi|mkv)(?:\?|$)/i.test(trimmedUrl);
   if (trimmedUrl.startsWith('http') && !isDirectVideo) {
-    return <iframe src={embedUrl} allow="autoplay; encrypted-media" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
+    return <iframe src={embedUrl} allow="autoplay; encrypted-media; fullscreen" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
   }
   
   // Standard video fallback
@@ -744,15 +766,29 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
           </p>
         </div>
 
-        {/* Small Tech Video Player in Column 3 */}
-        <div style={{ width: '100%', aspectRatio: '16/9', height: 'auto', margin: '0 auto 8px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
-          <EmbeddableVideo 
-            key={technicalVideoUrl}
-            controls
-            preload="metadata"
-            url={technicalVideoUrl}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
+        {/* Tech Video Player in Column 3 */}
+        {/* Extra bottom padding (GDRIVE_CTRL_BAR px) exposes the Google Drive control bar */}
+        <div style={{
+          width: '100%',
+          paddingTop: '56.25%',   /* 16:9 ratio */
+          paddingBottom: '52px', /* room for Google Drive control bar */
+          position: 'relative',
+          margin: '0 auto 8px',
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0',
+          backgroundColor: '#0f172a',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}>
+          <div style={{ position: 'absolute', inset: 0 }}>
+            <EmbeddableVideo 
+              key={technicalVideoUrl}
+              controls
+              preload="metadata"
+              url={technicalVideoUrl}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          </div>
         </div>
 
         {transcript.length > 0 ? (
