@@ -385,7 +385,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
                 <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
-                  {candidate.jobApplied} • {candidate.extractedData?.totalExperienceAnalysis?.totalExperience || '3 Years'} Exp {candidate.extractedData?.education?.[0]?.degree ? `• ${candidate.extractedData.education[0].degree}` : '• MCA'}
+                  {candidate.jobApplied} • {candidate.extractedData?.totalExperienceAnalysis?.totalExperience ? `${candidate.extractedData.totalExperienceAnalysis.totalExperience}` : '3 Years'} Exp {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
                 </p>
               </div>
             </div>
