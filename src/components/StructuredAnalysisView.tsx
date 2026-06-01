@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-export function StructuredAnalysisView({ text }: { text: string }) {
+export function StructuredAnalysisView({ text }: { text: string | any }) {
   const parsed = useMemo(() => {
     if (!text) return null;
 
@@ -10,8 +10,9 @@ export function StructuredAnalysisView({ text }: { text: string }) {
     let summaryText = "";
 
     try {
-      // If it's pure JSON
-      const data = JSON.parse(text);
+      // Handle case where text is already an object
+      const data = typeof text === 'string' ? JSON.parse(text) : text;
+      
       if (data.pros) pros = Array.isArray(data.pros) ? data.pros : [data.pros];
       if (data.cons) cons = Array.isArray(data.cons) ? data.cons : [data.cons];
       if (data.okok || data.neutral) okok = Array.isArray(data.okok || data.neutral) ? data.okok || data.neutral : [data.okok || data.neutral];
@@ -19,12 +20,13 @@ export function StructuredAnalysisView({ text }: { text: string }) {
       
       // Fallback if the JSON didn't have structured arrays but had text
       if (!pros.length && !cons.length && !okok.length) {
-        summaryText = text;
+        summaryText = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
       }
     } catch (e) {
       // Not JSON. Let's try to parse it with Regex or line splitting.
       // E.g., looking for "Pros:", "Cons:", "Neutral:" or "OkOk:"
-      const lines = text.split('\\n');
+      const strText = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
+      const lines = strText.split('\n');
       let currentSection = "summary";
       
       lines.forEach(line => {
@@ -84,7 +86,7 @@ export function StructuredAnalysisView({ text }: { text: string }) {
   if (!pros.length && !cons.length && !okok.length) {
     return (
       <div style={{ fontSize: '0.82rem', color: 'var(--gray-700)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-        {summaryText || text}
+        {summaryText || (typeof text === 'string' ? text : JSON.stringify(text, null, 2))}
       </div>
     );
   }

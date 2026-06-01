@@ -7,6 +7,7 @@ import {
   Activity, Users, Shield, BarChart2
 } from 'lucide-react';
 import { analyzeTranscript, TranscriptEntry, TranscriptAnalysisResult } from '@/utils/transcriptAnalyzer';
+import { StructuredAnalysisView } from '@/components/StructuredAnalysisView';
 
 /* ─────────────────── SVG Radar Chart ─────────────────────────── */
 const RadarChart = ({ data }: { data: { label: string; value: number; color: string }[] }) => {
@@ -467,9 +468,9 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
             <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: '700', color: recStyle.color, marginBottom: '8px' }}>
               {analysis.recommendation}
             </p>
-            <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--gray-700)', lineHeight: 1.6 }}>
-              {analysis.recommendationReason}
-            </p>
+            <div style={{ margin: 0, fontSize: '0.74rem', color: 'var(--gray-700)', lineHeight: 1.6 }}>
+              <StructuredAnalysisView text={analysis.recommendationReason} />
+            </div>
           </div>
         </div>
 

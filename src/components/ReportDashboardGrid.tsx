@@ -329,12 +329,26 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
   // Parsed highlights from matchedInterview summary
   const parsedHighlights = useMemo(() => {
     if (matchedInterview?.summary) {
-      // Split summary by line break, try to clean bullet markers
-      const lines = matchedInterview.summary.split('\n')
-        .map((l: string) => l.trim().replace(/^[-*•\d.]+\s*/, ''))
-        .filter((l: string) => l.length > 5 && !l.toLowerCase().includes("overall match") && !l.toLowerCase().includes("recommendation"));
-      if (lines.length > 0) {
-        return lines.slice(0, 4);
+      try {
+        // Try to parse as JSON first
+        const data = typeof matchedInterview.summary === 'string' ? JSON.parse(matchedInterview.summary) : matchedInterview.summary;
+        let highlights: string[] = [];
+        if (data.pros && Array.isArray(data.pros)) highlights.push(...data.pros);
+        if (data.cons && Array.isArray(data.cons)) highlights.push(...data.cons);
+        if (data.okok && Array.isArray(data.okok)) highlights.push(...data.okok);
+        
+        if (highlights.length > 0) {
+          return highlights.slice(0, 4);
+        }
+      } catch(e) {
+        // Fallback to string splitting if not JSON
+        const str = typeof matchedInterview.summary === 'string' ? matchedInterview.summary : JSON.stringify(matchedInterview.summary);
+        const lines = str.split('\n')
+          .map((l: string) => l.trim().replace(/^[-*•\d.]+\s*/, ''))
+          .filter((l: string) => l.length > 5 && !l.toLowerCase().includes("overall match") && !l.toLowerCase().includes("recommendation") && !l.startsWith('{') && !l.startsWith('}') && !l.includes('":'));
+        if (lines.length > 0) {
+          return lines.slice(0, 4);
+        }
       }
     }
     // Dynamic NLP-based observations from transcript if no summary

@@ -322,7 +322,7 @@ const deriveStrengthsWeaknesses = (candidate) => {
 };
 
 /* ─────────────────────── Detail Modal ──────────────────────── */
-const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMessage }) => {
+const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMessage, onCopyShareLink }) => {
   const { refreshCandidates, apiFetch } = useAppContext();
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
   const [matchedInterview, setMatchedInterview] = useState(null);
@@ -609,11 +609,26 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                   style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
                 />
               </div>
+              {isEditing ? (
+                <button
+                  onClick={handleSaveEdits}
+                  style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  style={{ background: 'transparent', color: '#fff', border: '1px solid #fff', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+                >
+                  Edit all details
+                </button>
+              )}
               <button
-                onClick={() => onUploadVideo && onUploadVideo(candidate)}
+                onClick={() => onCopyShareLink && onCopyShareLink(candidate)}
                 style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
               >
-                Upload Video
+                Generate Link
               </button>
               {uploadStatusMessage ? <span style={{ color: '#10b981', fontSize: '0.75rem', marginLeft: '4px' }}>{uploadStatusMessage}</span> : null}
               <button 
@@ -1760,6 +1775,7 @@ const Reports = () => {
           onClose={() => setSelectedCandidate(null)}
           onUploadVideo={triggerVideoUpload}
           uploadStatusMessage={uploadStatusMessage}
+          onCopyShareLink={handleCopyShareLink}
         />
       )}
 
