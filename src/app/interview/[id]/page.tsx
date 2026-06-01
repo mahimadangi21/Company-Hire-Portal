@@ -47,6 +47,7 @@ export default function InterviewPage() {
   const [allChunks, setAllChunks] = useState<RecordingChunk[]>([]);
   const [strikes, setStrikes] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -144,6 +145,16 @@ export default function InterviewPage() {
 
     animFrameRef.current = requestAnimationFrame(drawFrame);
   }, [currentQuestionIndex, interview]);
+
+  useEffect(() => {
+    if (timeLeft === null || !isRecording) return;
+    if (timeLeft <= 0) {
+      handleSubmitAnswer();
+      return;
+    }
+    const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    return () => clearTimeout(timerId);
+  }, [timeLeft, isRecording]);
 
   useEffect(() => {
     if (isCameraReady) {
@@ -347,12 +358,14 @@ export default function InterviewPage() {
     }
     
     setIsRecording(true);
+    setTimeLeft(60);
   };
 
   const stopRecording = (): RecordingChunk => {
     const duration = (Date.now() - startTimeRef.current) / 1000;
     isRecordingRef.current = false;
     setIsRecording(false);
+    setTimeLeft(null);
     
     if (recorderRef.current && recorderRef.current.state === "recording") {
       recorderRef.current.pause();
@@ -802,9 +815,17 @@ export default function InterviewPage() {
               )}
 
               {isRecording && (
-                <div className="flex items-center gap-2 text-red-500 text-sm font-semibold">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  Recording your answer...
+                <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100">
+                  <div className="flex items-center gap-2 text-red-600 text-sm font-bold">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    Recording
+                  </div>
+                  {timeLeft !== null && (
+                    <div className="text-red-600 font-bold font-mono text-sm flex items-center gap-2">
+                      <span className="text-xs uppercase tracking-wider opacity-75">Time left</span>
+                      00:{timeLeft.toString().padStart(2, '0')}
+                    </div>
+                  )}
                 </div>
               )}
 

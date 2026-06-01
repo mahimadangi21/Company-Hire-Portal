@@ -19,7 +19,8 @@ const VideoBot = () => {
   const [inviteCandidateId, setInviteCandidateId] = useState('');
   const [inviteJobRole, setInviteJobRole] = useState('');
   const [inviteDepartment, setInviteDepartment] = useState('Technology and Delivery');
-  const [inviteSubDepartment, setInviteSubDepartment] = useState('PHP');
+  const [inviteSubDepartment, setInviteSubDepartment] = useState('Development');
+  const [inviteRole, setInviteRole] = useState('Senior Dev');
   const [sending, setSending] = useState(false);
   const [inviteSubject, setInviteSubject] = useState('');
   const [inviteBody, setInviteBody] = useState('');
@@ -32,16 +33,33 @@ const VideoBot = () => {
   const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
   
   const getAvailableSubDepartments = (dept) => {
-    const subDepts = Array.from(new Set(jobs.filter(j => j.department === dept).map(j => j.title)));
+    const subDepts = Array.from(new Set(jobs.filter(j => j.department === dept && j.sub_department).map(j => j.sub_department)));
     if (subDepts.length > 0) return subDepts;
     
     const defaults = {
-      'Technology and Delivery': ['PHP', 'QA', 'Frontend', 'Backend'],
+      'Technology and Delivery': ['Development', 'Testing'],
+      'Operations': ['LnD'],
       'Engineering': ['DevOps', 'Data Science', 'SRE'],
       'HR': ['Recruitment', 'Operations'],
       'Marketing': ['SEO', 'Content', 'Social Media']
     };
     return defaults[dept] || ['General'];
+  };
+  
+  const getAvailableRoles = (dept, subDept) => {
+    const roles = Array.from(new Set(jobs.filter(j => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map(j => j.title)));
+    if (roles.length > 0) return roles;
+
+    const defaults = {
+      'Technology and Delivery': {
+        'Development': ['Senior Dev', 'TSE Intern', 'PHP Developer', 'Frontend', 'Backend'],
+        'Testing': ['Senior QA', 'QA Intern']
+      },
+      'Operations': {
+        'LnD': ['Manager', 'Associate Manager']
+      }
+    };
+    return (defaults[dept] && defaults[dept][subDept]) || ['General Role'];
   };
   
   // Copied indicator state
@@ -75,7 +93,9 @@ const VideoBot = () => {
       if (!inviteDepartment || !dynamicDepartments.includes(inviteDepartment)) {
         const firstDept = availableDepartments[0];
         setInviteDepartment(firstDept);
-        setInviteSubDepartment(getAvailableSubDepartments(firstDept)[0]);
+        const firstSubDept = getAvailableSubDepartments(firstDept)[0];
+        setInviteSubDepartment(firstSubDept);
+        setInviteRole(getAvailableRoles(firstDept, firstSubDept)[0]);
       }
     }
   }, [jobs]);
@@ -141,8 +161,8 @@ const VideoBot = () => {
     setLoading(false);
   };
 
-  const handleSendInvite = async (candidate, targetEmail, jobRole, department, subDepartment, subject, body, senderEmail) => {
-    if (!candidate || !department || !subDepartment) return;
+  const handleSendInvite = async (candidate, targetEmail, jobRole, department, subDepartment, role, subject, body, senderEmail) => {
+    if (!candidate || !department || !subDepartment || !role) return;
 
     setSending(true);
     try {
@@ -154,6 +174,7 @@ const VideoBot = () => {
           job_role: jobRole,
           department: department,
           sub_department: subDepartment,
+          role: role,
           subject: subject,
           body: body,
           senderEmail: senderEmail
@@ -199,9 +220,9 @@ const VideoBot = () => {
     // Strict Department check based on the selected Department
     if (job.department !== inviteDepartment) return false;
     
-    // Strict Sub-Department check (Sub-Department is stored as Job Title)
-    if (inviteSubDepartment && inviteSubDepartment !== 'General') {
-       if (job.title !== inviteSubDepartment) {
+    // Strict Role check
+    if (inviteRole && inviteRole !== 'General Role') {
+       if (job.title !== inviteRole) {
           return false; 
        }
     }
@@ -240,7 +261,7 @@ const VideoBot = () => {
         </div>
         <div className="card-body">
           
-          <div className="grid grid-cols-3 gap-6" style={{ marginBottom: '1.5rem' }}>
+          <div className="grid grid-cols-4 gap-4" style={{ marginBottom: '1.5rem' }}>
             <div className="form-group">
               <label className="form-label">Department</label>
               <select 
@@ -250,7 +271,9 @@ const VideoBot = () => {
                   const newDept = e.target.value;
                   setInviteDepartment(newDept);
                   const subs = getAvailableSubDepartments(newDept);
-                  setInviteSubDepartment(subs[0]);
+                  const firstSub = subs[0];
+                  setInviteSubDepartment(firstSub);
+                  setInviteRole(getAvailableRoles(newDept, firstSub)[0]);
                   setInviteCandidateId('');
                 }}
               >
@@ -266,7 +289,9 @@ const VideoBot = () => {
                 className="form-select"
                 value={inviteSubDepartment}
                 onChange={e => {
-                  setInviteSubDepartment(e.target.value);
+                  const newSub = e.target.value;
+                  setInviteSubDepartment(newSub);
+                  setInviteRole(getAvailableRoles(inviteDepartment, newSub)[0]);
                   setInviteCandidateId('');
                 }}
               >
@@ -274,8 +299,24 @@ const VideoBot = () => {
                   <option key={sd} value={sd}>{sd}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Role</label>
+              <select 
+                className="form-select"
+                value={inviteRole}
+                onChange={e => {
+                  setInviteRole(e.target.value);
+                  setInviteCandidateId('');
+                }}
+              >
+                {(getAvailableRoles(inviteDepartment, inviteSubDepartment)).map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
               <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
-                Candidate will be asked all questions configured for this sub-department.
+                Candidate will be asked all questions for this role.
               </span>
             </div>
 
@@ -363,6 +404,7 @@ const VideoBot = () => {
                     jobRole, 
                     inviteDepartment, 
                     inviteSubDepartment,
+                    inviteRole,
                     inviteSubject,
                     inviteBody,
                     selectedSender

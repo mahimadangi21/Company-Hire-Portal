@@ -8,7 +8,8 @@ import StandardResume from '@/components/admin/StandardResume';
 const ResumeUpload = () => {
   const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
   const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedJob, setSelectedJob] = useState('');
+  const [selectedSubDepartment, setSelectedSubDepartment] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
@@ -19,8 +20,12 @@ const ResumeUpload = () => {
 
   const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
   
-  const getAvailableSubDepartments = (dept) => {
-    return Array.from(new Set(jobs.filter(j => j.department === dept).map(j => j.title)));
+  const getAvailableSubDepartments = (dept: string) => {
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department)));
+  };
+
+  const getAvailableRoles = (dept: string, subDept: string) => {
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map((j: any) => j.title)));
   };
 
   // Close dropdown when clicking outside
@@ -72,8 +77,8 @@ const ResumeUpload = () => {
   };
 
   const handleContainerClick = () => {
-    if (!selectedJob) {
-      setStatus({ type: 'error', message: 'Please select a job listed first.' });
+    if (!selectedRole) {
+      setStatus({ type: 'error', message: 'Please select a role first.' });
       return;
     }
     if (!isUploading && fileInputRef.current) {
@@ -81,9 +86,9 @@ const ResumeUpload = () => {
     }
   };
 
-  const handleUpload = async (file) => {
-    if (!selectedJob) {
-      setStatus({ type: 'error', message: 'Please select a job listed first.' });
+  const handleUpload = async (file: File) => {
+    if (!selectedRole) {
+      setStatus({ type: 'error', message: 'Please select a role first.' });
       return;
     }
 
@@ -147,7 +152,7 @@ const ResumeUpload = () => {
           email: data.personalInformation?.email || 'No email provided',
           phone: data.personalInformation?.phoneNumber || 'No phone provided',
           skills: data.skillExtraction?.extractedSkills || [],
-          job_applied: selectedJob,
+          job_applied: selectedRole,
           resume_status: 'Parsed',
           form_status: 'N/A',
           video_status: 'Pending',
@@ -223,32 +228,52 @@ const ResumeUpload = () => {
                 onChange={(e) => {
                   const newDept = e.target.value;
                   setSelectedDepartment(newDept);
-                  const subDepts = getAvailableSubDepartments(newDept);
-                  setSelectedJob(subDepts.length === 1 ? subDepts[0] : '');
+                  setSelectedSubDepartment('');
+                  setSelectedRole('');
                   setStatus({ type: '', message: '' });
                 }}
               >
                 <option value="">-- Choose Department --</option>
                 {dynamicDepartments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept as string} value={dept as string}>{dept as string}</option>
                 ))}
               </select>
             </div>
             
-            <div className="form-group" style={{ flex: 1, minWidth: '250px' }}>
+            <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
               <label className="form-label">Select Sub Department <span style={{ color: 'var(--danger)' }}>*</span></label>
               <select 
                 className="form-select" 
-                value={selectedJob} 
+                value={selectedSubDepartment} 
                 onChange={(e) => {
-                  setSelectedJob(e.target.value);
+                  const newSub = e.target.value;
+                  setSelectedSubDepartment(newSub);
+                  setSelectedRole('');
                   setStatus({ type: '', message: '' });
                 }}
                 disabled={!selectedDepartment}
               >
                 <option value="">-- Choose Sub Department --</option>
                 {selectedDepartment && getAvailableSubDepartments(selectedDepartment).map(subDept => (
-                  <option key={subDept} value={subDept}>{subDept}</option>
+                  <option key={subDept as string} value={subDept as string}>{subDept as string}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+              <label className="form-label">Select Role <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <select 
+                className="form-select" 
+                value={selectedRole} 
+                onChange={(e) => {
+                  setSelectedRole(e.target.value);
+                  setStatus({ type: '', message: '' });
+                }}
+                disabled={!selectedSubDepartment}
+              >
+                <option value="">-- Choose Role --</option>
+                {selectedSubDepartment && getAvailableRoles(selectedDepartment, selectedSubDepartment).map(r => (
+                  <option key={r as string} value={r as string}>{r as string}</option>
                 ))}
               </select>
             </div>
@@ -335,9 +360,9 @@ const ResumeUpload = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Candidate Name</th>
+                <th>Candidate Name & ID</th>
                 <th>Email</th>
-                <th>Sub Department</th>
+                <th>Role</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -357,7 +382,12 @@ const ResumeUpload = () => {
                           {candidate.name.split(' ').map(n => n[0]).join('')}
                         </div>
                         <div>
-                          <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>{candidate.name}</div>
+                          <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>
+                            {candidate.name} 
+                            <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px' }}>
+                              {candidate.unique_id || String(candidate.id).substring(0,6)}
+                            </span>
+                          </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{candidate.phone}</div>
                         </div>
                       </div>

@@ -15,7 +15,7 @@ interface VideoPlayerOverlayProps {
   status: string;
   transcript?: any; // any because it comes from DB Json
   onTimeUpdate?: (time: number) => void;
-  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  videoRef?: any;
   onToggleFullScreen?: () => void;
   isFullscreen?: boolean;
 }
@@ -23,6 +23,7 @@ interface VideoPlayerOverlayProps {
 export function VideoPlayerOverlay({ videoUrl, status, transcript, onTimeUpdate, videoRef, onToggleFullScreen, isFullscreen }: VideoPlayerOverlayProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [activeClipIndex, setActiveClipIndex] = useState<number | null>(null);
 
   const handleFullScreen = () => {
     if (onToggleFullScreen) {
@@ -46,7 +47,7 @@ export function VideoPlayerOverlay({ videoUrl, status, transcript, onTimeUpdate,
   })();
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden border border-[#E2E8F0] bg-black shadow-md flex items-center justify-center group h-full w-full ${isFullscreen ? '' : 'aspect-video'}`}>
+    <div className={`relative rounded-2xl overflow-hidden border border-[#E2E8F0] bg-black shadow-md flex flex-col items-center justify-center group h-full w-full ${isFullscreen ? '' : 'aspect-video'}`}>
       {resolvedVideoUrl ? (
         <>
           <video
@@ -54,13 +55,21 @@ export function VideoPlayerOverlay({ videoUrl, status, transcript, onTimeUpdate,
             src={resolvedVideoUrl}
             controls
             controlsList="nofullscreen"
-            className="w-full h-full object-contain"
+            className="w-full flex-1 object-contain min-h-0"
             onTimeUpdate={(e) => {
               const time = e.currentTarget.currentTime;
               setCurrentTime(time);
               if (onTimeUpdate) onTimeUpdate(time);
               if (!videoDuration && !isNaN(e.currentTarget.duration)) {
                 setVideoDuration(e.currentTarget.duration);
+              }
+              
+              if (activeClipIndex !== null && videoRef && videoRef.current && transcript && transcript[activeClipIndex]) {
+                const endTime = transcript[activeClipIndex].timestamp_end;
+                if (endTime && videoRef.current.currentTime >= endTime) {
+                  videoRef.current.pause();
+                  setActiveClipIndex(null);
+                }
               }
             }}
           />
@@ -72,6 +81,66 @@ export function VideoPlayerOverlay({ videoUrl, status, transcript, onTimeUpdate,
           >
             <Maximize className="w-4 h-4" />
           </button>
+          
+          {transcript && transcript.length > 0 && (
+            <div className="w-full flex gap-2 overflow-x-auto p-2 bg-[#1e293b] flex-shrink-0 z-50 items-center justify-center">
+              <button
+                onClick={() => {
+                  if (activeClipIndex !== null && activeClipIndex > 0) {
+                    const prevIndex = activeClipIndex - 1;
+                    if (videoRef && videoRef.current) {
+                      videoRef.current.currentTime = transcript[prevIndex].timestamp_start || 0;
+                      videoRef.current.play().catch(console.error);
+                      setActiveClipIndex(prevIndex);
+                    }
+                  }
+                }}
+                disabled={activeClipIndex === null || activeClipIndex === 0}
+                className="px-2 py-1 text-xs font-bold bg-slate-700 text-white rounded hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                &larr; Prev
+              </button>
+              
+              <div className="flex gap-2 overflow-x-auto">
+                {transcript.map((t: any, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (videoRef && videoRef.current) {
+                        videoRef.current.currentTime = t.timestamp_start || 0;
+                        videoRef.current.play().catch(console.error);
+                        setActiveClipIndex(i);
+                      }
+                    }}
+                    className={`px-3 py-1.5 text-xs font-bold rounded shadow-sm border transition-all whitespace-nowrap
+                      ${activeClipIndex === i 
+                        ? 'bg-emerald-500 text-white border-emerald-400' 
+                        : 'bg-slate-700 text-white hover:bg-slate-600 border-slate-600'
+                      }`}
+                  >
+                    Q{i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  if (activeClipIndex !== null && activeClipIndex < transcript.length - 1) {
+                    const nextIndex = activeClipIndex + 1;
+                    if (videoRef && videoRef.current) {
+                      videoRef.current.currentTime = transcript[nextIndex].timestamp_start || 0;
+                      videoRef.current.play().catch(console.error);
+                      setActiveClipIndex(nextIndex);
+                    }
+                  }
+                }}
+                disabled={activeClipIndex === null || activeClipIndex === transcript.length - 1}
+                className="px-2 py-1 text-xs font-bold bg-slate-700 text-white rounded hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next &rarr;
+              </button>
+            </div>
+          )}
           
           {(() => {
             if (!transcript || !Array.isArray(transcript) || transcript.length === 0) return null;

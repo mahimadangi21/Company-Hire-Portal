@@ -149,6 +149,9 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
   const [scoresViewMode, setScoresViewMode] = useState<'radial' | 'bar'>('radial');
   const [mounted, setMounted] = useState(false);
   const [matchedInterview, setMatchedInterview] = useState<any>(matchedInterviewFromDb || null);
+  
+  const screeningVideoRef = React.useRef<HTMLVideoElement>(null);
+  const [activeClipIndex, setActiveClipIndex] = useState<number | null>(null);
 
   // Always call hook unconditionally at top level (Rules of Hooks)
   const contextValue = useAppContext();
@@ -353,16 +356,11 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     }
     // Dynamic NLP-based observations from transcript if no summary
     if (transcript && transcript.length > 0) {
-      return transcript
-        .filter((t: any) => t.answer && t.answer.length > 20)
-        .map((t: any) => {
-          const ans = t.answer.trim();
-          return ans.length > 60 ? ans.substring(0, 57) + "..." : ans;
-        })
-        .slice(0, 4);
+      const analysis = analyzeTranscript(transcript);
+      return analysis.keyObservations.slice(0, 4);
     }
     return [
-      'No screening highlights available yet.'
+      'No screening analysis available yet.'
     ];
   }, [matchedInterview, transcript]);
 
@@ -744,15 +742,100 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
             {/* Row 1: Video and Highlights */}
             <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch', flexShrink: 0 }}>
               {/* Video Player */}
-              <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
+              <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', display: 'flex', flexDirection: 'column' }}>
                 {screeningVideoUrl ? (
-                  <EmbeddableVideo 
-                    key={screeningVideoUrl}
-                    controls
-                    preload="metadata"
-                    url={screeningVideoUrl}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
+                  <>
+                    <video 
+                      key={screeningVideoUrl}
+                      ref={screeningVideoRef}
+                      controls
+                      preload="metadata"
+                      src={screeningVideoUrl}
+                      style={{ width: '100%', flex: 1, minHeight: 0, objectFit: 'contain' }}
+                      onTimeUpdate={() => {
+                        if (activeClipIndex !== null && screeningVideoRef.current && transcript && transcript[activeClipIndex]) {
+                          const endTime = transcript[activeClipIndex].timestamp_end;
+                          if (endTime && screeningVideoRef.current.currentTime >= endTime) {
+                            screeningVideoRef.current.pause();
+                            setActiveClipIndex(null);
+                          }
+                        }
+                      }}
+                    />
+                    {transcript && transcript.length > 0 && (
+                      <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', padding: '6px 8px', backgroundColor: '#1e293b', flexShrink: 0, alignItems: 'center', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => {
+                            if (activeClipIndex !== null && activeClipIndex > 0) {
+                              const prevIndex = activeClipIndex - 1;
+                              if (screeningVideoRef.current) {
+                                screeningVideoRef.current.currentTime = transcript[prevIndex].timestamp_start || 0;
+                                screeningVideoRef.current.play().catch(console.error);
+                                setActiveClipIndex(prevIndex);
+                              }
+                            }
+                          }}
+                          disabled={activeClipIndex === null || activeClipIndex === 0}
+                          style={{
+                            padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', borderRadius: '4px', border: 'none', cursor: 'pointer',
+                            backgroundColor: '#334155', color: '#fff', whiteSpace: 'nowrap', opacity: (activeClipIndex === null || activeClipIndex === 0) ? 0.5 : 1
+                          }}
+                        >
+                          &larr; Prev
+                        </button>
+                        
+                        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
+                          {transcript.map((t: any, i: number) => (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                if (screeningVideoRef.current) {
+                                  screeningVideoRef.current.currentTime = t.timestamp_start || 0;
+                                  screeningVideoRef.current.play().catch(console.error);
+                                  setActiveClipIndex(i);
+                                }
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '0.65rem',
+                                fontWeight: '700',
+                                borderRadius: '4px',
+                                border: '1px solid',
+                                borderColor: activeClipIndex === i ? '#10b981' : '#475569',
+                                cursor: 'pointer',
+                                backgroundColor: activeClipIndex === i ? '#10b981' : '#334155',
+                                color: '#fff',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              Q{i + 1}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (activeClipIndex !== null && activeClipIndex < transcript.length - 1) {
+                              const nextIndex = activeClipIndex + 1;
+                              if (screeningVideoRef.current) {
+                                screeningVideoRef.current.currentTime = transcript[nextIndex].timestamp_start || 0;
+                                screeningVideoRef.current.play().catch(console.error);
+                                setActiveClipIndex(nextIndex);
+                              }
+                            }
+                          }}
+                          disabled={activeClipIndex === null || activeClipIndex === transcript.length - 1}
+                          style={{
+                            padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', borderRadius: '4px', border: 'none', cursor: 'pointer',
+                            backgroundColor: '#334155', color: '#fff', whiteSpace: 'nowrap', opacity: (activeClipIndex === null || activeClipIndex === transcript.length - 1) ? 0.5 : 1
+                          }}
+                        >
+                          Next &rarr;
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
                     Screening video unavailable
