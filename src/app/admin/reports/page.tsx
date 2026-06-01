@@ -1809,20 +1809,26 @@ const Reports = () => {
             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '21%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name & ID</th>
-                  <th style={{ width: '12%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
+                  <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>ID</th>
+                  <th style={{ width: '18%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
+                  <th style={{ width: '10%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
                   <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
                   <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Video</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Score</th>
                   <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
                   <th style={{ width: '10%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
-                  <th style={{ width: '14%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
+                  <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
                   <th style={{ width: '16%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((c) => (
                   <tr key={c.id}>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '12px' }}>
+                        #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
+                      </span>
+                    </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '800', fontSize: '0.7rem', flexShrink: 0 }}>
@@ -1831,9 +1837,6 @@ const Reports = () => {
                         <div style={{ minWidth: 0, overflow: 'hidden' }}>
                           <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {c.name}
-                            <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px' }}>
-                              #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
-                            </span>
                           </div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                         </div>
