@@ -148,14 +148,37 @@ export default function InterviewPage() {
   }, [currentQuestionIndex, interview]);
 
   useEffect(() => {
-    if (timeLeft === null || !isRecording) return;
+    if (timeLeft === null) return;
     if (timeLeft <= 0) {
-      handleSubmitAnswer();
+      // Auto-submit: stop recording if active, then advance
+      if (isRecordingRef.current) {
+        handleSubmitAnswer();
+      } else {
+        // They never started — record a 0-duration clip and move on
+        const autoChunk: RecordingChunk = {
+          question: interview?.questions[currentQuestionIndex] || "",
+          questionIndex: currentQuestionIndex,
+          blob: new Blob([], { type: "video/webm" }),
+          duration: 0,
+        };
+        setAllChunks((prev) => {
+          const updated = [...prev, autoChunk];
+          const nextIndex = currentQuestionIndex + 1;
+          const isLast = !interview || nextIndex >= interview.questions.length;
+          if (isLast) {
+            processAndUpload(updated);
+          } else {
+            setCurrentQuestionIndex(nextIndex);
+            speakQuestion(interview!.questions[nextIndex]);
+          }
+          return updated;
+        });
+      }
       return;
     }
-    const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    const timerId = setTimeout(() => setTimeLeft((t) => (t !== null ? t - 1 : null)), 1000);
     return () => clearTimeout(timerId);
-  }, [timeLeft, isRecording]);
+  }, [timeLeft]);
 
   useEffect(() => {
     if (isCameraReady) {
@@ -177,6 +200,18 @@ export default function InterviewPage() {
       canvasRef.current.height = 720;
     }
   }, [stage]);
+
+  // Auto-start recording + timer the moment AI finishes speaking a question
+  useEffect(() => {
+    if (stage === "interview" && !isSpeaking && isCameraReady) {
+      // Small delay so UI settles after speech ends
+      const t = setTimeout(() => {
+        startRecording();
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSpeaking, currentQuestionIndex, stage]);
 
   const initCamera = async (micId?: string, camId?: string) => {
     try {
@@ -326,6 +361,8 @@ export default function InterviewPage() {
 
   const startRecording = () => {
     if (!streamRef.current) return;
+    // Prevent double-start if already recording
+    if (isRecordingRef.current) return;
 
     // Fresh recorder for each question — gives us a clean individual clip
     currentClipChunksRef.current = [];
@@ -343,6 +380,7 @@ export default function InterviewPage() {
     startTimeRef.current = Date.now();
     isRecordingRef.current = true;
     setIsRecording(true);
+    // Start the 60-second countdown (timer drives itself via the timeLeft useEffect)
     setTimeLeft(60);
   };
 
@@ -787,8 +825,64 @@ export default function InterviewPage() {
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col justify-center gap-6">
-              {/* Question card */}
+            <div className="flex flex-col justify-center gap-5">
+
+              {/* ── Countdown Timer Ring ── */}
+              {timeLeft !== null && (
+                <div className="flex flex-col items-center gap-2">
+                  {/* SVG ring */}
+                  <div className="relative">
+                    <svg width="96" height="96" viewBox="0 0 96 96" className="-rotate-90">
+                      <circle cx="48" cy="48" r="40" fill="none" stroke="#e2e8f0" strokeWidth="7" />
+                      <circle
+                        cx="48" cy="48" r="40"
+                        fill="none"
+                        stroke={timeLeft <= 10 ? "#ef4444" : timeLeft <= 20 ? "#f59e0b" : "#6366f1"}
+                        strokeWidth="7"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 40}`}
+                        strokeDashoffset={`${2 * Math.PI * 40 * (1 - timeLeft / 60)}`}
+                        style={{ transition: "stroke-dashoffset 0.9s linear, stroke 0.3s" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span
+                        className="font-mono font-black text-2xl leading-none"
+                        style={{ color: timeLeft <= 10 ? "#ef4444" : timeLeft <= 20 ? "#f59e0b" : "#6366f1" }}
+                      >
+                        {timeLeft < 10 ? `0:0${timeLeft}` : `0:${timeLeft}`}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">left</span>
+                    </div>
+                  </div>
+                  <p className={`text-xs font-semibold ${timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-slate-400"}`}>
+                    {isRecording
+                      ? timeLeft <= 10 ? "⚠ Wrapping up soon…" : "Recording your answer"
+                      : "Recording starts automatically"}
+                  </p>
+                </div>
+              )}
+
+              {/* ── Speaking indicator (before timer appears) ── */}
+              {isSpeaking && timeLeft === null && (
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <div className="flex gap-1 items-end h-8">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="w-1.5 bg-blue-500 rounded-full"
+                        style={{
+                          height: `${20 + Math.sin(Date.now() / 200 + i) * 10}px`,
+                          animation: `pulse ${0.5 + i * 0.1}s ease-in-out infinite alternate`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm font-semibold text-blue-600">AI is reading the question…</p>
+                </div>
+              )}
+
+              {/* ── Question card ── */}
               <div className="p-5 rounded-2xl border border-blue-100 bg-blue-50/50 shadow-sm">
                 <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-3">
                   Question {currentQuestionIndex + 1}
@@ -796,56 +890,16 @@ export default function InterviewPage() {
                 <p className="text-slate-800 text-lg leading-relaxed font-bold">{question}</p>
               </div>
 
-              {/* Status */}
-              {isSpeaking && (
-                <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
-                  <Volume2 className="w-4 h-4 text-blue-500 animate-pulse" />
-                  AI is reading the question...
-                </div>
-              )}
-
-              {!isSpeaking && !isRecording && (
-                <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
-                  <Mic className="w-4 h-4 text-slate-400" />
-                  Ready to record your answer
-                </div>
-              )}
-
-              {isRecording && (
-                <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100">
-                  <div className="flex items-center gap-2 text-red-600 text-sm font-bold">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    Recording
-                  </div>
-                  {timeLeft !== null && (
-                    <div className="text-red-600 font-bold font-mono text-sm flex items-center gap-2">
-                      <span className="text-xs uppercase tracking-wider opacity-75">Time left</span>
-                      00:{timeLeft.toString().padStart(2, '0')}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Action buttons */}
+              {/* ── Submit / status ── */}
               <div className="space-y-3">
-                {!isRecording ? (
-                  <Button
-                    onClick={startRecording}
-                    disabled={isSpeaking}
-                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 disabled:opacity-40"
-                    id="start-answer-btn"
-                  >
-                    <Mic className="w-4 h-4 mr-2" />
-                    Start Answer
-                  </Button>
-                ) : (
+                {isRecording && (
                   <Button
                     onClick={handleSubmitAnswer}
-                    className="w-full h-12 bg-red-50 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg shadow-red-500/20"
+                    className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-500/20"
                     id="submit-answer-btn"
                   >
                     <Square className="w-4 h-4 mr-2" />
-                    {isLastQuestion ? "Submit Final Answer" : "Submit Answer"}
+                    {isLastQuestion ? "Submit Final Answer" : "Done — Submit Answer"}
                   </Button>
                 )}
 
