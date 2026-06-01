@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send, Share2 } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send, Share2, CheckSquare, XSquare } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
+import WorkflowBadge from '@/components/admin/WorkflowBadge';
+import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
 
 const ResumeUpload = () => {
   const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
@@ -17,6 +19,34 @@ const ResumeUpload = () => {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [confirmModal, setConfirmModal] = useState<{ type: 'approve' | 'reject', candidate: any } | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const handleWorkflowAction = async (candidate: any, type: 'approve' | 'reject', reason?: string) => {
+    setActionLoading(candidate.id);
+    setConfirmModal(null);
+    try {
+      const endpoint = type === 'approve'
+        ? `/api/candidate/resume-approve/${candidate.id}`
+        : `/api/candidate/resume-reject/${candidate.id}`;
+      const res = await apiFetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: type === 'reject' ? JSON.stringify({ reason }) : undefined,
+      });
+      if (res.ok) {
+        refreshCandidates();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData?.error ?? `Failed to ${type} resume.`);
+      }
+    } catch (err) {
+      console.error('[handleWorkflowAction]', err);
+      alert('Network error. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
   
@@ -210,6 +240,22 @@ const ResumeUpload = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
+      {confirmModal && (
+        <ConfirmActionModal
+          title={confirmModal.type === 'approve' ? 'Approve Resume' : 'Reject Resume'}
+          message={confirmModal.type === 'approve' 
+            ? `Are you sure you want to approve ${confirmModal.candidate.name}'s resume? This will move them to the Video Bot Screening stage.`
+            : `Are you sure you want to reject ${confirmModal.candidate.name}'s resume?`
+          }
+          confirmLabel={confirmModal.type === 'approve' ? 'Approve' : 'Reject'}
+          onConfirm={(reason) => handleWorkflowAction(confirmModal.candidate, confirmModal.type, reason)}
+          onCancel={() => setConfirmModal(null)}
+          danger={confirmModal.type === 'reject'}
+          requireReason={confirmModal.type === 'reject'}
+          reasonPlaceholder="Enter rejection reason..."
+          loading={actionLoading === confirmModal.candidate.id}
+        />
+      )}
 
 
       {/* Upload Section */}
@@ -363,13 +409,14 @@ const ResumeUpload = () => {
                 <th>Candidate Name & ID</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredCandidates.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                     No candidates found.
                   </td>
                 </tr>
@@ -395,7 +442,10 @@ const ResumeUpload = () => {
                     <td style={{ color: 'var(--gray-600)' }}>{candidate.email}</td>
                     <td>{candidate.jobApplied}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <WorkflowBadge status={candidate.resume_stage_status || candidate.resumeStageStatus || 'Pending'} size="sm" />
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <button 
                           className="btn btn-outline" 
                           style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
@@ -403,6 +453,53 @@ const ResumeUpload = () => {
                         >
                           View
                         </button>
+                        
+                        {(candidate.resume_stage_status || candidate.resumeStageStatus || 'Pending') === 'Pending' && (
+                          <>
+                            <button
+                              onClick={() => setConfirmModal({ type: 'approve', candidate })}
+                              disabled={actionLoading === candidate.id}
+                              title="Approve Resume"
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                border: 'none',
+                                borderRadius: '6px',
+                                background: '#10b981',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <CheckSquare size={12} />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => setConfirmModal({ type: 'reject', candidate })}
+                              disabled={actionLoading === candidate.id}
+                              title="Reject Resume"
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                border: 'none',
+                                borderRadius: '6px',
+                                background: '#ef4444',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <XSquare size={12} />
+                              Reject
+                            </button>
+                          </>
+                        )}
                         <div style={{ position: 'relative' }}>
                           <button 
                             className="btn btn-ghost dropdown-trigger" 
