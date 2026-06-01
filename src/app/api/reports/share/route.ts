@@ -89,7 +89,7 @@ function reportEmailTemplate(
               <table width="100%" cellpadding="0" cellspacing="0">
                 ${scoreRow("Resume Score", scores.resume)}
                 ${scoreRow("Video Interview", scores.video)}
-                ${scoreRow("Technical Score", scores.tech)}
+                ${scoreRow("Tech Interview", scores.tech)}
                 <tr style="border-top:1px solid #e2e8f0;">
                   <td style="padding:10px 0 4px;color:#0E2D7B;font-size:13px;font-weight:700;">Final Recommendation</td>
                   <td style="padding:10px 0 4px;text-align:right;">
