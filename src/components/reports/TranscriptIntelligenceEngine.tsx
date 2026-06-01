@@ -315,7 +315,7 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
         </div>
         <div>
           <p style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--brand-navy)', margin: '0 0 4px' }}>
-            Transcript Intelligence Dashboard
+            Technical Interview Dashboard
           </p>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
             Upload a transcript file to activate AI-powered intelligence analysis

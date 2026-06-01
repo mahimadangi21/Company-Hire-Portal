@@ -162,7 +162,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     
     if (!url || typeof url !== 'string') return null;
     const clean = url.trim();
-    if (clean === "" || clean === "—" || clean === "null" || clean === "undefined") {
+    if (clean === "" || clean === "—" || clean === "null" || clean === "undefined" || clean.includes("mixkit.co")) {
       return null;
     }
     return clean;
@@ -500,7 +500,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         return (
           <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '2rem', width: '100%', maxWidth: '1050px', display: 'flex', flexDirection: 'column', gap: '1.5rem', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}><Brain size={18} /> TRANSCRIPT INTELLIGENCE</h3>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}><Brain size={18} /> TECHNICAL INTERVIEW</h3>
               <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}><X size={20} /></button>
             </div>
             <div style={{ padding: '0.5rem 0' }}>
@@ -779,7 +779,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
           <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
-            <Brain size={14} /> Transcript Intelligence
+            <Brain size={14} /> Technical Interview
           </p>
         </div>
 
