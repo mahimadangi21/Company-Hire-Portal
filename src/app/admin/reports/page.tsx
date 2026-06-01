@@ -331,6 +331,49 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
 
   console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
   const data = candidate.extractedData || {};
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState({
+    name: candidate.name,
+    email: candidate.email || candidate.extractedData?.personalInformation?.email || "",
+    jobApplied: candidate.jobApplied,
+    resumeScore: candidate.resumeScore || 0,
+    videoScore: candidate.videoScore || 0,
+    techScore: candidate.techScore || 0,
+    finalRecommendation: candidate.finalRecommendation || 'Under Review',
+    summary: candidate.extractedData?.transcriptAnalysis?.summary || "",
+    pros: candidate.extractedData?.transcriptAnalysis?.pros || "",
+    cons: candidate.extractedData?.transcriptAnalysis?.cons || ""
+  });
+
+  const handleSaveEdits = async () => {
+    try {
+      const supabase = createClient();
+      
+      const payload = {
+        name: editedData.name,
+        email: editedData.email,
+        jobApplied: editedData.jobApplied,
+        resumeScore: parseInt(editedData.resumeScore) || 0,
+        videoScore: parseInt(editedData.videoScore) || 0,
+        techScore: parseInt(editedData.techScore) || 0,
+        finalRecommendation: editedData.finalRecommendation
+      };
+
+      const { data: existing } = await supabase.from('candidates').select('extracted_data').eq('id', candidate.id).single();
+      const extracted_data = existing?.extracted_data || {};
+      if (!extracted_data.transcriptAnalysis) extracted_data.transcriptAnalysis = {};
+      extracted_data.transcriptAnalysis.summary = editedData.summary;
+      extracted_data.transcriptAnalysis.pros = editedData.pros;
+      extracted_data.transcriptAnalysis.cons = editedData.cons;
+
+      await supabase.from('candidates').update({ ...payload, extracted_data }).eq('id', candidate.id);
+      setIsEditing(false);
+      if (refreshCandidates) refreshCandidates();
+    } catch (e) {
+      console.error("Save failed", e);
+    }
+  };
+
 
   useEffect(() => {
     const fetchInterviewData = async () => {
@@ -472,10 +515,21 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 {getInitials(candidate.name)}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
-                  {candidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
-                </p>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <input type="text" value={editedData.name} onChange={e => setEditedData({...editedData, name: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '4px', padding: '4px 8px', fontSize: '1.1rem', fontWeight: '700' }} />
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input type="text" value={editedData.jobApplied} onChange={e => setEditedData({...editedData, jobApplied: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '4px', padding: '2px 6px', fontSize: '0.75rem' }} />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
+                      {candidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
@@ -521,7 +575,16 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 color: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
                 display: 'flex', alignItems: 'center', gap: '6px'
               }}>
-                <span style={{ fontSize: '10px' }}>●</span> {candidate.finalRecommendation || 'Under Review'}
+                {isEditing ? (
+                  <select value={editedData.finalRecommendation} onChange={e => setEditedData({...editedData, finalRecommendation: e.target.value})} style={{ background: 'transparent', color: 'inherit', border: 'none', outline: 'none', fontWeight: '700', fontSize: '0.75rem' }}>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Selected">Selected</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Hold">Hold</option>
+                  </select>
+                ) : (
+                  <><span style={{ fontSize: '10px' }}>●</span> {candidate.finalRecommendation || 'Under Review'}</>
+                )}
               </div>
               <div style={{
                 padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
@@ -588,7 +651,11 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.resumeScore || 0}%</span>
+                  {isEditing ? (
+                    <input type="number" value={editedData.resumeScore} onChange={e => setEditedData({...editedData, resumeScore: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#10b981', border: '1px solid rgba(16,185,129,0.5)', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', width: '50px' }} />
+                  ) : (
+                    <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.resumeScore || 0}%</span>
+                  )}
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -598,7 +665,11 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
-                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.videoScore || 0}%</span>
+                  {isEditing ? (
+                    <input type="number" value={editedData.videoScore} onChange={e => setEditedData({...editedData, videoScore: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.5)', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', width: '50px' }} />
+                  ) : (
+                    <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.videoScore || 0}%</span>
+                  )}
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -608,7 +679,11 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
-                  <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.techScore || 0}%</span>
+                  {isEditing ? (
+                    <input type="number" value={editedData.techScore} onChange={e => setEditedData({...editedData, techScore: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.5)', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', width: '50px' }} />
+                  ) : (
+                    <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.techScore || 0}%</span>
+                  )}
                 </div>
               </div>
               <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
@@ -1573,10 +1648,10 @@ const Reports = () => {
                         >
                           <Share2 size={11} />
                           {generatingId === c.id 
-                            ? "Gen..." 
+                            ? "Generating..." 
                             : copiedId === c.id 
-                              ? "Copied!" 
-                              : "Copy"}
+                              ? "Link Copied!" 
+                              : "Generate Link"}
                         </button>
                       </div>
                     </td>
@@ -1641,8 +1716,8 @@ const Reports = () => {
                       {generatingId === c.id 
                         ? "Generating..." 
                         : copiedId === c.id 
-                          ? "Copied!" 
-                          : "Copy Link"}
+                          ? "Link Copied!" 
+                          : "Generate Link"}
                     </button>
                     <button
                       className="btn btn-outline"
