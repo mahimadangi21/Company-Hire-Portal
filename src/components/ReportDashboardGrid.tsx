@@ -162,7 +162,18 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     
     if (!url || typeof url !== 'string') return null;
     const clean = url.trim();
-    if (clean === "" || clean === "—" || clean === "null" || clean === "undefined" || clean.includes("mixkit.co")) {
+    if (
+      clean === "" || 
+      clean === "—" || 
+      clean === "null" || 
+      clean === "undefined" || 
+      clean.includes("mixkit.co") ||
+      clean.includes("drive.google.com") ||
+      clean.includes("youtube.com") ||
+      clean.includes("youtu.be") ||
+      clean.includes("sharepoint.com") ||
+      clean.includes("w3schools.com")
+    ) {
       return null;
     }
     return clean;
@@ -219,7 +230,19 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
       rawUrl = String(matchedInterview.video_url).trim();
     }
     
-    if (rawUrl && rawUrl !== "" && rawUrl !== "—" && rawUrl !== "null" && rawUrl !== "undefined" && !rawUrl.includes("mixkit.co")) {
+    if (
+      rawUrl && 
+      rawUrl !== "" && 
+      rawUrl !== "—" && 
+      rawUrl !== "null" && 
+      rawUrl !== "undefined" && 
+      !rawUrl.includes("mixkit.co") &&
+      !rawUrl.includes("drive.google.com") &&
+      !rawUrl.includes("youtube.com") &&
+      !rawUrl.includes("youtu.be") &&
+      !rawUrl.includes("sharepoint.com") &&
+      !rawUrl.includes("w3schools.com")
+    ) {
       return rawUrl;
     }
     return null;
@@ -229,7 +252,19 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     const ext = candidate?.extractedData || {};
     let rawUrl = String(ext.videoUrl || ext.video_url || ext.video || candidate?.videoUrl || candidate?.video_url || "").trim();
     
-    if (rawUrl && rawUrl !== "" && rawUrl !== "—" && rawUrl !== "null" && rawUrl !== "undefined" && !rawUrl.includes("mixkit.co")) {
+    if (
+      rawUrl && 
+      rawUrl !== "" && 
+      rawUrl !== "—" && 
+      rawUrl !== "null" && 
+      rawUrl !== "undefined" && 
+      !rawUrl.includes("mixkit.co") &&
+      !rawUrl.includes("drive.google.com") &&
+      !rawUrl.includes("youtube.com") &&
+      !rawUrl.includes("youtu.be") &&
+      !rawUrl.includes("sharepoint.com") &&
+      !rawUrl.includes("w3schools.com")
+    ) {
       return rawUrl;
     }
     
@@ -806,7 +841,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
             />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.75rem', fontStyle: 'italic', textAlign: 'center', padding: '0 10px' }}>
-              Transcript video unavailable
+              Technical interview video unavailable
             </div>
           )}
         </div>
@@ -816,7 +851,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '1rem' }}>
             <Brain size={28} color="var(--brand-navy)" opacity={0.25} />
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, fontStyle: 'italic' }}>No transcript uploaded/generated yet</p>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, fontStyle: 'italic' }}>No technical interview transcript uploaded/generated yet</p>
           </div>
         )}
       </div>
