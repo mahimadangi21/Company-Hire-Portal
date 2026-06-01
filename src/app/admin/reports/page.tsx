@@ -322,15 +322,14 @@ const deriveStrengthsWeaknesses = (candidate) => {
 };
 
 /* ─────────────────────── Detail Modal ──────────────────────── */
-const DetailModal = ({ candidate, jobs, onClose }) => {
-  if (!candidate) return null;
-
-  console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
-
+const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMessage }) => {
   const { refreshCandidates, apiFetch } = useAppContext();
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
   const [matchedInterview, setMatchedInterview] = useState(null);
 
+  if (!candidate) return null;
+
+  console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
   const data = candidate.extractedData || {};
 
   useEffect(() => {
@@ -538,7 +537,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             {/* SEPARATOR */}
             <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
 
-            {/* RIGHT SECTION: Logo & Close Button */}
+            {/* RIGHT SECTION: Logo, Upload & Close Button */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img 
@@ -547,6 +546,13 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                   style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
                 />
               </div>
+              <button
+                onClick={() => onUploadVideo && onUploadVideo(candidate)}
+                style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+              >
+                Upload Video
+              </button>
+              {uploadStatusMessage ? <span style={{ color: '#10b981', fontSize: '0.75rem', marginLeft: '4px' }}>{uploadStatusMessage}</span> : null}
               <button 
                 onClick={onClose} 
                 style={{ 
@@ -718,6 +724,8 @@ const Reports = () => {
   const [uploadingVideoId, setUploadingVideoId] = useState(null);
   const [videoUploadCandidate, setVideoUploadCandidate] = useState(null);
   const videoFileInputRef = useRef(null);
+  const [uploadStatusMessage, setUploadStatusMessage] = useState('');
+  const ffmpegRef = useRef(null);
 
   // Auto-sync selectedCandidate when candidates context refreshes (fixes stale modal after re-upload)
   useEffect(() => {
@@ -950,66 +958,275 @@ const Reports = () => {
     const candidateExtractedData = videoUploadCandidate.extractedData || videoUploadCandidate.extracted_data || {};
 
     setUploadingVideoId(candidateId);
+    setUploadStatusMessage("Initializing...");
 
-    try {
-      // 1. Upload file using FormData to the new upload route
-      const formData = new FormData();
-      formData.append("video", file);
-      formData.append("candidateId", candidateId);
+    let finalFileToUpload: File = file;
+    let isCompressed = false;
 
-      const secret = process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "kl_internal_admin_secret_2026_secure";
-      const uploadResponse = await fetch(`${NEXT_JS_URL}/api/upload-video`, {
-        method: "POST",
-        headers: {
-          "x-api-key": secret
-        },
-        body: formData
-      });
+    // ─── Helper: upload via server-side API (uses service role key) ────────────
+    const uploadToSupabase = async (uploadFile: File): Promise<string> => {
+      const bucketName = 'interview-recordings';
+      const timestamp  = Date.now();
+      const fileExt    = uploadFile.name.split('.').pop() || 'mp4';
+      const uploadPath = `admin_uploads/${candidateId}_${timestamp}.${fileExt}`;
 
-      if (!uploadResponse.ok) {
-        const errData = await uploadResponse.json();
-        throw new Error(errData.error || "Failed to upload video to server.");
+      // ── Debug: Log every upload input ──────────────────────────────────────
+      console.log("=== SUPABASE UPLOAD DEBUG ===");
+      console.log("Bucket:", bucketName);
+      console.log("Upload Path:", uploadPath);
+      console.log("File:", uploadFile);
+      console.log("File Size (bytes):", uploadFile?.size);
+      console.log("File Type:", uploadFile?.type);
+      console.log("Candidate ID:", candidateId);
+
+      // Guard: ensure file is non-empty
+      if (!uploadFile || uploadFile.size === 0) {
+        throw new Error("Upload file is missing or empty (size = 0)");
       }
 
-      const uploadResult = await uploadResponse.json();
-      const uploadedVideoUrl = uploadResult.videoUrl;
+      // Build FormData for the server API route
+      const form = new FormData();
+      form.append('file', uploadFile, uploadFile.name);
+      form.append('candidateId', candidateId);
 
-      // 2. Persist the uploaded URL under all key mappings
+      // Track XHR progress while proxying through our server API
+      const publicUrl = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/upload-video", true);
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const pct = Math.round((event.loaded / event.total) * 100);
+            setUploadStatusMessage(`Uploading... ${pct}%`);
+          }
+        };
+
+        xhr.onload = () => {
+          // ── Debug: Log full response ────────────────────────────────────────
+          console.log("=== SERVER UPLOAD RESPONSE ===");
+          console.log("Status:", xhr.status);
+          console.log("Response:", xhr.responseText);
+          console.log("Headers:", xhr.getAllResponseHeaders());
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const json = JSON.parse(xhr.responseText);
+              resolve(json.publicUrl);
+            } catch {
+              reject(new Error("Invalid JSON in upload response: " + xhr.responseText));
+            }
+          } else {
+            reject(new Error(`${xhr.status} - ${xhr.responseText}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error — upload API unreachable"));
+        xhr.send(form);
+      });
+
+      return publicUrl;
+    };
+    // ─────────────────────────────────────────────────────────────────────────
+
+    try {
+      console.log(`=== VIDEO UPLOAD START ===`);
+      console.log(`Candidate: ${candidateId}, Original file: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+
+      // ── Step 1: FFmpeg compression (two-pass if needed) ───────────────────
+      const MAX_UPLOAD_MB = 48; // Supabase free tier hard limit is ~50MB per object
+
+      const runCompression = async (ffmpeg: any, inputName: string, outputName: string, pass: number) => {
+        const isPass2 = pass === 2;
+        const args = [
+          '-i', inputName,
+          '-c:v',    'libx264',
+          '-preset', 'ultrafast',
+          '-crf',    isPass2 ? '36' : '32',          // Pass2: crf 36 (more aggressive)
+          '-r',      '24',
+          '-vf',     isPass2
+            ? "scale='min(640,iw)':-2"               // Pass2: 360p max
+            : "scale='min(960,iw)':-2",              // Pass1: 480-540p max
+          '-b:v',    isPass2 ? '500k' : '700k',      // Pass2: 500k, Pass1: 700k
+          '-c:a',    'aac',
+          '-b:a',    '96k',
+          '-movflags', '+faststart',                 // Optimise for streaming
+          outputName,
+        ];
+        console.log(`[FFmpeg] Pass ${pass} args:`, args.join(' '));
+        await ffmpeg.exec(args);
+      };
+
+      try {
+        setUploadStatusMessage("Loading FFmpeg...");
+        const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+        const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
+
+        let ffmpeg = ffmpegRef.current;
+        if (!ffmpeg) {
+          ffmpeg = new FFmpeg();
+          (ffmpegRef as any).current = ffmpeg;
+        }
+
+        ffmpeg.on('log', ({ message }: { message: string }) => {
+          console.log("FFmpeg:", message);
+        });
+
+        ffmpeg.on('progress', ({ progress }: { progress: number }) => {
+          const percent = Math.round(progress * 100);
+          setUploadStatusMessage(`Compressing... ${percent}%`);
+        });
+
+        if (!(ffmpeg as any).loaded) {
+          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+          await ffmpeg.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+          });
+        }
+
+        const inputExt  = file.name.split('.').pop() || 'mp4';
+        const ts        = Date.now();
+        const inputName = `input_${ts}.${inputExt}`;
+        const out1Name  = `out1_${ts}.mp4`;
+        const out2Name  = `out2_${ts}.mp4`;
+
+        const originalMB = file.size / 1024 / 1024;
+        console.log("=== COMPRESSION START ===");
+        console.log("Original Size:", originalMB.toFixed(2), "MB");
+
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+        setUploadStatusMessage("Compressing... 0%");
+
+        // ── Pass 1: crf32, 480p, 700k ───────────────────────────────────────
+        await runCompression(ffmpeg, inputName, out1Name, 1);
+
+        const pass1Data = await ffmpeg.readFile(out1Name);
+        const pass1Blob = new Blob([pass1Data], { type: 'video/mp4' });
+        const pass1MB   = pass1Blob.size / 1024 / 1024;
+
+        console.log("Compressed Size (Pass 1):", pass1MB.toFixed(2), "MB");
+        console.log("Reduction %:", (((file.size - pass1Blob.size) / file.size) * 100).toFixed(1) + "%");
+
+        let compressedBlob = pass1Blob;
+
+        // ── Pass 2 (emergency): crf36, 360p, 500k — only if still too large ─
+        if (pass1MB > MAX_UPLOAD_MB) {
+          console.warn(`Pass 1 output (${pass1MB.toFixed(2)}MB) exceeds ${MAX_UPLOAD_MB}MB limit — running emergency Pass 2...`);
+          setUploadStatusMessage("Extra compression... 0%");
+
+          await runCompression(ffmpeg, inputName, out2Name, 2);
+
+          const pass2Data = await ffmpeg.readFile(out2Name);
+          const pass2Blob = new Blob([pass2Data], { type: 'video/mp4' });
+          const pass2MB   = pass2Blob.size / 1024 / 1024;
+
+          console.log("Compressed Size (Pass 2):", pass2MB.toFixed(2), "MB");
+          console.log("Reduction %:", (((file.size - pass2Blob.size) / file.size) * 100).toFixed(1) + "%");
+
+          if (pass2Blob.size === 0) {
+            throw new Error("Emergency compression produced an empty file");
+          }
+
+          if (pass2MB > MAX_UPLOAD_MB) {
+            throw new Error(
+              `Video still too large after compression (${pass2MB.toFixed(1)} MB). ` +
+              `Maximum allowed is ${MAX_UPLOAD_MB} MB. Please use a shorter clip.`
+            );
+          }
+
+          compressedBlob = pass2Blob;
+          try { await ffmpeg.deleteFile(out2Name); } catch { /* ignore */ }
+        }
+
+        if (compressedBlob.size === 0) {
+          throw new Error("Compressed file missing or empty after FFmpeg");
+        }
+
+        const compressedMB = compressedBlob.size / 1024 / 1024;
+        console.log("=== COMPRESSION RESULT ===");
+        console.log("Original Size:", originalMB.toFixed(2), "MB");
+        console.log("Compressed Size:", compressedMB.toFixed(2), "MB");
+        console.log("Reduction %:", (((file.size - compressedBlob.size) / file.size) * 100).toFixed(1) + "%");
+
+        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        finalFileToUpload = new File([compressedBlob], `${baseName}_compressed.mp4`, { type: 'video/mp4' });
+        isCompressed = true;
+
+        try { await ffmpeg.deleteFile(inputName); } catch { /* ignore */ }
+        try { await ffmpeg.deleteFile(out1Name); } catch { /* ignore */ }
+
+      } catch (compressErr: any) {
+        // If this is a user-facing size error, rethrow — don't fall back to original
+        if (compressErr.message?.includes('too large after compression') ||
+            compressErr.message?.includes('Maximum allowed')) {
+          throw compressErr;
+        }
+        console.warn("FFmpeg compression failed — falling back to original file:", compressErr);
+        finalFileToUpload = file;
+        isCompressed = false;
+
+        // Still enforce the 50MB limit on the original file
+        const originalMB = file.size / 1024 / 1024;
+        if (originalMB > MAX_UPLOAD_MB) {
+          throw new Error(
+            `File is ${originalMB.toFixed(1)} MB and compression failed. ` +
+            `Maximum allowed upload is ${MAX_UPLOAD_MB} MB. Please use a shorter/smaller video.`
+          );
+        }
+      }
+
+      // ── Step 2: Upload (compressed or original) ─────────────────────────────
+      setUploadStatusMessage("Uploading... 0%");
+      const publicVideoUrl = await uploadToSupabase(finalFileToUpload);
+      console.log("Upload success — public URL:", publicVideoUrl);
+
+      // ── Step 3: Save URL to DB ────────────────────────────────────────────
+      const objectUrl = URL.createObjectURL(finalFileToUpload);
       const updatedExtractedData = {
         ...candidateExtractedData,
-        video: uploadedVideoUrl,
-        videoUrl: uploadedVideoUrl,
-        video_url: uploadedVideoUrl,
-        video_path: uploadedVideoUrl,
-        videoUploadedAt: new Date().toISOString()
+        video:                       publicVideoUrl,
+        videoUrl:                    publicVideoUrl,
+        video_url:                   publicVideoUrl,
+        video_path:                  publicVideoUrl,
+        localVideoBlobUrl:           objectUrl,
+        videoUploadedAt:             new Date().toISOString(),
+        videoCompressionOptimized:   isCompressed,
+        originalSize:                file.size,
+        compressedSize:              finalFileToUpload.size,
       };
+
+      console.log("Saving to DB — videoUrl:", publicVideoUrl);
 
       const payload = {
         id: candidateId,
         extracted_data: updatedExtractedData,
         video_status: 'Completed',
-        // Note: video_url stored inside extracted_data above (videoUrl, video_url, video keys)
         video_score: 90
       };
 
       const response = await apiFetch('/api/candidates', {
         method: 'PATCH',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        alert('✅ Video uploaded and saved successfully!');
+        const saved = await response.json();
+        console.log("DB saved — videoUrl in DB:", saved?.extracted_data?.videoUrl);
+        setUploadStatusMessage("✅ Upload complete!");
+        alert(`✅ Video ${isCompressed ? 'compressed & ' : ''}uploaded successfully!\n\nURL: ${publicVideoUrl}`);
         await refreshCandidates();
       } else {
         const errData = await response.json();
-        alert(errData.error || 'Failed to update candidate record.');
+        throw new Error(errData.error || 'Failed to save video URL to database');
       }
     } catch (err: any) {
-      console.error(err);
-      alert(`Error uploading video: ${err.message || err}`);
+      console.error("=== VIDEO UPLOAD ERROR ===", err);
+      setUploadStatusMessage(`❌ ${err.message || 'Upload failed'}`);
+      alert('Video upload error:\n\n' + (err.message || String(err)));
     } finally {
       setUploadingVideoId(null);
       setVideoUploadCandidate(null);
+      setTimeout(() => setUploadStatusMessage(''), 4000);
     }
   };
 
@@ -1299,30 +1516,31 @@ const Reports = () => {
                       </button>
                     </td>
                     <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <button
-                        className="btn btn-outline"
-                        style={{
-                          padding: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: '8px',
-                          backgroundColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.1)' : '#fff',
-                          color: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? '#065f46' : 'var(--gray-700)',
-                          borderColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        onClick={() => triggerVideoUpload(c)}
-                        disabled={uploadingVideoId === c.id}
-                        title={(c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? "Video Uploaded" : "Upload Video"}
-                      >
-                        {uploadingVideoId === c.id ? (
-                          <span style={{ fontSize: '0.72rem' }}>⏳</span>
-                        ) : (
+                      {uploadingVideoId === c.id ? (
+                        <div style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--brand-navy)', whiteSpace: 'nowrap' }} title={uploadStatusMessage}>
+                          {uploadStatusMessage || "⏳ ..."}
+                        </div>
+                      ) : (
+                        <button
+                          className="btn btn-outline"
+                          style={{
+                            padding: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '8px',
+                            backgroundColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.1)' : '#fff',
+                            color: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? '#065f46' : 'var(--gray-700)',
+                            borderColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onClick={() => triggerVideoUpload(c)}
+                          title={(c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? "Video Uploaded" : "Upload Video"}
+                        >
                           <Video size={15} />
-                        )}
-                      </button>
+                        </button>
+                      )}
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span style={{
@@ -1468,6 +1686,8 @@ const Reports = () => {
           candidate={selectedCandidate}
           jobs={jobs || []}
           onClose={() => setSelectedCandidate(null)}
+          onUploadVideo={triggerVideoUpload}
+          uploadStatusMessage={uploadStatusMessage}
         />
       )}
 

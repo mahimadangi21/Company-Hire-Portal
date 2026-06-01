@@ -150,12 +150,23 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
   const [mounted, setMounted] = useState(false);
   const [matchedInterview, setMatchedInterview] = useState<any>(matchedInterviewFromDb || null);
 
-  let context: any = null;
-  try {
-    context = useAppContext();
-  } catch (e) {
-    // Gracefully handle case where AppContext is not available
-  }
+  // Always call hook unconditionally at top level (Rules of Hooks)
+  const contextValue = useAppContext();
+  // Safely use context — it may be null if AppContext is not in the tree
+  const context: any = contextValue ?? null;
+
+  // Tech Video (Admin Uploaded) - Transcript Intelligence
+  const transcriptVideoUrl = useMemo(() => {
+    const ext = candidate.extractedData || candidate.extracted_data || {};
+    const url = ext.videoUrl || ext.video_url || candidate.videoUrl || candidate.video_url;
+    
+    if (!url || typeof url !== 'string') return null;
+    const clean = url.trim();
+    if (clean === "" || clean === "—" || clean === "null" || clean === "undefined") {
+      return null;
+    }
+    return clean;
+  }, [candidate]);
 
   useEffect(() => {
     if (matchedInterviewFromDb) {
@@ -201,7 +212,10 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
 
   const screeningVideoUrl = useMemo(() => {
     let rawUrl = "";
-    if (matchedInterview?.video_url) {
+    const directScreeningUrl = candidate.screeningVideoUrl || candidate.screening_video_url;
+    if (directScreeningUrl && typeof directScreeningUrl === 'string' && directScreeningUrl.trim() !== "" && directScreeningUrl.trim() !== "—" && directScreeningUrl.trim() !== "null") {
+      rawUrl = directScreeningUrl.trim();
+    } else if (matchedInterview?.video_url) {
       rawUrl = String(matchedInterview.video_url).trim();
     }
     
@@ -212,7 +226,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
       return rawUrl;
     }
     return "https://www.w3schools.com/html/mov_bbb.mp4"; // Ultimate stable fallback!
-  }, [matchedInterview]);
+  }, [matchedInterview, candidate]);
 
   const technicalVideoUrl = useMemo(() => {
     const ext = candidate?.extractedData || {};
@@ -232,9 +246,12 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
   const videoUrl = screeningVideoUrl;
 
   useEffect(() => {
-    console.log("Screening Video URL:", screeningVideoUrl);
-    console.log("Technical Video URL:", technicalVideoUrl);
-  }, [screeningVideoUrl, technicalVideoUrl]);
+    console.log("Candidate Object:", candidate);
+    console.log("Candidate Screening Video URL fields:", candidate.screeningVideoUrl, candidate.screening_video_url);
+    console.log("Resolved Screening Video URL:", screeningVideoUrl);
+    console.log("Resolved Transcript Video URL (transcriptVideoUrl):", transcriptVideoUrl);
+    console.log("Technical Video URL (technicalVideoUrl):", technicalVideoUrl);
+  }, [candidate, screeningVideoUrl, transcriptVideoUrl, technicalVideoUrl]);
 
   useEffect(() => {
     setMounted(true);
@@ -685,13 +702,19 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
             <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch', flexShrink: 0 }}>
               {/* Video Player */}
               <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a' }}>
-                <EmbeddableVideo 
-                  key={screeningVideoUrl}
-                  controls
-                  preload="metadata"
-                  url={screeningVideoUrl}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                />
+                {screeningVideoUrl ? (
+                  <EmbeddableVideo 
+                    key={screeningVideoUrl}
+                    controls
+                    preload="metadata"
+                    url={screeningVideoUrl}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    Screening video unavailable
+                  </div>
+                )}
               </div>
               
               {/* Highlights */}
@@ -766,29 +789,32 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
           </p>
         </div>
 
-        {/* Tech Video Player in Column 3 */}
-        {/* Extra bottom padding (GDRIVE_CTRL_BAR px) exposes the Google Drive control bar */}
-        <div style={{
-          width: '100%',
-          paddingTop: '56.25%',   /* 16:9 ratio */
-          paddingBottom: '52px', /* room for Google Drive control bar */
-          position: 'relative',
-          margin: '0 auto 8px',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0',
-          backgroundColor: '#0f172a',
-          overflow: 'hidden',
-          flexShrink: 0,
-        }}>
-          <div style={{ position: 'absolute', inset: 0 }}>
+        {/* Small Tech Video Player in Column 3 */}
+        <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
+          {transcriptVideoUrl ? (
             <EmbeddableVideo 
-              key={technicalVideoUrl}
+              key={transcriptVideoUrl}
               controls
               preload="metadata"
-              url={technicalVideoUrl}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              url={transcriptVideoUrl}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+              onClick={(e: any) => {
+                const video = e.currentTarget;
+                if (video && typeof video.play === 'function') {
+                  if (video.paused) {
+                    video.play().catch((err: any) => console.error("Video play failed:", err));
+                  } else {
+                    video.pause();
+                  }
+                }
+              }}
+              title="Click to Play / Pause"
             />
-          </div>
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.75rem', fontStyle: 'italic', textAlign: 'center', padding: '0 10px' }}>
+              Transcript video unavailable
+            </div>
+          )}
         </div>
 
         {transcript.length > 0 ? (
