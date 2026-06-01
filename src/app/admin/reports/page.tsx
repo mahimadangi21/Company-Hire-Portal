@@ -1925,7 +1925,6 @@ const Reports = () => {
                         >
                           <Eye size={11} /> View
                         </button>
->>>>>>> pr27
                       </div>
                     </td>
                   </tr>
