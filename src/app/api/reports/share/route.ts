@@ -182,8 +182,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to generate report link" }, { status: 500 });
     }
 
-    // 5. Build the report URL
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    // 5. Build the report URL dynamically from the request origin to guarantee correctness
+    let baseUrl = req.nextUrl.origin;
+    if (baseUrl === "null" || !baseUrl || baseUrl.includes("localhost")) {
+      baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    }
+    baseUrl = baseUrl.replace(/\/$/, "");
     const reportUrl = `${baseUrl}/report/${token}`;
 
     // 6. Send email to the candidate
