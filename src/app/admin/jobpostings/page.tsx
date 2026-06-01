@@ -231,13 +231,21 @@ const JobPostings = () => {
               <div className="card-header flex justify-between items-center" style={{ borderBottom: '1px solid var(--gray-100)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
                 <div className="flex items-center gap-2">
                   <Folder size={20} style={{ color: 'var(--primary-color, #3b82f6)' }} />
-                  <h3 className="card-title" style={{ fontSize: '1.2rem', fontWeight: '600' }}>{deptName}</h3>
+                  <h3 
+                    className="card-title" 
+                    style={{ fontSize: '1.2rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+                    onClick={() => handleEditParentDept(deptName, subDepts)}
+                    title="Click to edit parent department"
+                  >
+                    <span style={{ borderBottom: '1px dashed transparent' }} onMouseEnter={(e) => e.currentTarget.style.borderBottom = '1px dashed var(--brand-navy)'} onMouseLeave={(e) => e.currentTarget.style.borderBottom = '1px dashed transparent'}>{deptName}</span>
+                    <Edit2 size={12} style={{ color: 'var(--text-muted)', opacity: 0.6 }} />
+                  </h3>
                   <span className="badge" style={{ backgroundColor: 'var(--gray-100)', color: 'var(--text-main)', marginLeft: '0.5rem' }}>
                     {subDepts.length} {subDepts.length === 1 ? 'Sub-Department' : 'Sub-Departments'}
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="btn btn-ghost" style={{ padding: '0.25rem' }} onClick={() => handleEditParentDept(deptName, subDepts)} title="Edit Parent Department"><Edit2 size={16} /></button>
+                  <button className="btn btn-ghost" style={{ padding: '0.25rem', cursor: 'pointer' }} onClick={() => handleEditParentDept(deptName, subDepts)} title="Edit Parent Department"><Edit2 size={16} /></button>
                 </div>
               </div>
               <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
@@ -251,13 +259,22 @@ const JobPostings = () => {
                   </thead>
                   <tbody>
                     {subDepts.map((job: any) => (
-                      <tr key={job.id}>
-                        <td style={{ fontWeight: '500', paddingLeft: '1.5rem', color: 'var(--gray-600)' }}>{job.sub_department || 'General'}</td>
-                        <td style={{ fontWeight: '500' }}>{job.title}</td>
-                        <td>
+                      <tr key={job.id} style={{ cursor: 'pointer' }} onClick={() => handleEditJob(job)} title="Click to edit sub-department or role">
+                        <td style={{ fontWeight: '500', paddingLeft: '1.5rem', color: 'var(--gray-600)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>{job.sub_department || 'General'}</span>
+                          </div>
+                        </td>
+                        <td style={{ fontWeight: '500' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>{job.title}</span>
+                            <Edit2 size={12} style={{ color: 'var(--text-muted)', opacity: 0, transition: 'opacity 0.2s' }} className="edit-icon-hover" />
+                          </div>
+                        </td>
+                        <td onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2">
-                            <button className="btn btn-ghost" style={{ padding: '0.25rem' }} onClick={() => handleEditJob(job)} title="Edit"><Edit2 size={16} /></button>
-                            <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--danger)' }} onClick={() => handleDeleteJob(job)} title="Delete"><Archive size={16} /></button>
+                            <button className="btn btn-ghost" style={{ padding: '0.25rem', cursor: 'pointer' }} onClick={() => handleEditJob(job)} title="Edit"><Edit2 size={16} /></button>
+                            <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--danger)', cursor: 'pointer' }} onClick={() => handleDeleteJob(job)} title="Delete"><Archive size={16} /></button>
                           </div>
                         </td>
                       </tr>
