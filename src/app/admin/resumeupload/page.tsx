@@ -406,7 +406,8 @@ const ResumeUpload = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Candidate Name & ID</th>
+                <th>ID</th>
+                <th>Candidate Name</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -424,16 +425,18 @@ const ResumeUpload = () => {
                 filteredCandidates.map(candidate => (
                   <tr key={candidate.id}>
                     <td>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '12px' }}>
+                        #{candidate.display_id || candidate.unique_id || String(candidate.id).substring(0,6)}
+                      </span>
+                    </td>
+                    <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(14, 45, 123, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '700', fontSize: '0.875rem' }}>
                           {candidate.name.split(' ').map(n => n[0]).join('')}
                         </div>
                         <div>
                           <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>
-                            {candidate.name} 
-                            <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px' }}>
-                              {candidate.unique_id || String(candidate.id).substring(0,6)}
-                            </span>
+                            {candidate.name}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{candidate.phone}</div>
                         </div>
