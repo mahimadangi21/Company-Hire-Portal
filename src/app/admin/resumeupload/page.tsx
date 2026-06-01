@@ -48,7 +48,7 @@ const ResumeUpload = () => {
     }
   };
 
-  const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
+  const dynamicDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean)));
   
   const getAvailableSubDepartments = (dept: string) => {
     return Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department)));
@@ -71,17 +71,17 @@ const ResumeUpload = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
   
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parsedCandidates = candidates.filter(c => c.resumeStatus === 'Parsed');
+  const parsedCandidates = candidates.filter((c: any) => c.resumeStatus === 'Parsed');
 
-  const filteredCandidates = parsedCandidates.filter(c => 
+  const filteredCandidates = parsedCandidates.filter((c: any) => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.jobApplied.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDrag = (e) => {
+  const handleDrag = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -91,7 +91,7 @@ const ResumeUpload = () => {
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -100,7 +100,7 @@ const ResumeUpload = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: any) => {
     if (e.target.files && e.target.files[0]) {
       handleUpload(e.target.files[0]);
     }
@@ -221,7 +221,7 @@ const ResumeUpload = () => {
           message: result.error || 'Parsing failed. Please check the PDF contents.' 
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       clearInterval(interval);
       console.error('Upload catch block:', err);
       setStatus({ 
@@ -417,12 +417,12 @@ const ResumeUpload = () => {
             <tbody>
               {filteredCandidates.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                     No candidates found.
                   </td>
                 </tr>
               ) : (
-                filteredCandidates.map(candidate => (
+                filteredCandidates.map((candidate: any) => (
                   <tr key={candidate.id}>
                     <td>
                       <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '12px' }}>
@@ -432,7 +432,7 @@ const ResumeUpload = () => {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(14, 45, 123, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '700', fontSize: '0.875rem' }}>
-                          {candidate.name.split(' ').map(n => n[0]).join('')}
+                          {candidate.name.split(' ').map((n: string) => n[0]).join('')}
                         </div>
                         <div>
                           <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>
