@@ -327,6 +327,96 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
   const [matchedInterview, setMatchedInterview] = useState(null);
 
+  // States for report edit and sharing link generation
+  const [isEditingReport, setIsEditingReport] = useState(false);
+  const [editForm, setEditForm] = useState({
+    finalRecommendation: candidate.finalRecommendation || 'Under Review',
+    resumeScore: candidate.resumeScore || 0,
+    videoScore: candidate.videoScore || 0,
+    techScore: candidate.techScore || 0,
+  });
+
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const prevCandidateIdRef = useRef(null);
+
+  useEffect(() => {
+    if (candidate) {
+      setEditForm({
+        finalRecommendation: candidate.finalRecommendation || 'Under Review',
+        resumeScore: candidate.resumeScore || 0,
+        videoScore: candidate.videoScore || 0,
+        techScore: candidate.techScore || 0,
+      });
+      if (prevCandidateIdRef.current !== candidate.id) {
+        setGeneratedLink('');
+        prevCandidateIdRef.current = candidate.id;
+      }
+    }
+  }, [candidate]);
+
+  const handleGenerateLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const res = await apiFetch('/api/reports/share', {
+        method: 'POST',
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          candidateEmail: candidate.email,
+          candidateName: candidate.name,
+          jobRole: candidate.jobApplied,
+          scores: {
+            resume: candidate.resumeScore,
+            video: candidate.videoScore,
+            tech: candidate.techScore,
+          },
+          recommendation: candidate.finalRecommendation,
+          skipEmail: true
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGeneratedLink(data.reportUrl);
+        await refreshCandidates();
+      } else {
+        alert(data.error || 'Failed to generate report link.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error. Failed to generate report link.');
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const handleSaveReport = async () => {
+    try {
+      const payload = {
+        id: candidate.id,
+        final_recommendation: editForm.finalRecommendation,
+        resume_score: Number(editForm.resumeScore),
+        video_score: Number(editForm.videoScore),
+        tech_score: Number(editForm.techScore),
+      };
+      const response = await apiFetch('/api/candidates', {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        setIsEditingReport(false);
+        await refreshCandidates();
+      } else {
+        const err = await response.json();
+        alert(err.error || 'Failed to update report');
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving report');
+    }
+  };
+
   if (!candidate) return null;
 
   console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
@@ -568,24 +658,27 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
 
             {/* RIGHT CENTER SECTION: Status Badges */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
-              <div style={{
-                padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
-                backgroundColor: 'rgba(245,158,11,0.1)',
-                border: candidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : candidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
-                color: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-                display: 'flex', alignItems: 'center', gap: '6px'
-              }}>
-                {isEditing ? (
-                  <select value={editedData.finalRecommendation} onChange={e => setEditedData({...editedData, finalRecommendation: e.target.value})} style={{ background: 'transparent', color: 'inherit', border: 'none', outline: 'none', fontWeight: '700', fontSize: '0.75rem' }}>
-                    <option value="Under Review">Under Review</option>
-                    <option value="Selected">Selected</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="Hold">Hold</option>
-                  </select>
-                ) : (
-                  <><span style={{ fontSize: '10px' }}>●</span> {candidate.finalRecommendation || 'Under Review'}</>
-                )}
-              </div>
+              {isEditingReport ? (
+                <select
+                  value={editForm.finalRecommendation}
+                  onChange={(e) => setEditForm({ ...editForm, finalRecommendation: e.target.value })}
+                  style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: '#fff', border: '1px solid #ccc', color: '#000' }}
+                >
+                  <option value="Under Review">Under Review</option>
+                  <option value="Selected">Selected</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              ) : (
+                <div style={{
+                  padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
+                  backgroundColor: 'rgba(245,158,11,0.1)',
+                  border: candidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : candidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
+                  color: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
+                  display: 'flex', alignItems: 'center', gap: '6px'
+                }}>
+                  <span style={{ fontSize: '10px' }}>●</span> {candidate.finalRecommendation || 'Under Review'}
+                </div>
+              )}
               <div style={{
                 padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
                 backgroundColor: 'rgba(16,185,129,0.05)',
@@ -601,36 +694,41 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
             <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
 
             {/* RIGHT SECTION: Logo, Upload & Close Button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '4px' }}>
                 <img 
                   src="/kadellabs-logo.png" 
                   alt="Company Logo" 
                   style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
                 />
               </div>
-              {isEditing ? (
+              
+              <button
+                onClick={() => setIsEditingReport(!isEditingReport)}
+                style={{ background: isEditingReport ? '#64748b' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', transition: 'all 0.2s' }}
+              >
+                {isEditingReport ? 'Cancel' : 'Edit Report'}
+              </button>
+
+              {isEditingReport && (
                 <button
-                  onClick={handleSaveEdits}
-                  style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+                  onClick={handleSaveReport}
+                  style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', transition: 'all 0.2s' }}
                 >
-                  Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  style={{ background: 'transparent', color: '#fff', border: '1px solid #fff', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
-                >
-                  Edit all details
+                  Save Changes
                 </button>
               )}
+
               <button
-                onClick={() => onCopyShareLink && onCopyShareLink(candidate)}
-                style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+                onClick={handleGenerateLink}
+                disabled={generatingLink}
+                style={{ background: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', transition: 'all 0.2s', opacity: generatingLink ? 0.7 : 1 }}
               >
-                Generate Link
+                {generatingLink ? 'Generating...' : 'Generate Link'}
               </button>
+
               {uploadStatusMessage ? <span style={{ color: '#10b981', fontSize: '0.75rem', marginLeft: '4px' }}>{uploadStatusMessage}</span> : null}
+              
               <button 
                 onClick={onClose} 
                 style={{ 
@@ -644,6 +742,8 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
               </button>
             </div>
           </div>
+
+
 
           {/* BOTTOM KPI BAR */}
           <div style={{ padding: '0 32px 12px 32px', backgroundColor: 'transparent' }}>
@@ -666,8 +766,15 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                  {isEditing ? (
-                    <input type="number" value={editedData.resumeScore} onChange={e => setEditedData({...editedData, resumeScore: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#10b981', border: '1px solid rgba(16,185,129,0.5)', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', width: '50px' }} />
+                  {isEditingReport ? (
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.resumeScore}
+                      onChange={(e) => setEditForm({ ...editForm, resumeScore: Number(e.target.value) })}
+                      style={{ width: '60px', color: '#000', padding: '2px 4px', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                    />
                   ) : (
                     <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.resumeScore || 0}%</span>
                   )}
@@ -680,8 +787,15 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
-                  {isEditing ? (
-                    <input type="number" value={editedData.videoScore} onChange={e => setEditedData({...editedData, videoScore: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.5)', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', width: '50px' }} />
+                  {isEditingReport ? (
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.videoScore}
+                      onChange={(e) => setEditForm({ ...editForm, videoScore: Number(e.target.value) })}
+                      style={{ width: '60px', color: '#000', padding: '2px 4px', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                    />
                   ) : (
                     <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.videoScore || 0}%</span>
                   )}
@@ -694,8 +808,15 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
-                  {isEditing ? (
-                    <input type="number" value={editedData.techScore} onChange={e => setEditedData({...editedData, techScore: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.5)', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', width: '50px' }} />
+                  {isEditingReport ? (
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.techScore}
+                      onChange={(e) => setEditForm({ ...editForm, techScore: Number(e.target.value) })}
+                      style={{ width: '60px', color: '#000', padding: '2px 4px', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                    />
                   ) : (
                     <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.techScore || 0}%</span>
                   )}
@@ -786,6 +907,155 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
               onClose={() => setViewResumeOpen(false)} 
               onUpdate={refreshCandidates} 
             />
+          </div>
+        </div>
+      )}
+
+      {generatedLink && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2100,
+          padding: '2rem'
+        }} onClick={() => setGeneratedLink('')}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '520px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            padding: '24px',
+            position: 'relative',
+            border: '1px solid rgba(226, 232, 240, 0.8)'
+          }} onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <button 
+              onClick={() => setGeneratedLink('')}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: '#f1f5f9',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#64748b',
+                transition: 'all 0.2s'
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            {/* Icon & Title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#8b5cf6'
+              }}>
+                <Share2 size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '850', color: '#0f172a', margin: 0 }}>Report Link Generated</h3>
+                <span style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expires in 24 Hours</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              This link is secure and will automatically expire exactly 24 hours from now. After expiration, access to this report will be locked.
+            </p>
+
+            {/* Link Box */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '12px',
+              marginBottom: '20px'
+            }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Generated URL</span>
+              <a 
+                href={generatedLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ 
+                  fontSize: '0.8rem', 
+                  color: '#8b5cf6', 
+                  fontWeight: '600', 
+                  wordBreak: 'break-all',
+                  textDecoration: 'underline'
+                }}
+              >
+                {generatedLink}
+              </a>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedLink);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2000);
+                }}
+                style={{
+                  flex: 1,
+                  background: copiedLink ? '#10b981' : '#8b5cf6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {copiedLink ? 'Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={() => setGeneratedLink('')}
+                style={{
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1655,19 +1925,7 @@ const Reports = () => {
                         >
                           <Eye size={11} /> View
                         </button>
-                        <button
-                          className="btn btn-outline"
-                          style={{ padding: '4px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', minWidth: '76px', justifyContent: 'center', whiteSpace: 'nowrap' }}
-                          onClick={() => handleCopyShareLink(c)}
-                          disabled={generatingId === c.id}
-                        >
-                          <Share2 size={11} />
-                          {generatingId === c.id 
-                            ? "Generating..." 
-                            : copiedId === c.id 
-                              ? "Link Copied!" 
-                              : "Generate Link"}
-                        </button>
+>>>>>>> pr27
                       </div>
                     </td>
                   </tr>
@@ -1733,31 +1991,6 @@ const Reports = () => {
                         : copiedId === c.id 
                           ? "Link Copied!" 
                           : "Generate Link"}
-                    </button>
-                    <button
-                      className="btn btn-outline"
-                      style={{
-                        padding: '5px 10px',
-                        fontSize: '0.72rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        justifyContent: 'center',
-                        backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.1)' : '#fff',
-                        color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#065f46' : 'var(--gray-700)',
-                        borderColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
-                      }}
-                      onClick={() => triggerTranscriptUpload(c)}
-                      disabled={uploadingId === c.id}
-                    >
-                      {uploadingId === c.id ? (
-                        <>⏳ Uploading...</>
-                      ) : (
-                        <>
-                          <Upload size={12} />
-                          <span>{(c.extractedData?.transcript?.length || c.transcript?.length) ? "Re-upload" : "Upload"}</span>
-                        </>
-                      )}
                     </button>
                   </div>
                 </div>
