@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Generate a secure random token
     const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
 
     // 2. First fetch the existing extracted_data so we can merge into it
     const { data: existing, error: fetchError } = await supabase

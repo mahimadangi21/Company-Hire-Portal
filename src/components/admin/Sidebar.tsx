@@ -11,11 +11,11 @@ const Sidebar = () => {
   
   const navItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-    { name: 'Department', path: '/admin/jobpostings', icon: Briefcase },
     { name: 'Resume Upload', path: '/admin/resumeupload', icon: FileText },
     { name: 'Video Bot Screening', path: '/admin/video-bot-admin', icon: Video },
     { name: 'Technical Scheduler', path: '/admin/technicalscheduler', icon: Calendar },
     { name: 'Reports', path: '/admin/reports', icon: BarChart },
+    { name: 'Department', path: '/admin/jobpostings', icon: Briefcase },
     { name: 'Email Settings', path: '/admin/settings', icon: Settings2 },
   ];
 
