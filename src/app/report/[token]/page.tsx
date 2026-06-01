@@ -373,7 +373,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
               {getInitials(mappedCandidate.name)}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{mappedCandidate.name}</h2>
+              <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>#{mappedCandidate.display_id} - {mappedCandidate.name}</h2>
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
                 {mappedCandidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {mappedCandidate.extractedData?.educationDetails?.[0]?.degree ? `• ${mappedCandidate.extractedData.educationDetails[0].degree}` : '• MCA'}
               </p>

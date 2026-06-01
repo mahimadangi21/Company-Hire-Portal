@@ -21,6 +21,7 @@ export interface TranscriptEntry {
   text: string;
   timestamp_start?: number;
   timestamp_end?: number;
+  clip_url?: string; // URL for the individual question clip video
 }
 
 export interface CreateInterviewInput {
@@ -34,7 +35,7 @@ export interface CreateInterviewInput {
 export interface RecordingChunk {
   question: string;
   questionIndex: number;
-  blob: Blob;
+  blob: Blob; // Actual video blob for this question's clip
   duration: number;
 }
 

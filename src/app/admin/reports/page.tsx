@@ -614,7 +614,7 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                   </div>
                 ) : (
                   <>
-                    <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
+                    <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>#{candidate.display_id} - {candidate.name}</h2>
                     <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
                       {candidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
                     </p>
@@ -1832,7 +1832,7 @@ const Reports = () => {
                           <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {c.name}
                             <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px' }}>
-                              {c.unique_id || String(c.id).substring(0,6)}
+                              #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
                             </span>
                           </div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
@@ -1953,7 +1953,7 @@ const Reports = () => {
                       {getInitials(c.name)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.87rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                      <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.87rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>#{c.display_id} - {c.name}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.jobApplied}</div>
                     </div>
                     {avgScore !== null && (

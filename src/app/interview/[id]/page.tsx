@@ -17,7 +17,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { mergeVideoChunks, uploadVideoToSupabase } from "@/lib/video/merge";
+import { mergeVideoChunks, uploadVideoToSupabase, uploadClipToSupabase } from "@/lib/video/merge";
 
 type Stage =
   | "loading"
@@ -54,6 +54,7 @@ export default function InterviewPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const rawChunksRef = useRef<Blob[]>([]);
+  const currentClipChunksRef = useRef<Blob[]>([]); // holds chunks for current question's recording
   const animFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
   const isRecordingRef = useRef(false);
@@ -271,27 +272,19 @@ export default function InterviewPage() {
   };
 
   const handleEarlyTermination = async () => {
-    let chunk;
+    let chunk: RecordingChunk;
     if (isRecordingRef.current) {
-       chunk = stopRecording();
+       chunk = await stopRecording();
     } else {
        chunk = {
          question: interview!.questions[currentQuestionIndex],
          questionIndex: currentQuestionIndex,
-         blob: new Blob(),
+         blob: new Blob(currentClipChunksRef.current, { type: "video/webm" }),
          duration: 0,
        };
     }
-    
-    const finalBlob = await new Promise<Blob>((resolve) => {
-      const recorder = recorderRef.current;
-      if (!recorder) return resolve(new Blob());
-      recorder.onstop = () => resolve(new Blob(rawChunksRef.current, { type: "video/webm" }));
-      if (recorder.state !== "inactive") recorder.stop();
-      else resolve(new Blob(rawChunksRef.current, { type: "video/webm" }));
-    });
 
-    await processAndUpload([...allChunks, chunk], finalBlob);
+    await processAndUpload([...allChunks, chunk]);
   };
 
   useEffect(() => {
@@ -332,125 +325,129 @@ export default function InterviewPage() {
   }, [stage, showWarning]);
 
   const startRecording = () => {
-    if (!canvasRef.current || !streamRef.current) return;
-    
-    if (!recorderRef.current) {
-      rawChunksRef.current = [];
-      // Use the raw stream directly to guarantee flawless audio/video capture from any mic
-      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-        ? "video/webm;codecs=vp8,opus"
-        : "video/webm";
+    if (!streamRef.current) return;
 
-      const recorder = new MediaRecorder(streamRef.current, { mimeType, videoBitsPerSecond: 1000000 });
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) rawChunksRef.current.push(e.data); };
-      recorderRef.current = recorder;
-    }
+    // Fresh recorder for each question — gives us a clean individual clip
+    currentClipChunksRef.current = [];
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+      ? "video/webm;codecs=vp8,opus"
+      : "video/webm";
 
-
+    const recorder = new MediaRecorder(streamRef.current, { mimeType, videoBitsPerSecond: 1000000 });
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) currentClipChunksRef.current.push(e.data);
+    };
+    recorderRef.current = recorder;
+    recorder.start(250);
 
     startTimeRef.current = Date.now();
     isRecordingRef.current = true;
-
-    if (recorderRef.current.state === "inactive") {
-      recorderRef.current.start(250);
-    } else if (recorderRef.current.state === "paused") {
-      recorderRef.current.resume();
-    }
-    
     setIsRecording(true);
     setTimeLeft(60);
   };
 
-  const stopRecording = (): RecordingChunk => {
+  const stopRecording = (): Promise<RecordingChunk> => {
     const duration = (Date.now() - startTimeRef.current) / 1000;
     isRecordingRef.current = false;
     setIsRecording(false);
     setTimeLeft(null);
-    
-    if (recorderRef.current && recorderRef.current.state === "recording") {
-      recorderRef.current.pause();
-    }
 
-    const chunk: RecordingChunk = {
-      question: interview!.questions[currentQuestionIndex],
-      questionIndex: currentQuestionIndex,
-      blob: new Blob(), // We no longer use individual blobs
-      duration,
-    };
-    
-    setAllChunks((prev) => [...prev, chunk]);
-    return chunk;
+    return new Promise<RecordingChunk>((resolve) => {
+      const recorder = recorderRef.current;
+      if (!recorder || recorder.state === "inactive") {
+        const chunk: RecordingChunk = {
+          question: interview!.questions[currentQuestionIndex],
+          questionIndex: currentQuestionIndex,
+          blob: new Blob(currentClipChunksRef.current, { type: "video/webm" }),
+          duration,
+        };
+        resolve(chunk);
+        return;
+      }
+      recorder.onstop = () => {
+        const blob = new Blob(currentClipChunksRef.current, { type: "video/webm" });
+        const chunk: RecordingChunk = {
+          question: interview!.questions[currentQuestionIndex],
+          questionIndex: currentQuestionIndex,
+          blob,
+          duration,
+        };
+        resolve(chunk);
+      };
+      recorder.stop();
+    });
   };
 
   const handleSubmitAnswer = async () => {
-    const chunk = stopRecording();
+    const chunk = await stopRecording();
+    setAllChunks((prev) => [...prev, chunk]);
     const nextIndex = currentQuestionIndex + 1;
     const isLast = !interview || nextIndex >= interview.questions.length;
 
     if (isLast) {
-      // It's the last question, so we actually stop the recorder to get the final file
-      const finalBlob = await new Promise<Blob>((resolve) => {
-        const recorder = recorderRef.current;
-        if (!recorder) return resolve(new Blob());
-        
-        recorder.onstop = () => {
-          resolve(new Blob(rawChunksRef.current, { type: "video/webm" }));
-        };
-        
-        if (recorder.state !== "inactive") {
-          recorder.stop();
-        } else {
-          resolve(new Blob(rawChunksRef.current, { type: "video/webm" }));
-        }
-      });
-
-      // Process and upload
-      await processAndUpload([...allChunks, chunk], finalBlob);
+      await processAndUpload([...allChunks, chunk]);
     } else {
       setCurrentQuestionIndex(nextIndex);
-      // Speak next question
       if (interview) {
         await speakQuestion(interview.questions[nextIndex]);
       }
     }
   };
 
-  const processAndUpload = async (chunks: RecordingChunk[], finalBlob: Blob) => {
+  const processAndUpload = async (chunks: RecordingChunk[]) => {
     setStage("processing");
     try {
-      setProcessingProgress(20);
+      setProcessingProgress(10);
 
       // Stop camera
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
 
-      setProcessingProgress(40);
+      // Sort by question index
+      const sorted = [...chunks].sort((a, b) => a.questionIndex - b.questionIndex);
 
-      // We already have the merged blob directly from MediaRecorder!
-      setProcessingProgress(65);
+      // 1. Upload each individual clip
+      const progressPerClip = 60 / sorted.length;
+      const clipUrls: string[] = [];
+      for (let i = 0; i < sorted.length; i++) {
+        const clipUrl = await uploadClipToSupabase(
+          sorted[i].blob,
+          id,
+          sorted[i].questionIndex,
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        clipUrls.push(clipUrl);
+        setProcessingProgress(10 + Math.round((i + 1) * progressPerClip));
+      }
 
-      // Upload to Supabase
+      // 2. Upload merged/concatenated video for backward compatibility
+      const mergedBlob = new Blob(sorted.map(c => c.blob), { type: "video/webm" });
       const videoUrl = await uploadVideoToSupabase(
-        finalBlob,
+        mergedBlob,
         id,
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
-      setProcessingProgress(85);
+      setProcessingProgress(80);
 
-      // Build timestamp entries
+      // 3. Build transcript entries with clip_url + cumulative timestamps
       let currentOffset = 0;
-      const questionTimestamps = chunks.map((c) => {
+      const questionTimestamps = sorted.map((c, i) => {
         const start = currentOffset;
         currentOffset += c.duration;
         return {
           question: c.question,
+          text: "",
           timestamp_start: start,
           timestamp_end: currentOffset,
+          clip_url: clipUrls[i],
         };
       });
 
-      // Mark completed
+      setProcessingProgress(90);
+
+      // 4. Mark completed in DB
       await fetch(`/api/interviews/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -464,7 +461,7 @@ export default function InterviewPage() {
 
       setProcessingProgress(100);
 
-      // Send completion email to admin (best effort)
+      // 5. Send completion email to admin (best effort)
       fetch("/api/emails/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
