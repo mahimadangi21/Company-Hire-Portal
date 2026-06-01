@@ -330,7 +330,6 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
   if (!candidate) return null;
 
   console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
-
   const data = candidate.extractedData || {};
 
   useEffect(() => {
@@ -994,8 +993,6 @@ const Reports = () => {
       const publicUrl = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/upload-video", true);
-        const secret = process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "kl_internal_admin_secret_2026_secure";
-        xhr.setRequestHeader("x-api-key", secret);
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
@@ -1204,7 +1201,6 @@ const Reports = () => {
         id: candidateId,
         extracted_data: updatedExtractedData,
         video_status: 'Completed',
-        // Note: video_url stored inside extracted_data above (videoUrl, video_url, video keys)
         video_score: 90
       };
 
