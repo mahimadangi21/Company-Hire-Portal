@@ -12,6 +12,8 @@ import StandardResume from '@/components/admin/StandardResume';
 import { ResumeParsedBox } from "@/components/ResumeParsedBox";
 import { ReportDashboardGrid } from "@/components/ReportDashboardGrid";
 import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
+import WorkflowBadge from '@/components/admin/WorkflowBadge';
+import { useSWRConfig } from 'swr'; // removed useSWR import, we'll use fetch with SWRConfig for revalidation
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
@@ -614,7 +616,7 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                   </div>
                 ) : (
                   <>
-                    <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>#{candidate.display_id} - {candidate.name}</h2>
+                    <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
                     <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
                       {candidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
                     </p>
@@ -786,7 +788,7 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                 <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Screening Video</span>
                   {isEditingReport ? (
                     <input
                       type="number"
@@ -807,7 +809,7 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                 <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
+                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Tech Interview</span>
                   {isEditingReport ? (
                     <input
                       type="number"
@@ -1086,6 +1088,12 @@ const Reports = () => {
   const videoFileInputRef = useRef(null);
   const [uploadStatusMessage, setUploadStatusMessage] = useState('');
   const ffmpegRef = useRef(null);
+
+  // Remark state
+  const [remarkPopover, setRemarkPopover] = useState<{ candidateId: string; name: string } | null>(null);
+  const [remarkText, setRemarkText] = useState('');
+  const [remarkSaving, setRemarkSaving] = useState(false);
+  const [filterStage, setFilterStage] = useState('All');
 
   // Auto-sync selectedCandidate when candidates context refreshes (fixes stale modal after re-upload)
   useEffect(() => {
@@ -1695,20 +1703,23 @@ const Reports = () => {
 
   useEffect(() => { refreshCandidates(); }, []);
 
-  // All parseed candidates as reports candidates
-  const allCandidates = candidates.filter((c) =>
-    c.resumeStatus === 'Parsed' ||
-    c.videoStatus === 'Completed' ||
-    c.techStatus === 'Scheduled' ||
-    c.techStatus === 'Completed'
-  );
+  // Return ALL candidates for full HR visibility (pending, in-progress, rejected, completed)
+  const allCandidates = candidates;
+
+  const stageOptions = [
+    'All', 'Resume Screening', 'Video Screening',
+    'Technical Scheduler', 'Technical Evaluation',
+    'Rejected at Resume Stage', 'Rejected at Video Stage',
+    'Rejected at Technical Stage', 'Report Generation', 'Completed',
+  ];
 
   const filtered = allCandidates.filter((c) => {
     const q = search.toLowerCase();
     const matchQ = !q || c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.jobApplied?.toLowerCase().includes(q);
     const matchJ = filterJob === 'All' || c.jobApplied === filterJob;
     const matchR = filterRec === 'All' || (c.finalRecommendation || 'Under Review') === filterRec;
-    return matchQ && matchJ && matchR;
+    const matchS = filterStage === 'All' || (c.current_stage ?? c.currentStage ?? c.stage ?? 'Resume Screening') === filterStage;
+    return matchQ && matchJ && matchR && matchS;
   });
 
   const jobOptions = ['All', ...new Set(allCandidates.map((c) => c.jobApplied).filter(Boolean))];
@@ -1784,6 +1795,10 @@ const Reports = () => {
             <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', width: 'auto' }}>
               {recOptions.map((r) => <option key={r}>{r}</option>)}
             </select>
+            {/* Stage filter */}
+            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', width: 'auto' }}>
+              {stageOptions.map((s) => <option key={s}>{s}</option>)}
+            </select>
             {/* View toggle */}
             <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
               {[{ id: 'table', Icon: List }, { id: 'cards', Icon: LayoutGrid }].map(({ id, Icon }) => (
@@ -1805,30 +1820,27 @@ const Reports = () => {
             <p style={{ fontStyle: 'italic' }}>No candidates match your filters.</p>
           </div>
         ) : viewMode === 'table' ? (
-          <div className="table-container">
+          <>
+            <div className="table-container">
             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>ID</th>
-                  <th style={{ width: '18%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
-                  <th style={{ width: '10%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
-                  <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
-                  <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Video</th>
-                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Score</th>
-                  <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
-                  <th style={{ width: '10%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
-                  <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
-                  <th style={{ width: '16%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
+                  <th style={{ width: '17%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name & ID</th>
+                  <th style={{ width: '9%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
+                  <th style={{ width: '5%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
+                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Screening Video</th>
+                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Int. Score</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
+                  <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
+                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
+                  <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Remark</th>
+                  <th style={{ width: '12%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
+                  <th style={{ width: '9%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((c) => (
                   <tr key={c.id}>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '12px' }}>
-                        #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
-                      </span>
-                    </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '800', fontSize: '0.7rem', flexShrink: 0 }}>
@@ -1837,6 +1849,9 @@ const Reports = () => {
                         <div style={{ minWidth: 0, overflow: 'hidden' }}>
                           <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {c.name}
+                            <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px' }}>
+                              {c.unique_id || String(c.id).substring(0,6)}
+                            </span>
                           </div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                         </div>
@@ -1907,6 +1922,54 @@ const Reports = () => {
                         </button>
                       )}
                     </td>
+                    {/* Remark cell */}
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <WorkflowBadge status={c.current_stage ?? c.currentStage ?? c.stage ?? 'Resume Screening'} size="sm" />
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      {(() => {
+                        const candidateRemark = c.remark_reports;
+                        const hasRemark = !!candidateRemark;
+                        return (
+                          <button
+                            onClick={() => {
+                              setRemarkPopover({ candidateId: c.id, name: c.name });
+                              setRemarkText(candidateRemark || '');
+                            }}
+                            title={hasRemark ? `Remark: ${candidateRemark}` : 'Add Remark'}
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '8px',
+                              border: hasRemark ? '1.5px solid #d97706' : '1.5px solid #e2e8f0',
+                              background: hasRemark ? '#f59e0b' : '#f8fafc',
+                              color: hasRemark ? '#fff' : '#94a3b8',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              position: 'relative',
+                              transition: 'all 0.2s',
+                              boxShadow: hasRemark ? '0 2px 5px rgba(245,158,11,0.3)' : 'none',
+                            }}
+                          >
+                            <MessageSquare size={13} />
+                            {hasRemark && (
+                              <span style={{
+                                position: 'absolute',
+                                top: '-4px',
+                                right: '-4px',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                border: '1.5px solid #fff',
+                              }} />
+                            )}
+                          </button>
+                        );
+                      })()}
+                    </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span style={{
                         padding: '3px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '700',
@@ -1940,6 +2003,106 @@ const Reports = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Remark Popover Modal */}
+          {remarkPopover && (
+            <div
+              style={{
+                position: 'fixed', inset: 0,
+                backgroundColor: 'rgba(15,23,42,0.5)',
+                backdropFilter: 'blur(4px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 9999, padding: '1.5rem',
+              }}
+              onClick={() => setRemarkPopover(null)}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: '#fff', borderRadius: '16px', padding: '24px 28px',
+                  width: '100%', maxWidth: '400px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                  animation: 'slideInRemark 0.18s ease',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <MessageSquare size={16} color="#d97706" />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Remark of Reports</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{remarkPopover.name}</div>
+                  </div>
+                </div>
+
+                <textarea
+                  value={remarkText}
+                  onChange={(e) => setRemarkText(e.target.value)}
+                  placeholder="Write your remark about this candidate..."
+                  rows={4}
+                  autoFocus
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    border: '1.5px solid #e2e8f0', borderRadius: '10px',
+                    padding: '10px 12px', fontSize: '0.85rem', color: '#1e293b',
+                    resize: 'vertical', outline: 'none', fontFamily: 'inherit',
+                    transition: 'border-color 0.2s', marginBottom: '16px',
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = '#f59e0b')}
+                  onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+                />
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => setRemarkPopover(null)}
+                    disabled={remarkSaving}
+                    style={{
+                      flex: 1, padding: '9px', border: '1.5px solid #e2e8f0',
+                      borderRadius: '8px', background: '#f8fafc', color: '#475569',
+                      fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setRemarkSaving(true);
+                      try {
+                        await apiFetch('/api/candidates', {
+                          method: 'PATCH',
+                          body: JSON.stringify({ id: remarkPopover.candidateId, remark_reports: remarkText }),
+                        });
+                        await refreshCandidates();
+                        setRemarkPopover(null);
+                      } catch (e) {
+                        console.error('Remark save error:', e);
+                      } finally {
+                        setRemarkSaving(false);
+                      }
+                    }}
+                    disabled={remarkSaving}
+                    style={{
+                      flex: 1, padding: '9px', border: 'none',
+                      borderRadius: '8px',
+                      background: remarkSaving ? '#fde68a' : '#f59e0b',
+                      color: '#fff', fontSize: '0.85rem', fontWeight: 700,
+                      cursor: remarkSaving ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    }}
+                  >
+                    {remarkSaving ? 'Saving...' : '💾 Save Remark'}
+                  </button>
+                </div>
+              </div>
+              <style>{`
+                @keyframes slideInRemark {
+                  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+                  to   { opacity: 1; transform: scale(1) translateY(0); }
+                }
+              `}</style>
+            </div>
+          )}
+          </>
         ) : (
           /* Card view */
           <div style={{ padding: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1rem' }}>
@@ -1956,7 +2119,7 @@ const Reports = () => {
                       {getInitials(c.name)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.87rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>#{c.display_id} - {c.name}</div>
+                      <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.87rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.jobApplied}</div>
                     </div>
                     {avgScore !== null && (

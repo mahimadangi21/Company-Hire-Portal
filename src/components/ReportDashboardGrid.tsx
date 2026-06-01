@@ -446,8 +446,8 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '2rem 0', gap: '20px' }}>
               <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume Evaluation" size={120} stroke={9} />
-              <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video Interview" size={120} stroke={9} />
-              <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical Assessment" size={120} stroke={9} />
+              <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Screening Video" size={120} stroke={9} />
+              <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Tech Interview" size={120} stroke={9} />
             </div>
             <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '14px', fontSize: '0.82rem', lineHeight: '1.5', color: 'var(--gray-700)' }}>
               <strong>Scores Overview:</strong> These radial progress meters capture standard assessment dimensions. Each score is normalized on a 100-point scale based on skills extraction, response clarity, and automated test suite evaluations.
@@ -632,19 +632,18 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
               </button>
             </div>
           </div>
-          
           {scoresViewMode === 'radial' ? (
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
               <RadialProgress value={candidate.resumeScore || 0} color="#3b82f6" label="Resume" size={76} />
-              <RadialProgress value={candidate.videoScore || 0} color="#10b981" label="Video" size={76} />
-              <RadialProgress value={candidate.techScore || 0} color="#8b5cf6" label="Technical" size={76} />
+              <RadialProgress value={candidate.videoScore || 0} color="#10b981" label="Screening Video" size={76} />
+              <RadialProgress value={candidate.techScore || 0} color="#8b5cf6" label="Tech Interview" size={76} />
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '4px' }}>
               {[
                 { label: 'Resume', value: candidate.resumeScore || 0, color: '#3b82f6' },
-                { label: 'Video', value: candidate.videoScore || 0, color: '#10b981' },
-                { label: 'Technical', value: candidate.techScore || 0, color: '#8b5cf6' },
+                { label: 'Screening Video', value: candidate.videoScore || 0, color: '#10b981' },
+                { label: 'Tech Interview', value: candidate.techScore || 0, color: '#8b5cf6' },
               ].map((b, idx) => (
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
