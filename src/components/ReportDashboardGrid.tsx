@@ -762,7 +762,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
               
               {/* Highlights */}
               <div style={{ flex: 1.4, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Video Highlights</p>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Screening Analysis</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                   {parsedHighlights.map((hl, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
