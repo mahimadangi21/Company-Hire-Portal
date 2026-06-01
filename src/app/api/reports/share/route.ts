@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Build the report URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
     const reportUrl = `${baseUrl}/report/${token}`;
 
     // 6. Send email to the candidate
