@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { VideoPlayerOverlay } from "@/components/video-player-overlay";
 import { MessageSquare, User, Sparkles, BarChart3, TrendingUp } from "lucide-react";
 import type { TranscriptEntry } from "@/types";
+import { StructuredAnalysisView } from "@/components/StructuredAnalysisView";
 
 interface InterviewPlayerLayoutProps {
   interview: any;
@@ -360,7 +361,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
               AI Interview Report
             </h3>
             <div className="prose prose-slate prose-sm max-w-none text-slate-600 whitespace-pre-wrap leading-relaxed">
-              {interview.summary}
+              <StructuredAnalysisView text={interview.summary} />
             </div>
           </div>
 

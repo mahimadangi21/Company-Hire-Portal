@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getServiceSupabase } from '@/lib/supabase/server';
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,65 @@ function isSupabaseConfigured() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   return !!(url && url.startsWith("http") && !url.includes("your_supabase_project_url") && serviceKey);
+}
+
+/**
+ * GET /api/upload-video
+ *
+ * Generates a signed upload URL for the browser to upload directly to Supabase Storage,
+ * completely bypassing Vercel serverless function payload size limits (4.5MB).
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const candidateId = searchParams.get('candidateId');
+    const filename = searchParams.get('filename') || 'video.mp4';
+
+    if (!candidateId) {
+      return NextResponse.json({ error: 'candidateId is required' }, { status: 400 });
+    }
+
+    if (isSupabaseConfigured()) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const bucketName = 'interview-recordings';
+      const fileExt    = (filename.split('.').pop() || 'mp4').toLowerCase();
+      const uploadPath = `admin_uploads/${candidateId}_${Date.now()}.${fileExt}`;
+      
+      const supabase = getServiceSupabase();
+
+      // Create signed upload URL (valid for 15 minutes)
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .createSignedUploadUrl(uploadPath);
+
+      if (error || !data) {
+        console.error('[upload-video] Failed to create signed upload URL:', error);
+        return NextResponse.json({ error: error?.message || 'Failed to create signed upload URL' }, { status: 500 });
+      }
+
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${uploadPath}`;
+
+      console.log('[upload-video] Generated direct upload URL for path:', uploadPath);
+
+      return NextResponse.json({
+        success: true,
+        directUpload: true,
+        uploadUrl: data.signedUrl,
+        publicUrl: publicUrl,
+        videoUrl: publicUrl
+      });
+    } else {
+      console.log('[upload-video] Supabase not configured. Direct upload not available.');
+      return NextResponse.json({
+        success: true,
+        directUpload: false,
+        message: 'Supabase not configured, use local upload fallback'
+      });
+    }
+  } catch (err: any) {
+    console.error('[upload-video] GET server error:', err);
+    return NextResponse.json({ error: err.message || 'Unknown server error' }, { status: 500 });
+  }
 }
 
 /**
