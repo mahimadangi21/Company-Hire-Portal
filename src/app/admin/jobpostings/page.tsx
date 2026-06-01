@@ -36,12 +36,29 @@ const JobPostings = () => {
         if (editingJob.isParentEdit) {
           const jobsToUpdate = jobs.filter((j: any) => j.department === editingJob.oldDeptName);
           await Promise.all(
-            jobsToUpdate.map((j: any) =>
-              apiFetch('/api/jobs', {
-                method: 'PATCH',
-                body: JSON.stringify({ id: j.id, department: department.trim(), sub_department: subDepartment.trim() })
-              })
-            )
+            jobsToUpdate.map((j: any) => {
+              if (j.id === editingJob.id) {
+                // Update everything for this specific row
+                return apiFetch('/api/jobs', {
+                  method: 'PATCH',
+                  body: JSON.stringify({ 
+                    id: j.id, 
+                    department: department.trim(), 
+                    sub_department: subDepartment.trim(),
+                    title: title.trim()
+                  })
+                });
+              } else {
+                // Only rename the parent department for other rows
+                return apiFetch('/api/jobs', {
+                  method: 'PATCH',
+                  body: JSON.stringify({ 
+                    id: j.id, 
+                    department: department.trim()
+                  })
+                });
+              }
+            })
           );
           res = { ok: true };
         } else {
@@ -90,7 +107,7 @@ const JobPostings = () => {
     const firstJob = subDepts[0];
     if (!firstJob) return;
     setEditingJob({ ...firstJob, isParentEdit: true, oldDeptName: deptName });
-    setTitle('');
+    setTitle(firstJob.title || '');
     setSubDepartment(firstJob.sub_department || '');
     setDepartment(deptName);
     setShowForm(true);
@@ -178,10 +195,9 @@ const JobPostings = () => {
                    placeholder="e.g. Frontend, Backend, UI/UX"
                    value={subDepartment}
                    onChange={(e) => setSubDepartment(e.target.value)}
-                   disabled={editingJob?.isParentEdit}
                  />
                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                   {editingJob?.isParentEdit ? 'Sub-departments cannot be edited when editing the parent department.' : 'The sub-department under the parent.'}
+                   {editingJob?.isParentEdit ? 'Updates the sub-department for this specific role, and renames the parent department for all roles in it.' : 'The sub-department under the parent.'}
                  </span>
               </div>
               <div className="form-group">
@@ -192,10 +208,9 @@ const JobPostings = () => {
                    placeholder="e.g. Senior Frontend Dev"
                    value={title}
                    onChange={(e) => setTitle(e.target.value)}
-                   disabled={editingJob?.isParentEdit}
                  />
                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                   {editingJob?.isParentEdit ? 'Roles cannot be edited when editing the parent department.' : 'The role under the sub-department.'}
+                   {editingJob?.isParentEdit ? 'Updates the role title for this specific role, and renames the parent department for all roles in it.' : 'The role under the sub-department.'}
                  </span>
               </div>
             </div>
