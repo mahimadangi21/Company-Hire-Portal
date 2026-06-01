@@ -15,7 +15,25 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
       const data = typeof text === 'string' ? JSON.parse(text) : text;
       
       if (Array.isArray(data)) {
-        summaryList = data.filter(item => typeof item === 'string');
+        const positiveWords = ['good', 'great', 'excellent', 'strong', 'well', 'impressive', 'demonstrated', 'proficient', 'clear', 'effective', 'ability', 'positive'];
+        const negativeWords = ['failed', 'lack', 'difficulty', 'require', 'weak', 'poor', 'bad', 'needs', 'not', 'unable', 'struggled', 'missed', 'unclear', 'necessary'];
+        
+        data.filter(item => typeof item === 'string').forEach(item => {
+          const lower = item.toLowerCase();
+          const hasPos = positiveWords.some(w => lower.includes(w));
+          const hasNeg = negativeWords.some(w => lower.includes(w));
+          
+          if (hasNeg && !hasPos) {
+            cons.push(item);
+          } else if (hasPos && !hasNeg) {
+            pros.push(item);
+          } else if (hasPos && hasNeg) {
+             // If both, consider it neutral
+            okok.push(item);
+          } else {
+            okok.push(item);
+          }
+        });
       } else if (data && typeof data === 'object') {
         if (data.pros) pros = Array.isArray(data.pros) ? data.pros : [data.pros];
         if (data.cons) cons = Array.isArray(data.cons) ? data.cons : [data.cons];
