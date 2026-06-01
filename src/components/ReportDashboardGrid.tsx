@@ -219,23 +219,17 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
       rawUrl = String(matchedInterview.video_url).trim();
     }
     
-    if (rawUrl && rawUrl !== "" && rawUrl !== "—" && rawUrl !== "null" && rawUrl !== "undefined") {
-      if (rawUrl.includes("mixkit.co")) {
-        return "https://www.w3schools.com/html/mov_bbb.mp4";
-      }
+    if (rawUrl && rawUrl !== "" && rawUrl !== "—" && rawUrl !== "null" && rawUrl !== "undefined" && !rawUrl.includes("mixkit.co")) {
       return rawUrl;
     }
-    return "https://www.w3schools.com/html/mov_bbb.mp4"; // Ultimate stable fallback!
+    return null;
   }, [matchedInterview, candidate]);
 
   const technicalVideoUrl = useMemo(() => {
     const ext = candidate?.extractedData || {};
     let rawUrl = String(ext.videoUrl || ext.video_url || ext.video || candidate?.videoUrl || candidate?.video_url || "").trim();
     
-    if (rawUrl && rawUrl !== "" && rawUrl !== "—" && rawUrl !== "null" && rawUrl !== "undefined") {
-      if (rawUrl.includes("mixkit.co")) {
-        return "https://www.w3schools.com/html/mov_bbb.mp4";
-      }
+    if (rawUrl && rawUrl !== "" && rawUrl !== "—" && rawUrl !== "null" && rawUrl !== "undefined" && !rawUrl.includes("mixkit.co")) {
       return rawUrl;
     }
     
