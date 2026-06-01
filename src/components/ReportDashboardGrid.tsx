@@ -855,7 +855,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
             />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.75rem', fontStyle: 'italic', textAlign: 'center', padding: '0 10px' }}>
-              Technical interview video unavailable
+              Technical interview video pending or not uploaded
             </div>
           )}
         </div>
@@ -865,7 +865,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '1rem' }}>
             <Brain size={28} color="var(--brand-navy)" opacity={0.25} />
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, fontStyle: 'italic' }}>No technical interview transcript uploaded/generated yet</p>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, fontStyle: 'italic' }}>No technical interview transcript uploaded or generated yet</p>
           </div>
         )}
       </div>
