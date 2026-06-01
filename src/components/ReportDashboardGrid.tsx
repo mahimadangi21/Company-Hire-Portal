@@ -816,7 +816,6 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
             </div>
           )}
         </div>
-        </div>
 
         {transcript.length > 0 ? (
           <TranscriptCompactView transcript={transcript} storedAnalysis={storedAnalysis} onViewMore={() => setActiveModal('transcript')} />
