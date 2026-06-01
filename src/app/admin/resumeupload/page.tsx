@@ -417,7 +417,7 @@ const ResumeUpload = () => {
             <tbody>
               {filteredCandidates.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                     No candidates found.
                   </td>
                 </tr>
